@@ -20,7 +20,10 @@ The marketplace identifier (the part after `@`) is `nbg-design`, as declared in
 
 ## Available Plugins
 
-See the `plugins/` directory for available plugins.
+See the `plugins/` directory for available plugins. For a guided tour of the `nbg-design` plugin, open
+[The nbg-design skill — explained](https://biks2013-presentations.github.io/deck-work-nbgdesign/), a
+38-slide deck built with the skill itself (HTML with the in-browser editor, PDF, and five standalone
+diagrams of how the skill works).
 
 ## Development
 

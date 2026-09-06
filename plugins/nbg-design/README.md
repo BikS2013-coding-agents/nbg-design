@@ -82,9 +82,35 @@ The plugin is distributed through the public marketplace
 
 This plugin provides the `nbg-design` skill which Claude will use automatically based on context.
 
+## The skill, explained
+
+[**The nbg-design skill — explained**](https://biks2013-presentations.github.io/deck-work-nbgdesign/) is a
+38-slide deck, built with this skill, that walks through what the skill makes possible, how to ask for and
+build a deck, how a viewer edits it in the browser, and how it can be customised. It doubles as a live
+sample of the output: open the HTML deck and right-click any slide to try the editor.
+
+- [HTML deck](https://biks2013-presentations.github.io/deck-work-nbgdesign/deck/NBG-Design-Skill-Explained-latest.html)
+  (with the built-in right-click editor),
+  [PDF](https://biks2013-presentations.github.io/deck-work-nbgdesign/deck/NBG-Design-Skill-Explained-latest.pdf)
+  (one page per slide) and the deck's
+  [rebuild script](https://biks2013-presentations.github.io/deck-work-nbgdesign/deck/NBG-Design-Skill-Explained-latest.rebuild.mjs).
+- Five standalone diagram pages:
+  [Five layers](https://biks2013-presentations.github.io/deck-work-nbgdesign/deck/diagrams/nbg-design-layers.html)
+  (how the skill is built up),
+  [A deck, end to end](https://biks2013-presentations.github.io/deck-work-nbgdesign/deck/diagrams/nbg-design-sequence.html),
+  [The pipeline](https://biks2013-presentations.github.io/deck-work-nbgdesign/deck/diagrams/nbg-design-flow.html),
+  [What a viewer can do](https://biks2013-presentations.github.io/deck-work-nbgdesign/deck/diagrams/nbg-design-tree.html)
+  and
+  [Inside a delivered deck](https://biks2013-presentations.github.io/deck-work-nbgdesign/deck/diagrams/nbg-design-arch.html).
+- [Source of the deck on GitHub](https://github.com/BikS2013-presentations/deck-work-nbgdesign).
+
+The deck's look is inspired by the NBG brand; it is not an official National Bank of Greece publication.
+
 ## Documentation
 
-See `skills/nbg-design/SKILL.md` for complete documentation.
+See `skills/nbg-design/SKILL.md` for complete documentation, and
+[The nbg-design skill — explained](https://biks2013-presentations.github.io/deck-work-nbgdesign/) for a
+guided tour.
 
 ## License
 
