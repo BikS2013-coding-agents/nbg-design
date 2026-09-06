@@ -1,0 +1,1043 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1280" />
+<title>NBG Presentation Design System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
+
+<style>
+  /* -------------------------------------------------------------------------
+     NBG Design System — documentation host page
+     ------------------------------------------------------------------------- */
+  :root {
+    /* Brand palette pulled from theme1 / "NBG Colors 2" */
+    --ink:        #003841;  /* accent1 — deep teal, default text on light */
+    --teal:       #007B85;  /* accent2 — mid teal */
+    --bright:     #00ADBF;  /* accent3 — bright cyan */
+    --cyan:       #00CFE7;  /* accent4 — light cyan */
+    --grey-1:     #BEC1BE;  /* accent5 */
+    --grey-2:     #939793;  /* accent6 */
+    --cream:      #F5F8F6;  /* lt2 — section background */
+    --paper:      #FFFFFF;
+    --black:      #0A1416;
+
+    /* Doc-only chrome (not part of the brand system) */
+    --doc-bg:     #FAFBFA;
+    --doc-fg:     #1C2224;
+    --doc-muted:  rgba(28, 34, 36, 0.62);
+    --doc-line:   rgba(0, 56, 65, 0.10);
+    --doc-card:   #FFFFFF;
+    --doc-shadow: 0 1px 2px rgba(0,56,65,0.04), 0 12px 40px -16px rgba(0,56,65,0.10);
+
+    --doc-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    --doc-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --brand-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Aptos", Helvetica, Arial, sans-serif;
+
+    /* slide template scale: 1920×1080 ↘ 720×405  (×0.375) */
+    --slide-w: 720px;
+    --slide-h: 405px;
+    --slide-scale: 0.375;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    background: var(--doc-bg);
+    color: var(--doc-fg);
+    font-family: var(--doc-sans);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* ---------- Top nav ---------- */
+  header.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: rgba(250, 251, 250, 0.92);
+    backdrop-filter: saturate(140%) blur(16px);
+    -webkit-backdrop-filter: saturate(140%) blur(16px);
+    border-bottom: 1px solid var(--doc-line);
+  }
+  .topbar-inner {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 12px;
+    color: var(--ink); font-weight: 600; font-size: 14px;
+    letter-spacing: 0.2px;
+  }
+  .brand-mark {
+    width: 28px; height: 28px; border-radius: 6px;
+    background: var(--ink);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--cyan); font-weight: 700; font-size: 12px; letter-spacing: 0.5px;
+  }
+  nav.anchors {
+    display: flex; gap: 4px; flex-wrap: wrap;
+  }
+  nav.anchors a {
+    color: var(--doc-fg); text-decoration: none;
+    padding: 8px 12px; border-radius: 999px; font-size: 13px; font-weight: 500;
+    transition: background 0.12s ease;
+  }
+  nav.anchors a:hover { background: rgba(0, 56, 65, 0.07); }
+
+  /* ---------- Layout ---------- */
+  main { max-width: 1240px; margin: 0 auto; padding: 0 32px 160px; }
+
+  section.block { padding: 96px 0 32px; scroll-margin-top: 80px; }
+  section.block:first-of-type { padding-top: 64px; }
+
+  .eyebrow {
+    font-family: var(--doc-mono);
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 1.6px; text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 16px;
+  }
+  h1.hero-title {
+    font-family: var(--brand-sans);
+    font-weight: 200; font-size: 92px; line-height: 1; letter-spacing: -2.5px;
+    color: var(--ink); margin: 0;
+  }
+  h1.hero-title em {
+    font-style: italic; font-weight: 300; color: var(--teal);
+  }
+  h2.section-title {
+    font-family: var(--brand-sans);
+    font-weight: 300; font-size: 46px; line-height: 1.05; letter-spacing: -1.2px;
+    color: var(--ink); margin: 0 0 16px;
+  }
+  h3.subhead {
+    font-family: var(--brand-sans);
+    font-weight: 600; font-size: 16px; letter-spacing: 0.2px;
+    color: var(--ink); margin: 0 0 12px;
+    text-transform: uppercase; letter-spacing: 1.4px; font-size: 11px;
+    font-family: var(--doc-mono); font-weight: 500;
+  }
+  p.lead {
+    font-size: 20px; line-height: 1.5; color: var(--doc-muted);
+    margin: 0; max-width: 64ch; text-wrap: pretty;
+  }
+  p.body { margin: 0; color: var(--doc-muted); max-width: 70ch; }
+
+  hr.rule {
+    border: 0; height: 1px; background: var(--doc-line);
+    margin: 96px 0 0;
+  }
+
+  /* ---------- Tokens grids ---------- */
+  .grid {
+    display: grid;
+    gap: 24px;
+    margin-top: 36px;
+  }
+  .grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .grid.cols-6 { grid-template-columns: repeat(6, 1fr); }
+
+  /* Color swatch */
+  .swatch {
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: var(--doc-shadow);
+    background: var(--doc-card);
+    display: flex; flex-direction: column;
+  }
+  .swatch .chip {
+    aspect-ratio: 16 / 9;
+    display: flex; align-items: flex-end; justify-content: space-between;
+    padding: 16px; color: white;
+    font-family: var(--doc-mono); font-size: 12px;
+  }
+  .swatch .chip.dark { color: rgba(255,255,255,0.85); }
+  .swatch .chip.light { color: rgba(0,56,65,0.7); }
+  .swatch .meta {
+    padding: 14px 16px;
+    display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+  }
+  .swatch .name { font-size: 13px; font-weight: 600; color: var(--ink); }
+  .swatch .role { font-size: 11px; color: var(--doc-muted); font-family: var(--doc-mono); text-transform: uppercase; letter-spacing: 1px; }
+
+  /* Token row (type scale) */
+  .type-row {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 32px;
+    align-items: baseline;
+    padding: 24px 0;
+    border-bottom: 1px dashed var(--doc-line);
+  }
+  .type-row:last-child { border-bottom: 0; }
+  .type-row .label {
+    font-family: var(--doc-mono); font-size: 11px;
+    color: var(--doc-muted); letter-spacing: 1px; text-transform: uppercase;
+    line-height: 1.5;
+  }
+  .type-row .label strong {
+    display: block;
+    font-family: var(--brand-sans); font-size: 13px;
+    color: var(--ink); text-transform: none; letter-spacing: 0;
+    margin-bottom: 2px;
+  }
+  .type-row .sample {
+    color: var(--ink); font-family: var(--brand-sans);
+    letter-spacing: -0.5px; line-height: 1.05;
+  }
+
+  /* Card */
+  .card {
+    background: var(--doc-card);
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: var(--doc-shadow);
+  }
+
+  /* ---------- Slide template gallery ---------- */
+  .template {
+    display: grid;
+    grid-template-columns: var(--slide-w) 1fr;
+    gap: 48px;
+    align-items: start;
+    margin-top: 40px;
+    padding-top: 40px;
+    border-top: 1px solid var(--doc-line);
+  }
+  .template:first-of-type { border-top: 0; padding-top: 0; }
+  .template .info h4 {
+    margin: 0;
+    font-family: var(--brand-sans); font-weight: 500; font-size: 22px; color: var(--ink);
+    letter-spacing: -0.3px;
+  }
+  .template .info .meta-tag {
+    display: inline-block; margin-bottom: 10px;
+    font-family: var(--doc-mono); font-size: 10px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 1.4px;
+    color: var(--teal); padding: 4px 8px; border-radius: 4px;
+    background: rgba(0, 173, 191, 0.10);
+  }
+  .template .info p {
+    color: var(--doc-muted); margin: 14px 0 18px;
+  }
+  .template .info ul {
+    margin: 18px 0 0; padding: 0; list-style: none;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .template .info li {
+    font-size: 13px; color: var(--doc-fg);
+    display: grid; grid-template-columns: 110px 1fr; gap: 14px;
+  }
+  .template .info li b {
+    font-family: var(--doc-mono); font-weight: 500; font-size: 11px;
+    color: var(--doc-muted); text-transform: uppercase; letter-spacing: 1px;
+    padding-top: 1px;
+  }
+
+  /* slide frame — render at 1920×1080 then scale down */
+  .frame {
+    width: var(--slide-w);
+    height: var(--slide-h);
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    background: white;
+    box-shadow: 0 1px 0 rgba(0,56,65,0.04), 0 24px 64px -28px rgba(0,56,65,0.30);
+    isolation: isolate;
+  }
+  .frame .stage {
+    position: absolute;
+    top: 0; left: 0;
+    width: 1920px;
+    height: 1080px;
+    transform: scale(var(--slide-scale));
+    transform-origin: 0 0;
+    font-family: var(--brand-sans);
+  }
+  /* faint dimensions tag below the frame */
+  .frame-tag {
+    margin-top: 10px;
+    font-family: var(--doc-mono); font-size: 11px;
+    color: var(--doc-muted); letter-spacing: 0.5px;
+    display: flex; justify-content: space-between;
+    width: var(--slide-w);
+  }
+
+  /* ---------- Logo demo plates ---------- */
+  .logo-plate {
+    border-radius: 14px;
+    padding: 48px;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 200px;
+    box-shadow: var(--doc-shadow);
+  }
+  .logo-plate img { max-width: 80%; height: auto; }
+  .plate-light { background: white; border: 1px solid var(--doc-line); }
+  .plate-cream { background: var(--cream); }
+  .plate-dark { background: var(--ink); }
+  .plate-bright { background: var(--bright); }
+
+  /* spacing scale visual */
+  .space-row {
+    display: grid;
+    grid-template-columns: 80px 1fr 80px;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 0;
+  }
+  .space-row .token {
+    font-family: var(--doc-mono); font-size: 12px; color: var(--ink); font-weight: 500;
+  }
+  .space-row .bar {
+    height: 14px; border-radius: 4px; background: var(--bright);
+  }
+  .space-row .px {
+    font-family: var(--doc-mono); font-size: 12px; color: var(--doc-muted);
+    text-align: right;
+  }
+
+  /* grid mockup */
+  .grid-mock {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: var(--doc-shadow);
+    padding: 4%;
+  }
+  .grid-mock .col {
+    background: rgba(0, 173, 191, 0.10);
+    border-left: 1px dashed rgba(0, 173, 191, 0.45);
+    border-right: 1px dashed rgba(0, 173, 191, 0.45);
+    height: 100%;
+  }
+  .grid-mock-inner {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 16px;
+    height: 100%;
+  }
+  .grid-mock .safe-area {
+    position: absolute;
+    inset: 4%;
+    border: 1px dashed rgba(0, 56, 65, 0.25);
+    pointer-events: none;
+  }
+
+  /* hero collage */
+  .hero {
+    padding-top: 96px; padding-bottom: 32px;
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 64px;
+    align-items: end;
+  }
+  .hero-aside {
+    display: flex; flex-direction: column; gap: 16px;
+    border-left: 1px solid var(--doc-line);
+    padding-left: 32px;
+  }
+  .hero-aside .row {
+    display: flex; justify-content: space-between;
+    font-family: var(--doc-mono); font-size: 11px; color: var(--doc-muted);
+    text-transform: uppercase; letter-spacing: 1.2px;
+  }
+  .hero-aside .row b { color: var(--ink); font-weight: 600; font-family: var(--doc-sans); text-transform: none; letter-spacing: 0; font-size: 13px; }
+
+  /* responsive tighten */
+  @media (max-width: 1180px) {
+    .template { grid-template-columns: 1fr; }
+    .grid.cols-4 { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+
+<!-- React + Babel for slide templates -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+
+<body>
+
+<!-- ============================== TOP NAV ============================== -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="brand-mark">N</span>
+      <span>NBG Presentation Design System</span>
+      <span style="color: var(--doc-muted); font-weight: 400; margin-left: 8px;">v1.0</span>
+    </div>
+    <nav class="anchors">
+      <a href="#colors">Colors</a>
+      <a href="#type">Type</a>
+      <a href="#logo">Logo</a>
+      <a href="#grid">Grid</a>
+      <a href="#covers">Covers</a>
+      <a href="#dividers">Dividers</a>
+      <a href="#content">Content</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<!-- ============================== HERO ============================== -->
+<section class="block hero" style="padding-top: 96px;">
+  <div>
+    <div class="eyebrow">Brand presentation system · Internal</div>
+    <h1 class="hero-title">
+      A calm voice<br />
+      for <em>National Bank<br />of Greece.</em>
+    </h1>
+    <p class="lead" style="margin-top: 36px; max-width: 56ch;">
+      This system documents the tokens, type, layouts and slide templates used across NBG
+      presentations — extracted from the v1.0 master deck and tightened into a reusable kit.
+      Use the Tweaks panel (bottom-right) to switch language and accent color across every
+      example on the page.
+    </p>
+  </div>
+
+  <aside class="hero-aside">
+    <div class="row"><span>Format</span><b>16:9 · 1920×1080</b></div>
+    <div class="row"><span>Source</span><b>v1.0 master · 205 slides</b></div>
+    <div class="row"><span>Type</span><b>Aptos (system fallback)</b></div>
+    <div class="row"><span>Palette</span><b>NBG Colors 2 · 6 tokens</b></div>
+    <div class="row"><span>Languages</span><b>EN · GR · Bilingual</b></div>
+    <div class="row"><span>Last update</span><b>21 May 2026</b></div>
+  </aside>
+</section>
+
+<!-- ============================== COLORS ============================== -->
+<hr class="rule" />
+<section class="block" id="colors">
+  <div class="eyebrow">01 · Colors</div>
+  <h2 class="section-title">A teal-led palette<br />with quiet neutrals.</h2>
+  <p class="body">
+    The brand is built on a four-step teal scale, anchored by <b>Deep Teal</b> as the
+    primary ink color and supported by neutrals for body and surface. Accent application
+    is intentional — large blocks of color appear on covers and section openers; content
+    pages stay mostly mono-chromatic.
+  </p>
+
+  <h3 class="subhead" style="margin-top: 56px;">Primary teal scale</h3>
+  <div class="grid cols-4">
+
+    <div class="swatch">
+      <div class="chip dark" style="background: #003841;">
+        <span>Deep Teal</span><span>#003841</span>
+      </div>
+      <div class="meta">
+        <span class="name">--ink</span>
+        <span class="role">accent · 1</span>
+      </div>
+    </div>
+
+    <div class="swatch">
+      <div class="chip dark" style="background: #007B85;">
+        <span>Teal</span><span>#007B85</span>
+      </div>
+      <div class="meta">
+        <span class="name">--teal</span>
+        <span class="role">accent · 2</span>
+      </div>
+    </div>
+
+    <div class="swatch">
+      <div class="chip dark" style="background: #00ADBF;">
+        <span>Bright Cyan</span><span>#00ADBF</span>
+      </div>
+      <div class="meta">
+        <span class="name">--bright</span>
+        <span class="role">accent · 3</span>
+      </div>
+    </div>
+
+    <div class="swatch">
+      <div class="chip dark" style="background: #00CFE7;">
+        <span>Cyan</span><span>#00CFE7</span>
+      </div>
+      <div class="meta">
+        <span class="name">--cyan</span>
+        <span class="role">accent · 4</span>
+      </div>
+    </div>
+
+  </div>
+
+  <h3 class="subhead" style="margin-top: 56px;">Neutrals & surfaces</h3>
+  <div class="grid cols-4">
+
+    <div class="swatch">
+      <div class="chip dark" style="background: #0A1416;">
+        <span>Black</span><span>#0A1416</span>
+      </div>
+      <div class="meta">
+        <span class="name">--black</span>
+        <span class="role">stage · dark</span>
+      </div>
+    </div>
+
+    <div class="swatch">
+      <div class="chip light" style="background: #BEC1BE;">
+        <span>Grey 1</span><span>#BEC1BE</span>
+      </div>
+      <div class="meta">
+        <span class="name">--grey-1</span>
+        <span class="role">accent · 5</span>
+      </div>
+    </div>
+
+    <div class="swatch">
+      <div class="chip light" style="background: #939793;">
+        <span>Grey 2</span><span>#939793</span>
+      </div>
+      <div class="meta">
+        <span class="name">--grey-2</span>
+        <span class="role">accent · 6</span>
+      </div>
+    </div>
+
+    <div class="swatch">
+      <div class="chip light" style="background: #F5F8F6;">
+        <span>Cream</span><span>#F5F8F6</span>
+      </div>
+      <div class="meta">
+        <span class="name">--cream</span>
+        <span class="role">surface · light</span>
+      </div>
+    </div>
+
+  </div>
+
+  <h3 class="subhead" style="margin-top: 56px;">Usage rules</h3>
+  <div class="grid cols-2">
+    <div class="card">
+      <h4 style="margin:0 0 8px; color: var(--ink); font-weight: 600; font-size: 14px;">Do</h4>
+      <ul style="margin:0; padding-left: 20px; color: var(--doc-muted); font-size: 14px; line-height: 1.6;">
+        <li>Use Deep Teal as the primary text color on light surfaces.</li>
+        <li>Reserve Cyan for accent moments — rules, highlights, callouts.</li>
+        <li>Keep one accent color per slide; let the page breathe.</li>
+        <li>Cream backgrounds for divider variants — never a competing color.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4 style="margin:0 0 8px; color: var(--ink); font-weight: 600; font-size: 14px;">Don't</h4>
+      <ul style="margin:0; padding-left: 20px; color: var(--doc-muted); font-size: 14px; line-height: 1.6;">
+        <li>Introduce colors outside the palette — even for charts, stick to teal tints.</li>
+        <li>Use gradients between teals; use solid blocks at full saturation instead.</li>
+        <li>Put Bright Cyan as body text — reserve it for &lt;6 word moments.</li>
+        <li>Combine more than three palette colors on a single slide.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== TYPE ============================== -->
+<hr class="rule" />
+<section class="block" id="type">
+  <div class="eyebrow">02 · Typography</div>
+  <h2 class="section-title">Aptos for everything,<br />used at three weights.</h2>
+  <p class="body">
+    The source deck uses <b>Aptos</b> as the master typeface (Microsoft 365 default,
+    pairs with Aeonik on print). Set body at 22pt with line-height 1.55, titles at
+    light-weight with negative tracking. Greek characters render at the same weights —
+    bilingual layouts pair English in primary color with Greek in 55% opacity.
+  </p>
+
+  <div style="margin-top: 36px;">
+    <div class="type-row">
+      <div class="label">
+        <strong>Display · 88pt</strong>
+        Weight 200<br />Tracking −2px<br />Line-height 0.96<br />Use: covers, dividers
+      </div>
+      <div class="sample" style="font-weight: 200; font-size: 88px;">
+        Building tomorrow, today.
+      </div>
+    </div>
+    <div class="type-row">
+      <div class="label">
+        <strong>Title · 56pt</strong>
+        Weight 300<br />Tracking −1px<br />Line-height 1.05<br />Use: content titles
+      </div>
+      <div class="sample" style="font-weight: 300; font-size: 56px;">
+        Three pillars carry the plan forward.
+      </div>
+    </div>
+    <div class="type-row">
+      <div class="label">
+        <strong>Subtitle · 28pt</strong>
+        Weight 400<br />Line-height 1.3<br />Color: 78% opacity
+      </div>
+      <div class="sample" style="font-weight: 400; font-size: 28px; line-height: 1.3; color: rgba(0,56,65,0.78);">
+        A subtitle providing further context on the topic at hand.
+      </div>
+    </div>
+    <div class="type-row">
+      <div class="label">
+        <strong>Body · 22pt</strong>
+        Weight 400<br />Line-height 1.55<br />Color: 85% opacity
+      </div>
+      <div class="sample" style="font-weight: 400; font-size: 22px; line-height: 1.55; color: rgba(0,56,65,0.85);">
+        Body copy sits below the title in a single column at comfortable line-height, prioritising readability in both printed reports and large rooms.
+      </div>
+    </div>
+    <div class="type-row">
+      <div class="label">
+        <strong>Eyebrow · 16pt</strong>
+        Weight 700<br />Tracking +3px<br />UPPERCASE
+      </div>
+      <div class="sample" style="font-weight: 700; font-size: 16px; letter-spacing: 3px; text-transform: uppercase; color: var(--teal);">
+        Section · Strategy 2026
+      </div>
+    </div>
+    <div class="type-row">
+      <div class="label">
+        <strong>Caption · 14pt</strong>
+        Weight 400<br />Color: 50% opacity<br />Use: footnotes, sources
+      </div>
+      <div class="sample" style="font-weight: 400; font-size: 14px; color: rgba(0,56,65,0.5);">
+        Source: Internal data, FY2025. All figures unaudited unless otherwise stated.
+      </div>
+    </div>
+  </div>
+
+  <h3 class="subhead" style="margin-top: 56px;">Greek characterset</h3>
+  <div class="card">
+    <div style="font-family: var(--brand-sans); font-weight: 300; font-size: 42px; color: var(--ink); line-height: 1.1;">
+      ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ
+      <span style="display: block; margin-top: 6px;">αβγδεζηθικλμνξοπρσςτυφχψω</span>
+      <span style="display: block; margin-top: 6px; font-variant-numeric: tabular-nums;">0123456789 · €%‰</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== LOGO ============================== -->
+<hr class="rule" />
+<section class="block" id="logo">
+  <div class="eyebrow">03 · Logo</div>
+  <h2 class="section-title">Three lockups,<br />one consistent application.</h2>
+  <p class="body">
+    The logo appears in three forms across the system: full-color on light, knockout on dark, and a
+    compact wordmark for footers and small surfaces. Maintain a minimum clear-space equal to the
+    height of the building mark. Never crop, recolor, or rearrange the elements.
+  </p>
+
+  <div class="grid cols-3">
+    <div>
+      <div class="logo-plate plate-light">
+        <img src="assets/logo-primary.png" alt="NBG · primary lockup" />
+      </div>
+      <div class="frame-tag" style="width: 100%; margin-top: 12px;">
+        <span>Primary · on light</span><span>logo-primary.png</span>
+      </div>
+    </div>
+    <div>
+      <div class="logo-plate plate-dark">
+        <img src="assets/logo-knockout.png" alt="NBG · knockout lockup" />
+      </div>
+      <div class="frame-tag" style="width: 100%; margin-top: 12px;">
+        <span>Knockout · on dark</span><span>logo-knockout.png</span>
+      </div>
+    </div>
+    <div>
+      <div class="logo-plate plate-cream">
+        <img src="assets/logo-small.png" alt="NBG · compact wordmark" />
+      </div>
+      <div class="frame-tag" style="width: 100%; margin-top: 12px;">
+        <span>Compact · footers</span><span>logo-small.png</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== GRID ============================== -->
+<hr class="rule" />
+<section class="block" id="grid">
+  <div class="eyebrow">04 · Grid & spacing</div>
+  <h2 class="section-title">A 12-column grid<br />with a 90px safe area.</h2>
+  <p class="body">
+    Slides are designed at 1920×1080. A 90px margin on every edge defines the safe
+    area; inside, a 12-column grid with 24px gutters carries text and image blocks.
+    Vertical rhythm is established by an 8px base spacing scale.
+  </p>
+
+  <div class="grid cols-2" style="margin-top: 40px;">
+    <div>
+      <h3 class="subhead">12-column grid (1920×1080)</h3>
+      <div class="grid-mock">
+        <div class="grid-mock-inner">
+          <div class="col"></div><div class="col"></div><div class="col"></div><div class="col"></div>
+          <div class="col"></div><div class="col"></div><div class="col"></div><div class="col"></div>
+          <div class="col"></div><div class="col"></div><div class="col"></div><div class="col"></div>
+        </div>
+        <div class="safe-area"></div>
+      </div>
+      <div class="frame-tag" style="width: 100%; margin-top: 12px;">
+        <span>90px margin · 12 cols · 24px gutter</span>
+        <span>1920 × 1080</span>
+      </div>
+    </div>
+
+    <div>
+      <h3 class="subhead">Spacing scale (8px base)</h3>
+      <div class="card" style="padding: 32px 28px;">
+        <div class="space-row"><span class="token">space-1</span><span class="bar" style="width: 8px;"></span><span class="px">8 px</span></div>
+        <div class="space-row"><span class="token">space-2</span><span class="bar" style="width: 16px;"></span><span class="px">16 px</span></div>
+        <div class="space-row"><span class="token">space-3</span><span class="bar" style="width: 24px;"></span><span class="px">24 px</span></div>
+        <div class="space-row"><span class="token">space-4</span><span class="bar" style="width: 32px;"></span><span class="px">32 px</span></div>
+        <div class="space-row"><span class="token">space-6</span><span class="bar" style="width: 48px;"></span><span class="px">48 px</span></div>
+        <div class="space-row"><span class="token">space-8</span><span class="bar" style="width: 64px;"></span><span class="px">64 px</span></div>
+        <div class="space-row"><span class="token">space-12</span><span class="bar" style="width: 96px;"></span><span class="px">96 px</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================== COVERS ============================== -->
+<hr class="rule" />
+<section class="block" id="covers">
+  <div class="eyebrow">05 · Templates · Covers</div>
+  <h2 class="section-title">Cover slides<br />open the conversation.</h2>
+  <p class="body">
+    Three cover variations cover most reporting and presenting needs. All run at 1920×1080
+    with the title left-anchored, supporting metadata bottom-left, and the visual element
+    (photo, color block or typographic statement) carrying the right or full surface.
+  </p>
+
+  <!-- Cover 1 -->
+  <article class="template">
+    <div>
+      <div class="frame"><div class="stage" id="cover1-mount"></div></div>
+      <div class="frame-tag"><span>Cover · 01</span><span>Hero photo · dark</span></div>
+    </div>
+    <div class="info">
+      <span class="meta-tag">Cover · 01</span>
+      <h4>Hero photo on dark.</h4>
+      <p>The default cover. Photography fills a rounded card on the right; a long-form
+        title sits on the left over deep teal. Best for annual reports, investor decks,
+        and any moment that benefits from a strong photographic anchor.</p>
+      <ul>
+        <li><b>Background</b><span>Deep Teal · #003841</span></li>
+        <li><b>Title size</b><span>88pt · weight 200 · −1.5px tracking</span></li>
+        <li><b>Photo card</b><span>720 × 880, 18px radius, right-aligned</span></li>
+        <li><b>Logo</b><span>Knockout, bottom-left, 56px tall</span></li>
+      </ul>
+    </div>
+  </article>
+
+  <!-- Cover 2 -->
+  <article class="template">
+    <div>
+      <div class="frame"><div class="stage" id="cover2-mount"></div></div>
+      <div class="frame-tag"><span>Cover · 02</span><span>Editorial · light</span></div>
+    </div>
+    <div class="info">
+      <span class="meta-tag">Cover · 02</span>
+      <h4>Editorial light cover.</h4>
+      <p>A cream-grounded cover with a large photo card on the right. Use the italic weight
+        for one accent word in the title. Suitable for thought-leadership pieces, brochures
+        and partner-facing material.</p>
+      <ul>
+        <li><b>Background</b><span>Cream · #F5F8F6</span></li>
+        <li><b>Title size</b><span>96pt · weight 300 · italic accent word</span></li>
+        <li><b>Photo card</b><span>820 × 960, 24px radius, drop-shadow</span></li>
+        <li><b>Logo</b><span>Primary, bottom-left</span></li>
+      </ul>
+    </div>
+  </article>
+
+  <!-- Cover 3 -->
+  <article class="template">
+    <div>
+      <div class="frame"><div class="stage" id="cover3-mount"></div></div>
+      <div class="frame-tag"><span>Cover · 03</span><span>Typographic · no photo</span></div>
+    </div>
+    <div class="info">
+      <span class="meta-tag">Cover · 03</span>
+      <h4>Typographic — no image.</h4>
+      <p>When the right photo doesn't exist, lean on type. A diagonal line pattern adds
+        quiet texture; an accent corner block balances the composition. Perfect for
+        internal updates, strategy decks, or quick turnarounds.</p>
+      <ul>
+        <li><b>Background</b><span>Deep Teal + 6% diagonal line pattern</span></li>
+        <li><b>Title size</b><span>120pt · weight 300 · italic accent</span></li>
+        <li><b>Corner block</b><span>380 × 380, top-right, accent color</span></li>
+        <li><b>Number</b><span>200pt section number @ 18% opacity</span></li>
+      </ul>
+    </div>
+  </article>
+
+</section>
+
+<!-- ============================== DIVIDERS ============================== -->
+<hr class="rule" />
+<section class="block" id="dividers">
+  <div class="eyebrow">06 · Templates · Section dividers</div>
+  <h2 class="section-title">Dividers signal<br />a shift in chapter.</h2>
+  <p class="body">
+    Every section opens with a divider. The big numeral cues navigation; the label and caption
+    set up what follows. Three variations let you adjust energy — dark with image for major
+    chapters, dark-only for subdued moments, light-bright for energetic transitions.
+  </p>
+
+  <article class="template">
+    <div>
+      <div class="frame"><div class="stage" id="div-image-mount"></div></div>
+      <div class="frame-tag"><span>Divider · A</span><span>Dark with photo</span></div>
+    </div>
+    <div class="info">
+      <span class="meta-tag">Divider · A</span>
+      <h4>Dark with image.</h4>
+      <p>The most expressive opener. The image card takes the right half; the section
+        number anchors the left. Use this for major chapter starts (1, 2, 3 …) where
+        you want to set tone and pace.</p>
+      <ul>
+        <li><b>Number</b><span>220pt · weight 200 · accent cyan</span></li>
+        <li><b>Label</b><span>64pt · weight 300 · cream</span></li>
+        <li><b>Image card</b><span>1100 × 880, 24px radius, right-aligned</span></li>
+      </ul>
+    </div>
+  </article>
+
+  <article class="template">
+    <div>
+      <div class="frame"><div class="stage" id="div-dark-mount"></div></div>
+      <div class="frame-tag"><span>Divider · B</span><span>Dark, type-only</span></div>
+    </div>
+    <div class="info">
+      <span class="meta-tag">Divider · B</span>
+      <h4>Dark, type only.</h4>
+      <p>The quietest opener — for sub-sections or moments where imagery would distract.
+        The numeral and label split the layout left/right; an accent bar runs the full
+        left edge.</p>
+      <ul>
+        <li><b>Accent bar</b><span>12px wide, full height, bright cyan</span></li>
+        <li><b>Number</b><span>260pt · weight 200, left-anchored</span></li>
+        <li><b>Label</b><span>84pt · weight 300, paired with number</span></li>
+      </ul>
+    </div>
+  </article>
+
+  <article class="template">
+    <div>
+      <div class="frame"><div class="stage" id="div-bright-mount"></div></div>
+      <div class="frame-tag"><span>Divider · C</span><span>Bright · light</span></div>
+    </div>
+    <div class="info">
+      <span class="meta-tag">Divider · C</span>
+      <h4>Bright on cream.</h4>
+      <p>The energetic option. A massive numeral dominates the left; a bright corner block
+        bottom-right balances the page. Best mid-deck where you want to wake the room.</p>
+      <ul>
+        <li><b>Background</b><span>Cream · #F5F8F6</span></li>
+        <li><b>Number</b><span>320pt · weight 200 · ink color</span></li>
+        <li><b>Corner block</b><span>720 × 720, bottom-right, accent</span></li>
+      </ul>
+    </div>
+  </article>
+</section>
+
+<!-- ============================== CONTENT ============================== -->
+<hr class="rule" />
+<section class="block" id="content">
+  <div class="eyebrow">07 · Templates · Standard content</div>
+  <h2 class="section-title">Content slides<br />do the heavy lifting.</h2>
+  <p class="body">
+    Three patterns cover most content needs: image-led, multi-column, and stat-led.
+    All three share the same chrome: an eyebrow tag, a title, a short accent rule, and
+    a body block — keeping the page hierarchy predictable across a long deck.
+  </p>
+
+  <article class="template">
+    <div>
+      <div class="frame"><div class="stage" id="c-image-mount"></div></div>
+      <div class="frame-tag"><span>Content · A</span><span>Image right</span></div>
+    </div>
+    <div class="info">
+      <span class="meta-tag">Content · A</span>
+      <h4>Image right (½).</h4>
+      <p>The standard image-led content slide. Body copy and the accent rule sit on the
+        left over half the surface; full-bleed photography carries the right. Mirror
+        for image-left by flipping the columns.</p>
+      <ul>
+        <li><b>Eyebrow</b><span>16pt · uppercase · accent color</span></li>
+        <li><b>Title</b><span>56pt · weight 300 · ink color</span></li>
+        <li><b>Body</b><span>22pt · two paragraphs, max 880px wide</span></li>
+        <li><b>Image</b><span>820px wide, full-bleed right edge</span></li>
+      </ul>
+    </div>
+  </article>
+
+  <article class="template">
+    <div>
+      <div class="frame"><div class="stage" id="c-cols-mount"></div></div>
+      <div class="frame-tag"><span>Content · B</span><span>Three columns</span></div>
+    </div>
+    <div class="info">
+      <span class="meta-tag">Content · B</span>
+      <h4>Three columns.</h4>
+      <p>The workhorse for pillar, principle and step layouts. Each column carries a big
+        accent numeral, a short heading and 2–3 lines of body. Limit to three; four crowds
+        the page.</p>
+      <ul>
+        <li><b>Column count</b><span>3 (max) · 48px gap</span></li>
+        <li><b>Numeral</b><span>64pt · weight 200 · accent</span></li>
+        <li><b>Column title</b><span>26pt · weight 600 · ink</span></li>
+        <li><b>Body</b><span>18pt · weight 400 · 78% opacity</span></li>
+      </ul>
+    </div>
+  </article>
+
+  <article class="template">
+    <div>
+      <div class="frame"><div class="stage" id="c-stat-mount"></div></div>
+      <div class="frame-tag"><span>Content · C</span><span>Stat-led</span></div>
+    </div>
+    <div class="info">
+      <span class="meta-tag">Content · C</span>
+      <h4>Stat with supporting table.</h4>
+      <p>One number, large, with a supporting metric table to its right. The hero stat
+        uses accent color for the number, ink for the unit. Use sparingly — a single
+        stat slide lands harder than three.</p>
+      <ul>
+        <li><b>Hero number</b><span>260pt · weight 200 · accent</span></li>
+        <li><b>Hero caption</b><span>26pt · weight 400, max 700px</span></li>
+        <li><b>Table rows</b><span>22pt label · 32pt value · 1px divider</span></li>
+        <li><b>Background</b><span>Cream · #F5F8F6</span></li>
+      </ul>
+    </div>
+  </article>
+</section>
+
+</main>
+
+<!-- ============================== SCRIPTS ============================== -->
+
+<!-- Tweakable defaults — host parses & rewrites this block when user toggles -->
+<script>
+  window.TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+    "accent": "#003841",
+    "lang": "en",
+    "showLogo": true
+  }/*EDITMODE-END*/;
+</script>
+
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="slide-templates.jsx"></script>
+
+<script type="text/babel">
+  const { useState, useEffect } = React;
+
+  // ------------ Tweaks state, applied across every slide template ------------
+  function App() {
+    const [t, setTweak] = useTweaks(window.TWEAK_DEFAULTS);
+
+    return (
+      <TweaksPanel title="Tweaks">
+        <TweakSection label="Look">
+          <TweakColor
+            label="Accent"
+            value={t.accent}
+            onChange={v => setTweak("accent", v)}
+            options={["#003841", "#007B85", "#00ADBF", "#00CFE7"]}
+          />
+          <TweakRadio
+            label="Language"
+            value={t.lang}
+            onChange={v => setTweak("lang", v)}
+            options={[
+              { value: "en", label: "EN" },
+              { value: "gr", label: "GR" },
+              { value: "bi", label: "Both" },
+            ]}
+          />
+          <TweakToggle
+            label="Show logo"
+            value={t.showLogo}
+            onChange={v => setTweak("showLogo", v)}
+          />
+        </TweakSection>
+        <div style={{
+          fontSize: 11,
+          color: "rgba(255,255,255,0.55)",
+          padding: "8px 14px 4px",
+          lineHeight: 1.5,
+          fontFamily: "ui-monospace, SF Mono, monospace",
+        }}>
+          Changes apply live to every template on the page.
+        </div>
+      </TweaksPanel>
+    );
+  }
+
+  // ------------ Mount the tweaks panel ------------
+  ReactDOM.createRoot(document.body.appendChild(document.createElement("div"))).render(<App />);
+
+  // ------------ Mount each slide template into its slot ------------
+  // We re-render slides whenever tweaks change by listening to the same
+  // edit-mode messages the panel uses.
+  const slides = [
+    ["cover1-mount",   () => window.Cover1],
+    ["cover2-mount",   () => window.Cover2],
+    ["cover3-mount",   () => window.Cover3],
+    ["div-image-mount",  () => window.DividerImage],
+    ["div-dark-mount",   () => window.DividerDark],
+    ["div-bright-mount", () => window.DividerBright],
+    ["c-image-mount",   () => window.ContentImageRight],
+    ["c-cols-mount",    () => window.ContentTwoColumn],
+    ["c-stat-mount",    () => window.ContentStat],
+  ];
+
+  const roots = new Map();
+  function renderAllSlides() {
+    const t = {
+      ...window.TWEAK_DEFAULTS,
+      ...(window.__edits || {}),
+    };
+    for (const [id, getC] of slides) {
+      const el = document.getElementById(id);
+      if (!el) continue;
+      const C = getC();
+      if (!C) continue;
+      let root = roots.get(id);
+      if (!root) {
+        root = ReactDOM.createRoot(el);
+        roots.set(id, root);
+      }
+      root.render(<C accent={t.accent} lang={t.lang} showLogo={t.showLogo} />);
+    }
+  }
+
+  // listen for tweak edits — useTweaks dispatches a 'tweakchange' CustomEvent
+  // on the same window AND posts to parent. Listen to both to be safe.
+  window.addEventListener("tweakchange", (e) => {
+    window.__edits = { ...(window.__edits || {}), ...e.detail };
+    renderAllSlides();
+  });
+  window.addEventListener("message", (e) => {
+    if (e.data && e.data.type === "__edit_mode_set_keys") {
+      window.__edits = { ...(window.__edits || {}), ...e.data.edits };
+      renderAllSlides();
+    }
+  });
+
+  // initial render — give Babel a tick to define window.Cover1 etc.
+  requestAnimationFrame(() => requestAnimationFrame(renderAllSlides));
+</script>
+
+</body>
+</html>
