@@ -1,6 +1,6 @@
 # nbg-design
 
-Use when creating presentations in a design system inspired by the brand image of the National Bank of Greece (NBG), HTML slides (with a built-in right-click menu: in-place text editing with a formatting toolbar, shape resize/move with a shape toolbar, multi-selection with align / distribute / order / group, an AI assistant panel, "Export to PDF", "Save edited copy"), slide specifications, PDF exports of HTML decks (one page per slide, aesthetics preserved) — all on the bundled NBG-inspired presentation design system, templates, logos, photography, screenshots, and guardrails.
+Use when creating presentations in a design system inspired by the brand image of the National Bank of Greece (NBG), HTML slides (with a built-in right-click menu: in-place text editing with a formatting toolbar, shape resize/move with a shape toolbar, multi-selection with align / distribute / order / group, a structure outline and HTML panel, pinnable, detachable toolbars that follow the selection, an AI assistant panel that sends the slide's screenshot / source / selection and a clipboard image to Anthropic, Azure Anthropic, OpenAI-compatible, Azure OpenAI or DeepSeek endpoints with saved prompts, "Export to PDF", "Save edited copy", editing of the parts of inline SVGs (icons, diagrams, charts), and a per-deck rebuild script that re-embeds newer versions of those editing tools), updating an existing deck to the skill's current editing tools, slide specifications, PDF exports of HTML decks (one page per slide, aesthetics preserved) — all on the bundled NBG-inspired presentation design system, templates, logos, photography, screenshots, and guardrails.
 
 ## Overview
 
@@ -8,7 +8,7 @@ This skill packages a presentation design system inspired by the brand image of 
 
 Output formats: `html` (default, fully self-contained), `pdf` (exported from the HTML deck by the bundled
 `scripts/export-pdf.mjs` — one page per slide at the 1920×1080 artboard, vector text, backgrounds and
-embedded images preserved; needs Chrome/Chromium/Edge on the host). PowerPoint output is out of scope: HTML presentations and their PDF export only.
+embedded images preserved, soft masks re-anchored so macOS Preview renders the shadows; needs Chrome/Chromium/Edge on the host). The in-deck *Export to PDF* prints shadows as images for the same reason (block v13). An existing deck is brought to the current tools without regeneration: `node <deck>.rebuild.mjs`, or `add-deck-menu.mjs` → `verify-deck.mjs --strict` → `write-rebuild-script.mjs` → `export-pdf.mjs` when it has no rebuild script (`SKILL.md` → "Updating an existing deck to the current skill"). PowerPoint output is out of scope: HTML presentations and their PDF export only.
 
 Every delivered HTML deck also carries a right-click menu (`scripts/add-deck-menu.mjs`):
 

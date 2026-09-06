@@ -53,6 +53,12 @@
  *     the toolbar's Stack list offers the enclosing shapes, the selected one and its child shapes,
  *     Ctrl/Cmd+click on a shape with nothing inside cycles outward at the same spot, Tab / Shift+Tab step out / in.
  *
+ * Printing (block v13) — the print path (Export to PDF, Ctrl/Cmd+P) hands nbgPreparePrintLayout
+ *   rasterShadows: true (unless window.nbgDeckMenuConfig.rasterShadows === false): every blurred, non-inset
+ *   box-shadow inside the slides is printed as a pre-rendered image behind its element instead of Chrome's
+ *   luminosity soft mask, which macOS Preview / Quick Look / Safari mis-position (solid gray blocks); the
+ *   deck is restored afterwards. See lib/print-layout.js.
+ *
  * SVG editing (block v12) — the parts of an inline <svg> (icons, diagrams, charts drawn in the deck)
  *   - right-click an SVG → "Edit SVG" (or double-click the selected SVG, or click one of its parts in the
  *     Tree tab): the SVG gets a dashed outline and its parts — path, rect, circle, ellipse, line, polyline,
@@ -188,7 +194,7 @@
  */
 (function () {
   if (window.nbgDeck) return;
-  var VERSION = 12;
+  var VERSION = 13;
   // configuration hook (see the header): root selector, page mode, labels
   var CFG = (typeof window.nbgDeckMenuConfig === 'object' && window.nbgDeckMenuConfig) || {};
   function cfgStr(k) { return typeof CFG[k] === 'string' && CFG[k].trim() ? CFG[k].trim() : ''; }
@@ -3279,6 +3285,10 @@
     if (editing) commitEdit(); if (svgEd) svgEnd(); deselectShape();
     if (PAGE_MODE) return preparePagePrint();
     opts = opts || {}; if (!opts.selector) opts.selector = ROOT_SEL;
+    // block v13: blurred box-shadows are printed as images (macOS Preview mis-positions Chrome's
+    // shadow masks and a PDF saved from the print dialog cannot be repaired afterwards);
+    // window.nbgDeckMenuConfig.rasterShadows === false keeps the CSS shadows.
+    if (opts.rasterShadows === undefined) opts.rasterShadows = CFG.rasterShadows !== false;
     return nbgPreparePrintLayout(opts);
   }
   function restore() { return PAGE_MODE ? restorePagePrint() : nbgRestorePrintLayout(); }

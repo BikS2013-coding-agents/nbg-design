@@ -6,7 +6,8 @@
 // </body>, containing lib/print-layout.js (the print-layout shim shared with export-pdf.mjs)
 // followed by lib/deck-menu.js (the menu UI, in-place text editing, print orchestration). The
 // deck stays fully self-contained. Idempotent: an existing block (including the v1
-// "nbg-pdf-menu-script" block) is replaced, so re-running upgrades an older menu. Zero deps.
+// "nbg-pdf-menu-script" block) is replaced, so re-running upgrades an older menu; the block's
+// configuration (window.nbgDeckMenuConfig, if any) is carried over. Zero deps.
 //
 // Programmatic use: addMenu(html, config) / buildMenuBlock(config) accept an optional configuration
 // object that the block writes as `window.nbgDeckMenuConfig = {...};` before the library, so the
@@ -117,7 +118,9 @@ export function main() {
   const out = args.out ? resolve(process.cwd(), args.out) : file;
   try {
     const html = readFileSync(file, 'utf8');
-    const r = args.remove ? removeMenu(html) : addMenu(html);
+    // Re-running on a file that already carries a block keeps that block's configuration (page mode,
+    // root, labels) — an update never turns a configured page back into a default deck.
+    const r = args.remove ? removeMenu(html) : addMenu(html, readMenuConfig(html) || undefined);
     writeFileSync(out, r.html, 'utf8');
     console.log(`${args.remove ? 'deck menu' : `deck menu v${r.version}`}: ${r.status} → ${out}`);
     process.exit(0);

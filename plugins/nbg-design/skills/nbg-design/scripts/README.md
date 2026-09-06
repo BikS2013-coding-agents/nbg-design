@@ -138,7 +138,63 @@ pdfinfo my-deck.pdf                                # Pages: N, Page size: 1440 x
 pdftotext -l 1 my-deck.pdf -                       # text is selectable (vector), not a bitmap
 ```
 
+### Shadows in macOS Preview — soft masks re-anchored (v1.19.0)
+
+Chrome writes every blurred `box-shadow` as a **luminosity soft mask**: a grayscale image in a
+transparency-group form, attached to the graphics state, through which the shadow colour is
+filled. The page content is in Skia's 300-dpi device units under one `.24 0 0 -.24 0 810 cm`, and
+the mask form has no `/Matrix`, so its BBox is in those units too. macOS Quartz (Preview, Quick
+Look, Safari) clips the mask form to the page box in **points** but applies it in the form's own
+units — the top-left 24 % of the page. A shadow entirely outside that corner gets an empty mask
+and Quartz paints the fill **unmasked** (a solid gray block); a shadow that straddles the corner
+vanishes outside it. Chrome, Acrobat, Firefox and poppler render the same file correctly.
+
+The exporter therefore re-anchors every such mask before writing the file (`lib/pdf-soft-masks.mjs`):
+the form gets `/Matrix` = the inverse of the transform in effect at its `gs`, its content is
+prefixed with that transform and its BBox is mapped the same way. The drawing is unchanged
+(poppler renders before and after pixel-identically); only the coordinate bookkeeping moves to
+page space, where Quartz's clip is right. The rewritten forms are appended as an incremental
+update, so the bytes Chrome wrote stay intact. The output line reports
+`soft masks re-anchored for macOS Preview: N`. `--keep-soft-masks` skips the step; a PDF whose
+structure is not Chrome's (cross-reference streams, encryption) is written as printed with a `!`
+note. Zero dependencies — the rewrite is a few hundred lines of Node.
+
+The in-deck menu's *Export to PDF* (and Ctrl/Cmd+P) goes through the browser's print dialog, whose
+file cannot be post-processed. So the print-layout shim, on that path only (block v13,
+`rasterShadows: true`), replaces every blurred, non-inset `box-shadow` layer for the duration of the
+print by a pre-rendered image of the same shadow — a canvas drawing at 2× with the layer's colour,
+offsets, blur (σ = blur / 2, as CSS), spread and the element's corner radii, the element's own box
+cut out — placed right behind the element as an absolutely positioned sibling at `z-index: -1`, the
+parent isolated so the image sits above the parent's background and below every sibling, as the CSS
+shadow does. Chrome prints such an image with an alpha mask, which every viewer renders; the element
+itself stays vector. Inset or unblurred layers, inline boxes and elements under a rotation / scale
+are left as CSS. `nbgRestorePrintLayout()` removes the images and puts the styles back byte for byte.
+`window.nbgDeckMenuConfig.rasterShadows = false` keeps the CSS shadows. Decks delivered before
+block v13 get the behaviour through their rebuild script; a PDF saved from such a deck is repaired
+with `fix-pdf-soft-masks.mjs` (next section).
+
+## 4b. Re-anchor soft masks in an existing PDF — `fix-pdf-soft-masks.mjs`
+
+For PDFs exported before v1.19.0, with `--keep-soft-masks`, or saved from the browser's print dialog:
+
+```
+node "<skill-root>/scripts/fix-pdf-soft-masks.mjs" my-deck.pdf [-o out.pdf] [--check]
+```
+
+- Default: rewrites the file in place (`-o` writes elsewhere). Prints pages, the number of
+  luminosity soft masks, how many were re-anchored and which were left as they are (already
+  anchored, set under several transforms, unreadable form).
+- `--check`: report only; exit 0 = nothing to do, 1 = masks still need re-anchoring.
+- Idempotent: a second run finds nothing to do. Exit 0 = done / nothing to do, 1 = error or
+  `--check` found work, 2 = usage. Only Chrome/Skia PDFs (classic cross-reference table, no
+  object streams) are supported; anything else is reported and left untouched.
+
 ## 5. In-deck right-click menu — `add-deck-menu.mjs`
+
+Idempotent: a deck that already carries a block (any version, the v1.4 PDF-only one included) gets
+the current block in its place — `added`, `upgraded from vN`, `refreshed` or `already current` —
+and the block's configuration (`window.nbgDeckMenuConfig`, if any) is carried over, so re-running
+the script IS the manual update of an existing deck (see "Update an existing deck" at the end).
 
 Gives the people who receive the HTML in-place text editing and the PDF export with no tooling.
 
@@ -575,12 +631,34 @@ node "<skill-root>/scripts/verify-deck.mjs"     my-deck.html --strict   # mandat
 node "<skill-root>/scripts/write-rebuild-script.mjs" my-deck.html       # standard: my-deck.rebuild.mjs, delivered with the deck
 node "<skill-root>/scripts/screenshot-deck.mjs" my-deck.html            # optional, when a browser exists
 # then READ the PNGs and inspect them
-node "<skill-root>/scripts/export-pdf.mjs"      my-deck.html            # when a PDF was requested
+node "<skill-root>/scripts/export-pdf.mjs"      my-deck.html            # when a PDF was requested (shadows re-anchored for Preview)
 # then rasterise a few pages and READ them against the screenshots
 # deliver my-deck.html + my-deck.pdf + my-deck.rebuild.mjs
 ```
 
+### Update an existing deck
+
+An existing deck is never regenerated: only its editor block is replaced, then the PDF re-exported.
+
+```
+grep -o 'data-nbg-deck-menu="[0-9]*"' my-deck.html                  # the block the deck carries
+node my-deck.rebuild.mjs --check && node my-deck.rebuild.mjs         # 2a: the deck has its rebuild script (v1.16.0+)
+# 2b: no rebuild script — the same steps by hand
+cp my-deck.html my-deck.backup-$(date +%Y%m%d-%H%M%S).html
+node "<skill-root>/scripts/add-deck-menu.mjs"        my-deck.html    # adds / upgrades the block, keeps its configuration
+node "<skill-root>/scripts/verify-deck.mjs"          my-deck.html --strict
+node "<skill-root>/scripts/write-rebuild-script.mjs" my-deck.html    # next time it is 2a
+node "<skill-root>/scripts/export-pdf.mjs"           my-deck.html    # when a PDF is delivered
+node "<skill-root>/scripts/fix-pdf-soft-masks.mjs"   my-deck.pdf     # only when the PDF cannot be re-exported here
+```
+
+Full instructions, symptoms of an old block and the version history: `SKILL.md` → "Updating an existing
+deck to the current skill".
+
 `<skill-root>` is the directory that contains `SKILL.md`. Shared code under `scripts/lib/`:
 `find-browser.mjs` (browser locator), `cdp.mjs` (DevTools-protocol client), `print-layout.js`
-(print-layout shim, browser JS, used by the exporter and inlined by the menu), `deck-menu.js`
-(menu UI, text editing, persistence, saved copy, print orchestration; browser JS).
+(print-layout shim, browser JS, used by the exporter and inlined by the menu; prints blurred
+box-shadows as images on the menu's print path — block v13), `deck-menu.js`
+(menu UI, text editing, persistence, saved copy, print orchestration; browser JS),
+`pdf-soft-masks.mjs` (re-anchors Chrome's luminosity soft masks for macOS Preview; used by the
+exporter and by `fix-pdf-soft-masks.mjs`).

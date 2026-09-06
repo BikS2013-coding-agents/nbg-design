@@ -18,6 +18,13 @@
 //   - the PDF page size is set to the slide's own box (normally 1920x1080 px = 20 x 11.25 in
 //     at 96 dpi) with zero margins and one slide per page, so text stays vector/selectable.
 //
+// Before writing the file, Chrome's luminosity soft masks (every blurred box-shadow) are
+// re-anchored to page space (lib/pdf-soft-masks.mjs): macOS Preview / Quick Look / Safari
+// otherwise clip them to the top-left corner of the page and paint the rest of each shadow
+// as a solid gray block. The rewrite changes coordinate bookkeeping only — the rendering is
+// pixel-identical in Chrome, Acrobat, Firefox and poppler — and is appended as an incremental
+// update. `--keep-soft-masks` leaves the PDF exactly as Chrome wrote it.
+//
 // After writing the file the script verifies the PDF page count equals the slide count and
 // exits non-zero on a mismatch (a slide taller than its page spills to an extra page; a
 // slide that could not be detected is missing). Zero dependencies. Node >= 18.
@@ -29,13 +36,14 @@ import { resolve, dirname, basename, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { findBrowser, NO_BROWSER_EXIT_CODE } from './lib/find-browser.mjs';
 import { launchBrowser, openPage, navigate, evaluate, printToPdf, countPdfPages } from './lib/cdp.mjs';
+import { fixLuminosityMasks, UnsupportedPdfError } from './lib/pdf-soft-masks.mjs';
 
 const PRINT_LAYOUT_SRC = readFileSync(new URL('./lib/print-layout.js', import.meta.url), 'utf8');
 
 const USAGE = `NBG deck PDF exporter (needs a browser; vector output, one page per slide)
 Usage: node export-pdf.mjs <deck.html> [-o <out.pdf>] [--size WxH] [--selector <css>]
                                      [--settle <ms>] [--timeout <ms>] [--browser <path>]
-                                     [--debug-html <path>]
+                                     [--debug-html <path>] [--keep-soft-masks]
 
   -o, --out          Output PDF path (default: next to the deck, same name, .pdf).
   --size WxH         Force the page size in CSS px (default: the measured box of slide 1,
@@ -45,6 +53,8 @@ Usage: node export-pdf.mjs <deck.html> [-o <out.pdf>] [--size WxH] [--selector <
   --timeout <ms>     Overall timeout for the browser session (default 120000).
   --browser <path>   Explicit browser binary (else auto-detect; or env NBG_BROWSER / CHROME_BIN).
   --debug-html       Write the prepared (print-layout) DOM to this path for inspection.
+  --keep-soft-masks  Do not re-anchor Chrome's soft masks (shadows) for macOS Preview; keep
+                     the PDF byte for byte as Chrome wrote it.
 
 Exit: 0 = PDF written and verified, 1 = error / verification failure, 3 = no browser found.`;
 
@@ -59,6 +69,7 @@ function parseArgs(argv) {
     else if (x === '--timeout') a.timeout = parseInt(argv[++i], 10);
     else if (x === '--browser') a.browser = argv[++i];
     else if (x === '--debug-html') a.debugHtml = argv[++i];
+    else if (x === '--keep-soft-masks') a.keepSoftMasks = true;
     else if (x === '-h' || x === '--help') a.help = true;
     else a._.push(x);
   }
@@ -91,7 +102,9 @@ async function exportPdf(args) {
     // The exporter always uses its own copy of the shim (deterministic, current version). If the
     // deck carries the in-deck menu, __nbgPdfExternal tells its beforeprint/afterprint hooks to
     // stay idle while we print.
-    const expr = `(async () => { window.__nbgPdfExternal = true; ${PRINT_LAYOUT_SRC}\n return nbgPreparePrintLayout(${JSON.stringify({ selector: args.selector, size })}); })()`;
+    // rasterShadows:false — the exporter keeps Chrome's exact vector shadows and repairs their soft
+    // masks in the PDF (lib/pdf-soft-masks.mjs); only the in-deck print path rasterises them.
+    const expr = `(async () => { window.__nbgPdfExternal = true; ${PRINT_LAYOUT_SRC}\n return nbgPreparePrintLayout(${JSON.stringify({ selector: args.selector, size, rasterShadows: false })}); })()`;
     let diag;
     try { diag = await evaluate(cdp, sessionId, expr); }
     catch (e) { throw new Error('print shim failed: ' + e.message); }
@@ -105,11 +118,18 @@ async function exportPdf(args) {
       writeFileSync(resolve(process.cwd(), args.debugHtml), dump, 'utf8');
     }
 
-    const buf = await printToPdf(cdp, sessionId, diag.page);
+    const printed = await printToPdf(cdp, sessionId, diag.page);
+    // Re-anchor the soft masks (shadows) so macOS Preview renders them; see lib/pdf-soft-masks.mjs.
+    let buf = printed;
+    const softMasks = { rewritten: 0, skipped: [], kept: !!args.keepSoftMasks, error: null };
+    if (!args.keepSoftMasks) {
+      try { const r = fixLuminosityMasks(printed); buf = r.buf; softMasks.rewritten = r.rewritten; softMasks.skipped = r.skipped; }
+      catch (e) { if (!(e instanceof UnsupportedPdfError)) throw e; softMasks.error = e.message; }
+    }
     mkdirSync(dirname(out), { recursive: true });
     writeFileSync(out, buf);
     try { await cdp.send('Browser.close'); } catch { /* already gone */ }
-    return { out, buf, diag };
+    return { out, buf, diag, softMasks };
   })();
 
   try {
@@ -134,12 +154,15 @@ async function main() {
     process.exit(NO_BROWSER_EXIT_CODE);
   }
 
-  const { out, buf, diag } = r;
+  const { out, buf, diag, softMasks } = r;
   const pages = countPdfPages(buf);
   const kb = Math.round(buf.length / 1024);
   console.log(`\nNBG deck PDF export — ${out}`);
   console.log(`  slides: ${diag.slides} | pages: ${pages} | page box: ${diag.page.width}x${diag.page.height} px (${(diag.page.width / 96).toFixed(2)} x ${(diag.page.height / 96).toFixed(2)} in) | size: ${kb.toLocaleString()} KB`);
   console.log(`  host layer neutralised: ${diag.ancestors} wrapper(s), ${diag.hiddenElements} non-slide element(s) hidden, ${diag.forcedDisplay} slide(s) force-shown`);
+  if (softMasks.kept) console.log('  soft masks kept as Chrome wrote them (--keep-soft-masks): shadows may show as gray blocks in macOS Preview');
+  else if (softMasks.error) console.log(`  ! Preview-compatibility rewrite skipped (${softMasks.error}) — the PDF is as Chrome wrote it; fine in Chrome/Acrobat, shadows may show as gray blocks in macOS Preview`);
+  else console.log(`  soft masks re-anchored for macOS Preview: ${softMasks.rewritten}${softMasks.skipped.length ? ` (${softMasks.skipped.length} left as written: ${[...new Set(softMasks.skipped.map((s) => s.reason))].join('; ')})` : ''}`);
 
   const problems = [];
   if (diag.page.width !== 1920 || diag.page.height !== 1080) {

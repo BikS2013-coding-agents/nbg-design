@@ -12,15 +12,144 @@
  *   - the page box is the slide's own box (normally 1920x1080 px = 20 x 11.25 in), one
  *     slide per page, zero margins.
  * It returns a diagnostic object { slides, page, forcedDisplay, hiddenElements, ancestors,
- * sizeMismatch, notes } and records every mutation so nbgRestorePrintLayout() can put the
- * deck back exactly as it was (used by the in-deck menu after the print dialog closes).
+ * sizeMismatch, rasterShadows, notes } and records every mutation so nbgRestorePrintLayout()
+ * can put the deck back exactly as it was (used by the in-deck menu after the print dialog closes).
+ *
+ * Shadows (block v13). Chrome prints every blurred box-shadow as a luminosity soft mask that
+ * macOS Preview / Quick Look / Safari mis-position: outside the top-left 24 % of the page the
+ * shadow becomes a solid gray block, across it the shadow disappears. export-pdf.mjs repairs the
+ * masks in the PDF file afterwards; a PDF saved from the browser's print dialog cannot be
+ * post-processed, so by default (opts.rasterShadows !== false) the shim replaces each blurred,
+ * non-inset box-shadow layer, for the duration of the print, by a pre-rendered shadow image
+ * (a canvas drawing of the same shadow: same colour, offsets, blur — sigma = blur / 2, as CSS —
+ * spread and corner radii, the element's own box cut out) placed right behind the element as an
+ * absolutely positioned sibling with z-index -1; the parent is isolated so that layer sits above
+ * the parent's background and below every sibling, as the CSS shadow does. Chrome prints such an
+ * image with an alpha mask, which every viewer renders. The element itself (its text, borders,
+ * fills) stays vector. Elements with a rotation / scale transform, inline boxes and inset or
+ * unblurred layers are left as they are. export-pdf.mjs passes rasterShadows:false and keeps the
+ * exact vector shadows, repaired in the file.
  */
 
 var __nbgPrintRegistry = null;
 
+// Split a computed box-shadow into layers at top-level commas (colours contain commas too).
+function __nbgSplitShadow(v) {
+  var out = [], depth = 0, cur = '';
+  for (var i = 0; i < v.length; i++) {
+    var c = v[i];
+    if (c === '(') depth++; else if (c === ')') depth--;
+    if (c === ',' && depth === 0) { out.push(cur.trim()); cur = ''; } else cur += c;
+  }
+  if (cur.trim()) out.push(cur.trim());
+  return out.map(function (s) {
+    var inset = /\binset\b/.test(s);
+    var color = (s.match(/rgba?\([^)]*\)|hsla?\([^)]*\)|#[0-9a-fA-F]{3,8}/) || [])[0] || null;
+    var rest = color ? s.replace(color, ' ') : s;
+    var nums = (rest.match(/-?\d*\.?\d+(?=px)/g) || []).map(parseFloat);
+    if (!color) { var word = (rest.replace(/\binset\b/, '').match(/[a-zA-Z]+/) || [])[0]; color = word || 'rgba(0,0,0,0)'; }
+    return { raw: s, inset: inset, color: color, x: nums[0] || 0, y: nums[1] || 0, blur: nums[2] || 0, spread: nums[3] || 0 };
+  });
+}
+
+function __nbgRadius(v, W, H) {  // "28px", "28px 14px", "50%" → { x, y } in px
+  var parts = (v || '0px').split(/\s+/);
+  function one(p, ref) { if (!p) return 0; if (p.slice(-1) === '%') return parseFloat(p) * ref / 100; return parseFloat(p) || 0; }
+  return { x: one(parts[0], W), y: one(parts[1] || parts[0], H) };
+}
+
+// Replace the blurred box-shadows inside the slides by pre-rendered images for the print (see header).
+function __nbgRasterShadows(slides, reg, diag, opts) {
+  var scale = opts.shadowScale || 2;
+  var count = 0, skipped = 0;
+  slides.forEach(function (slide) {
+    var els = Array.prototype.slice.call(slide.querySelectorAll('*'));
+    els.forEach(function (el) {
+      if (!(el instanceof HTMLElement) || el.closest('.nbg-print-shadow')) return;
+      var cs = getComputedStyle(el);
+      if (!cs.boxShadow || cs.boxShadow === 'none') return;
+      var layers = __nbgSplitShadow(cs.boxShadow);
+      var blurred = layers.filter(function (l) { return !l.inset && l.blur > 0; });
+      if (!blurred.length) return;
+      var parent = el.parentElement;
+      if (!parent || cs.display === 'inline' || cs.display === 'contents' || cs.display === 'none' || cs.visibility === 'hidden') { skipped++; return; }
+      var pcs = getComputedStyle(parent);
+      if (pcs.display === 'inline' || pcs.display === 'contents') { skipped++; return; }
+      // only translations between the element and its slide keep a rectangular shadow
+      var rotated = false, a = el;
+      while (a && a !== slide) {
+        var t = getComputedStyle(a).transform;
+        if (t && t !== 'none' && !/^matrix\(1, 0, 0, 1, /.test(t)) { rotated = true; break; }
+        a = a.parentElement;
+      }
+      if (rotated) { skipped++; return; }
+      var r = el.getBoundingClientRect();
+      var W = r.width, H = r.height;
+      if (W < 1 || H < 1) { skipped++; return; }
+      var L = 0, T = 0, R = 0, B = 0;
+      blurred.forEach(function (l) {
+        var e = l.blur + Math.max(l.spread, 0) + 1;
+        L = Math.max(L, e - l.x); R = Math.max(R, e + l.x); T = Math.max(T, e - l.y); B = Math.max(B, e + l.y);
+      });
+      L = Math.ceil(L); T = Math.ceil(T); R = Math.ceil(R); B = Math.ceil(B);
+      var cw = W + L + R, ch = H + T + B, s = scale;
+      if (cw * ch * s * s > 24e6) s = 1;
+      var canvas = document.createElement('canvas');
+      canvas.width = Math.ceil(cw * s); canvas.height = Math.ceil(ch * s);
+      var ctx = canvas.getContext('2d');
+      if (!ctx || !ctx.roundRect) { skipped++; return; }
+      var rad = [__nbgRadius(cs.borderTopLeftRadius, W, H), __nbgRadius(cs.borderTopRightRadius, W, H),
+        __nbgRadius(cs.borderBottomRightRadius, W, H), __nbgRadius(cs.borderBottomLeftRadius, W, H)];
+      function radii(grow) {
+        return rad.map(function (p) { return new DOMPoint(Math.max(0, Math.min(p.x + grow, (W + 2 * grow) / 2)), Math.max(0, Math.min(p.y + grow, (H + 2 * grow) / 2))); });
+      }
+      ctx.scale(s, s);
+      ctx.translate(L, T);
+      var K = cw + 64;   // the shape is drawn off-canvas; only its shadow lands (shadow offsets ignore the CTM, hence * s)
+      for (var i = blurred.length - 1; i >= 0; i--) {   // the first CSS layer is on top
+        var l = blurred[i];
+        ctx.save();
+        ctx.shadowColor = l.color; ctx.shadowBlur = l.blur * s;
+        ctx.shadowOffsetX = (l.x + K) * s; ctx.shadowOffsetY = l.y * s;
+        ctx.fillStyle = '#000';
+        ctx.beginPath(); ctx.roundRect(-l.spread - K, -l.spread, W + 2 * l.spread, H + 2 * l.spread, radii(l.spread)); ctx.fill();
+        ctx.restore();
+      }
+      ctx.globalCompositeOperation = 'destination-out';   // a box-shadow never paints under its own box
+      ctx.beginPath(); ctx.roundRect(0, 0, W, H, radii(0)); ctx.fill();
+      var url;
+      try { url = canvas.toDataURL('image/png'); } catch (e) { skipped++; return; }
+      var img = document.createElement('div');
+      img.className = 'nbg-print-shadow';
+      img.setAttribute('aria-hidden', 'true');
+      img.style.cssText = 'position:absolute;left:0;top:0;margin:0;padding:0;border:0;box-sizing:border-box;z-index:-1;pointer-events:none;' +
+        'width:' + cw + 'px;height:' + ch + 'px;background:url(' + url + ') no-repeat 0 0 / 100% 100%;';
+      remember(parent);
+      if (pcs.isolation !== 'isolate') parent.style.setProperty('isolation', 'isolate', 'important');
+      // The parent is NOT made positioned (that would move its absolutely positioned children): the
+      // shadow is placed against whatever containing block applies, measured, then corrected.
+      parent.insertBefore(img, el);
+      reg.inserted.push(img);
+      var ir = img.getBoundingClientRect();
+      img.style.left = (r.left - L - ir.left) + 'px';
+      img.style.top = (r.top - T - ir.top) + 'px';
+      remember(el);
+      var rest = layers.filter(function (l) { return blurred.indexOf(l) < 0; }).map(function (l) { return l.raw; });
+      el.style.setProperty('box-shadow', rest.length ? rest.join(', ') : 'none', 'important');
+      count++;
+    });
+  });
+  diag.rasterShadows = count;
+  if (skipped) diag.notes.push(skipped + ' shadow(s) left as CSS (rotated / inline / hidden element)');
+  function remember(el) {
+    reg.touched.push({ el: el, className: el.getAttribute('class'), style: el.getAttribute('style'),
+      hidden: el.getAttribute('hidden'), ariaHidden: el.getAttribute('aria-hidden') });
+  }
+}
+
 async function nbgPreparePrintLayout(opts) {
   opts = opts || {};
-  var diag = { slides: 0, page: null, forcedDisplay: 0, hiddenElements: 0, ancestors: 0, sizeMismatch: [], notes: [] };
+  var diag = { slides: 0, page: null, forcedDisplay: 0, hiddenElements: 0, ancestors: 0, sizeMismatch: [], rasterShadows: 0, notes: [] };
   if (__nbgPrintRegistry) { diag.notes.push('already prepared'); diag.slides = __nbgPrintRegistry.slides; diag.page = __nbgPrintRegistry.page; return diag; }
   var sel = opts.selector || '.slide';
   var all = Array.prototype.slice.call(document.querySelectorAll(sel));
@@ -28,7 +157,7 @@ async function nbgPreparePrintLayout(opts) {
   if (!slides.length) { diag.notes.push('no element matches "' + sel + '"'); return diag; }
   diag.slides = slides.length;
 
-  var reg = { slides: slides.length, page: null, style: null, touched: [] };
+  var reg = { slides: slides.length, page: null, style: null, touched: [], inserted: [] };
   function remember(el) {
     reg.touched.push({ el: el, className: el.getAttribute('class'), style: el.getAttribute('style'),
       hidden: el.getAttribute('hidden'), ariaHidden: el.getAttribute('aria-hidden') });
@@ -116,6 +245,13 @@ async function nbgPreparePrintLayout(opts) {
   });
   style.textContent = '@page { size: ' + W + 'px ' + H + 'px; margin: 0; }\n html, body { width:' + W + 'px !important; }' + baseCss;
 
+  // 4b. Blurred box-shadows → pre-rendered images (see header); synchronous, so a beforeprint
+  //     handler already has them. Off for export-pdf.mjs, which repairs the masks in the file.
+  if (opts.rasterShadows !== false) {
+    try { __nbgRasterShadows(slides, reg, diag, opts); }
+    catch (e) { diag.notes.push('shadow rasterisation failed: ' + (e && e.message ? e.message : e)); }
+  }
+
   // 5. Wait for fonts, images and two frames so lazy layout settles before printing.
   //    (Everything above ran synchronously, so a `beforeprint` handler already has the layout.)
   try { if (document.fonts && document.fonts.ready) await document.fonts.ready; } catch (e) { diag.notes.push('fonts.ready failed: ' + e); }
@@ -131,11 +267,18 @@ function nbgRestorePrintLayout() {
   if (!reg) return false;
   __nbgPrintRegistry = null;
   if (reg.style && reg.style.parentNode) reg.style.parentNode.removeChild(reg.style);
-  // restore in reverse order so an element touched twice ends up with its original state
+  // the pre-rendered shadows go first; then every attribute change, in reverse order so an
+  // element touched twice ends up with its original state
+  (reg.inserted || []).forEach(function (n) { if (n.parentNode) n.parentNode.removeChild(n); });
   for (var i = reg.touched.length - 1; i >= 0; i--) {
     var t = reg.touched[i], el = t.el;
     if (t.className === null) el.removeAttribute('class'); else el.setAttribute('class', t.className);
-    if (t.style === null) el.removeAttribute('style'); else el.setAttribute('style', t.style);
+    if (t.style === null) {
+      el.removeAttribute('style');
+      // Chrome: after el.style.setProperty() and a style recalc, the first removeAttribute('style')
+      // leaves an empty style="" behind (the inline declaration re-synchronises); a second one clears it.
+      if (el.getAttribute('style') === '') el.removeAttribute('style');
+    } else el.setAttribute('style', t.style);
     if (t.hidden === null) el.removeAttribute('hidden'); else el.setAttribute('hidden', t.hidden);
     if (t.ariaHidden === null) el.removeAttribute('aria-hidden'); else el.setAttribute('aria-hidden', t.ariaHidden);
   }

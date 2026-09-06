@@ -1,6 +1,6 @@
 ---
 name: nbg-design
-description: Use when creating presentations in a design system inspired by the brand image of the National Bank of Greece (NBG), HTML slides (with a built-in right-click menu for in-place text editing with a formatting toolbar, shape resize/move, editing of the parts of inline SVGs, an AI assistant panel, "Export to PDF" and "Save edited copy", plus a per-deck rebuild script that re-embeds newer versions of those editing tools), slide specifications, PDF exports of HTML decks (one page per slide, aesthetics preserved) — all on the bundled NBG-inspired presentation design system, templates, logos, photography, screenshots, and guardrails.
+description: Use when creating presentations in a design system inspired by the brand image of the National Bank of Greece (NBG), HTML slides (with a built-in right-click menu for in-place text editing with a formatting toolbar, shape resize/move, editing of the parts of inline SVGs, an AI assistant panel, "Export to PDF" and "Save edited copy", plus a per-deck rebuild script that re-embeds newer versions of those editing tools), updating an existing deck to the skill's current editing tools, slide specifications, PDF exports of HTML decks (one page per slide, aesthetics preserved) — all on the bundled NBG-inspired presentation design system, templates, logos, photography, screenshots, and guardrails.
 ---
 
 # NBG Design
@@ -268,6 +268,37 @@ Every delivered deck is three files: `<deck>.html`, `<deck>.pdf` and **`<deck>.r
 - The script records, in plain JSON at its top: the deck and PDF file names relative to itself (the delivery folder can move as a whole), the scripts directory, the embedded block version, the plugin version (when the skill sits in its plugin checkout) and the block's configuration. It is generated per deck (`--pdf <file>`, `--no-pdf`, `--selector`, `--size`, `-o <script>` at generation time) and must be regenerated if the deck is regenerated.
 - It does not apply to page-mode files made with the workspace's `html-editor` skill (a page has no slide PDF); the generator refuses those and points to `add-editor.mjs`.
 
+## Updating an existing deck to the current skill
+
+Use this whenever a user asks to update, refresh, upgrade or "re-embed the latest scripts" into a deck that already exists — theirs or one delivered earlier — or when a deck shows one of the symptoms of an old block: a menu without *Edit SVG* or the three toolbar tabs, no *Assistant* tab, shadows printed as gray blocks in macOS Preview, `verify-deck.mjs --strict` warning that the block is older than the skill's. **An update never regenerates the deck**: the slides, their copy, CSS, embedded images and logos stay byte for byte; only the inlined editor block (`<script id="nbg-deck-menu-script" data-nbg-deck-menu="N">` — menu, toolbars, structure panel, assistant, print layout) is replaced, then the PDF is re-exported.
+
+**1. Read the state of the deck.** The block version is the `data-nbg-deck-menu="N"` attribute of that script (`grep -o 'data-nbg-deck-menu="[0-9]*"' <deck>.html`); a `<script id="nbg-pdf-menu-script">` is the v1.4 PDF-only menu; no such script means the deck was delivered without a menu. The skill's current block version is `var VERSION = N` in `scripts/lib/deck-menu.js`. Then check whether `<deck>.rebuild.mjs` sits next to the deck.
+
+**2a. The deck has its rebuild script** (every deck delivered since v1.16.0):
+
+```
+node <deck>.rebuild.mjs --check     # RESULT: CURRENT (exit 0) or REBUILD NEEDED (exit 1); writes nothing
+node <deck>.rebuild.mjs             # backup, new block, verify-deck --strict, PDF re-exported
+```
+
+It keeps `<deck>.backup-<stamp>.html`, re-embeds the block through the same `add-deck-menu.mjs` path with the configuration the deck was delivered with, runs the strict gate and re-exports the PDF with the recorded `--selector` / `--size`. Exit 3 = the HTML was rebuilt but no browser exists on this host for the PDF; say so and give the command to run where Chrome/Chromium/Edge exists. If the script cannot find the skill (`--scripts <dir>` / `NBG_DESIGN_SCRIPTS` / the recorded directory), point it at this skill's `scripts/` folder — never at a copy of a few files. A viewer's saved copy (`<deck>-edited.html`) is refreshed with `node <deck>.rebuild.mjs <deck>-edited.html`.
+
+**2b. The deck has no rebuild script** (delivered before v1.16.0, or the file was lost) — do by hand what the script does, in this order:
+
+```
+cp <deck>.html <deck>.backup-$(date +%Y%m%d-%H%M%S).html
+node "<skill-root>/scripts/add-deck-menu.mjs"        <deck>.html            # idempotent: adds or upgrades the block, keeps its configuration
+node "<skill-root>/scripts/verify-deck.mjs"          <deck>.html --strict
+node "<skill-root>/scripts/write-rebuild-script.mjs" <deck>.html            # so the next update is 2a (--pdf <file> / --no-pdf as delivered)
+node "<skill-root>/scripts/export-pdf.mjs"           <deck>.html            # when the deck is delivered with a PDF
+```
+
+`add-deck-menu.mjs` reports `added`, `upgraded from vN`, `refreshed` or `already current`. Do not run `embed-assets.mjs` on a delivered deck (its images are already data URIs; the script only resolves `{{TOKEN}}` placeholders). If the deck's PDF cannot be re-exported on this host (no browser) but exists, run `node "<skill-root>/scripts/fix-pdf-soft-masks.mjs" <deck>.pdf` so at least its shadows render in macOS Preview, and say the PDF still carries the old export otherwise.
+
+**3. Verify and report.** Confirm the new block version in the file, `verify-deck.mjs --strict` PASS, and — when a PDF was produced — the exporter's `RESULT: PASS` and its `soft masks re-anchored` line. Tell the user in one line what changed: "editor block v<old> → v<new>, slides untouched, PDF re-exported (N pages)", plus the backup file name. What viewers keep: their in-browser edits are stored per file path and title, so an update in place keeps them (the records apply to the untouched slides); a copy under a new name starts clean — tell them to *Save edited copy* first if they want their edits in a file.
+
+Block versions and what they brought, to judge whether an update matters: v1 (skill 1.4.0) PDF export only; v2–v6 (1.5.0–1.9.0) text editing, shape resize / move, formatting toolbar, movable toolbars, multi-selection with align / distribute / order / group; v7 (1.10.0) Outline tab; v8 (1.12.0) toolbar modes; v9 (1.13.0) AI assistant; v10 (1.14.0) detachable panels; v11 (1.15.0) configuration hook; v12 (1.18.0) SVG editing and the three-tab toolbar; v13 (1.19.0) shadows printed as images for macOS Preview.
+
 ## PDF output (export from the HTML deck)
 
 A PDF deliverable is **always derived from the finished, verified HTML deck** — never authored separately, never re-laid-out for paper, and never assembled from screenshots. The bundled exporter prints the deck with the browser engine so the PDF is the deck: same 1920×1080 artboard per page, same palette, typography, spacing, logos and photography, with vector (selectable) text.
@@ -277,13 +308,13 @@ A PDF deliverable is **always derived from the finished, verified HTML deck** �
 1. Build and verify the HTML deck exactly as for HTML output (author with tokens → `embed-assets.mjs` → `verify-deck.mjs --strict` → visual check). The PDF inherits every defect of the HTML, so the HTML gate is a precondition, not an option.
 2. Export:
    `node "<skill-root>/scripts/export-pdf.mjs" <deck>.html [-o <deck>.pdf]`
-   The script opens the deck in headless Chrome/Chromium/Edge (auto-detected; `--browser <path>` or `NBG_BROWSER` / `CHROME_BIN` to override), lifts the deck's navigation and viewport-scaling layer without touching any slide's own CSS, makes every top-level `.slide` visible in flow, settles fonts/images/animations, and prints one page per slide at the slide's own box (20 × 11.25 in for the 1920×1080 artboard, zero margins, backgrounds forced). It then verifies that the PDF page count equals the slide count and exits non-zero on any mismatch.
+   The script opens the deck in headless Chrome/Chromium/Edge (auto-detected; `--browser <path>` or `NBG_BROWSER` / `CHROME_BIN` to override), lifts the deck's navigation and viewport-scaling layer without touching any slide's own CSS, makes every top-level `.slide` visible in flow, settles fonts/images/animations, and prints one page per slide at the slide's own box (20 × 11.25 in for the 1920×1080 artboard, zero margins, backgrounds forced). Before writing the file it re-anchors Chrome's luminosity soft masks (every blurred box-shadow) to page space, so macOS Preview / Quick Look / Safari render the shadows instead of clipping them to the top-left corner of the page and painting the rest as solid gray blocks; the drawing is unchanged in every other viewer, and the output line reports `soft masks re-anchored for macOS Preview: N`. It then verifies that the PDF page count equals the slide count and exits non-zero on any mismatch.
 3. Inspect: rasterise a few pages (`pdftoppm -r 72 -png <deck>.pdf <prefix>` when poppler is available, otherwise open the PDF) and **read them** next to the browser screenshots. Cover, one divider, one dense content slide and the last slide are the minimum set. Anything that differs from the HTML render — a missing background, an animation stuck at its start state, a clipped card, a re-flowed line — is a defect to fix in the deck, then re-export.
 4. Deliver the PDF together with the HTML it was exported from (unless the user explicitly wants only the PDF) and the deck's `<deck>.rebuild.mjs` (written after the menu, see "Rebuild script"; when the PDF has another name or place, generate the script with `--pdf <file>` so the rebuild refreshes that file), and report the exporter output line (slides / pages / page box).
 
 ### Export from the in-deck menu
 
-Viewers of the HTML deck get the same export without any tooling: the in-deck menu's **Export to PDF** applies the very same print-layout code the CLI exporter uses (`scripts/lib/print-layout.js`, inlined), opens the browser's print dialog, and restores the interactive deck when the dialog closes. In the dialog the viewer picks **Save as PDF** (Chrome / Edge); paper size (1920×1080), zero margins and background printing are preset by the page, so the result is one page per slide, identical to the CLI export. Ctrl/Cmd+P and the browser's own Print command go through the same prepare/restore hooks. See "In-deck right-click menu". The agent-produced PDF deliverable is still made with `scripts/export-pdf.mjs` (deterministic, verified page count); the menu is for the people who receive the HTML.
+Viewers of the HTML deck get the same export without any tooling: the in-deck menu's **Export to PDF** applies the very same print-layout code the CLI exporter uses (`scripts/lib/print-layout.js`, inlined), opens the browser's print dialog, and restores the interactive deck when the dialog closes. In the dialog the viewer picks **Save as PDF** (Chrome / Edge); paper size (1920×1080), zero margins and background printing are preset by the page, so the result is one page per slide, identical to the CLI export. Ctrl/Cmd+P and the browser's own Print command go through the same prepare/restore hooks. See "In-deck right-click menu". The agent-produced PDF deliverable is still made with `scripts/export-pdf.mjs` (deterministic, verified page count, shadows re-anchored for macOS Preview); the menu is for the people who receive the HTML. A PDF saved from the print dialog cannot be post-processed, so the menu's print path (block v13) prints every blurred box-shadow as a pre-rendered image behind its element instead of Chrome's soft mask — visually the same shadow, and one that macOS Preview renders; the deck is restored when the dialog closes. Decks delivered with an older block get this through `node <deck>.rebuild.mjs`; a PDF saved from an older deck is repaired with `node "<skill-root>/scripts/fix-pdf-soft-masks.mjs" <deck>.pdf`.
 
 ### Rules
 
@@ -295,6 +326,7 @@ Viewers of the HTML deck get the same export without any tooling: the in-deck me
 - The exporter must never be used to print a deck that fails `verify-deck.mjs --strict`.
 - What the exporter changes is only the host layer: navigation toggles (`.active` / `.hidden` / inline display / `[hidden]`) lifted, viewport-fit wrappers neutralised, non-slide chrome hidden, animations and transitions jumped to their end state, backgrounds forced with `print-color-adjust: exact`. It never changes a slide's own CSS, size, fonts, colours, copy, logos or photography; slides of a different size are reported, never resized. `--size WxH` overrides the page box only when the deck's slide box is wrong; `--settle <ms>` waits longer for fonts and images; `--debug-html <path>` dumps the printed DOM.
 - Optional extra checks: `pdfinfo <deck>.pdf` (page count; 1440 × 810 pt pages for the 1920×1080 artboard) and `pdftotext` to confirm the text is selectable.
+- **macOS Preview and shadows.** Quartz mis-positions Chrome's soft masks (blurred `box-shadow`s): outside the top-left 24 % of the page a shadow becomes a solid gray block, across it the shadow disappears. The exporter fixes this in the PDF itself (`--keep-soft-masks` leaves Chrome's bytes untouched); the in-deck menu prints the shadows as images (block v13); `scripts/fix-pdf-soft-masks.mjs <deck>.pdf [--check]` repairs a PDF exported earlier or saved from an older deck's print dialog. Never "fix" it in the deck by removing shadows or adding print CSS — the deck is right, and every other viewer renders it.
 
 `<skill-root>` is the directory containing this `SKILL.md`. See `scripts/README.md` for the flags.
 
@@ -305,12 +337,14 @@ Scripts (zero-dependency Node, see `scripts/README.md`):
 - `scripts/embed-assets.mjs` — deterministic `{{TOKEN}}` → data-URI embedding.
 - `scripts/verify-deck.mjs` — browser-free pre-delivery gate (mandatory, `--strict`).
 - `scripts/screenshot-deck.mjs` — per-slide PNGs at the required viewports (needs a browser).
-- `scripts/export-pdf.mjs` — HTML deck → PDF, one page per slide, aesthetics preserved (needs a browser).
-- `scripts/add-deck-menu.mjs` — inlines the right-click deck menu (Edit text / Export to PDF / Save edited copy) into a deck (idempotent; `--remove` strips it).
+- `scripts/export-pdf.mjs` — HTML deck → PDF, one page per slide, aesthetics preserved, soft masks re-anchored for macOS Preview (needs a browser).
+- `scripts/fix-pdf-soft-masks.mjs` — re-anchors the soft masks of an already exported PDF (`--check` reports only); zero dependencies.
+- `scripts/add-deck-menu.mjs` — inlines the right-click deck menu (Edit text / Export to PDF / Save edited copy) into a deck (idempotent: re-running upgrades an older block and keeps its configuration; `--remove` strips it). See "Updating an existing deck to the current skill".
 - `scripts/write-rebuild-script.mjs` — writes the deck's `<deck>.rebuild.mjs`, delivered with the HTML and the PDF: re-embeds the skill's current editing tools into that deck, verifies it and re-exports its PDF (`--check` only reports).
 - `scripts/lib/find-browser.mjs` — shared Chrome/Chromium/Edge locator.
 - `scripts/lib/cdp.mjs` — shared DevTools-protocol client (launch, navigate, evaluate, print).
-- `scripts/lib/print-layout.js` — the print-layout shim shared by the exporter and the in-deck menu (browser JS).
+- `scripts/lib/pdf-soft-masks.mjs` — zero-dependency PDF rewriter (classic xref, incremental update) that re-anchors Chrome's luminosity soft masks to page space so macOS Preview renders shadows; the analysis of the Quartz defect is in its header.
+- `scripts/lib/print-layout.js` — the print-layout shim shared by the exporter and the in-deck menu (browser JS); on the menu's print path it also prints blurred box-shadows as images for macOS Preview (`rasterShadows`, block v13).
 - `scripts/lib/deck-menu.js` — the in-deck menu: UI, in-place text editing, shape resize/move, SVG part editing, persistence, saved copy, print orchestration (browser JS, inlined by `add-deck-menu.mjs`; configurable through `window.nbgDeckMenuConfig` — root selector, page mode — so the same editor serves non-deck HTML, see `scripts/README.md` §5).
 
 References (design history and the issue register; this `SKILL.md` is the authoritative behaviour):
@@ -381,5 +415,5 @@ Before delivering NBG slide work:
 - For HTML output, confirm the full slide fits the viewport without clipping or unintended scrolling.
 - For HTML output, confirm rendered screenshots show no unintended overlaps among cards, text blocks, decorative shapes, logos, grouped rows/columns, footers, or page numbers.
 - If any overlap is found during visual verification, revise the layout and repeat the screenshot inspection before delivery; do not report the deck as complete while a collision remains.
-- For PDF output, confirm the source HTML passed `verify-deck.mjs --strict`, that `scripts/export-pdf.mjs` reported `RESULT: PASS` (pages = slides, page box = the slide box, normally 1920x1080), and that rasterised pages were read and match the browser render (backgrounds, photography, logo, typography, no clipping). Deliver the PDF with its source HTML.
+- For PDF output, confirm the source HTML passed `verify-deck.mjs --strict`, that `scripts/export-pdf.mjs` reported `RESULT: PASS` (pages = slides, page box = the slide box, normally 1920x1080) and `soft masks re-anchored for macOS Preview: N` (not the `!` skipped note), and that rasterised pages were read and match the browser render (backgrounds, photography, logo, typography, no clipping). Deliver the PDF with its source HTML.
 - Report the files/resources inspected and any visual verification artifacts used.

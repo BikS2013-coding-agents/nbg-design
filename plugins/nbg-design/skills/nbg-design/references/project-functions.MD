@@ -230,3 +230,42 @@ Give the agent a documented choice of bundled photography — five lifestyle pho
 
 ### How to Use
 Pick a stem from the catalogue, write its token where the image goes (`background-image: url("{{PHOTO_NETWORK_2}}")` or `<img src="{{PHOTO_SECURITY_1}}">`), then run the standard gate: `embed-assets.mjs` → `add-deck-menu.mjs` → `verify-deck.mjs --strict`.
+
+## Preview-Safe PDF Export (soft-mask re-anchoring)
+
+### Function
+Make the exported PDF render its shadows in macOS Preview / Quick Look / Safari, whose PDF engine mis-positions Chrome's luminosity soft masks (blurred `box-shadow`s): outside the top-left 24 % of the page a shadow becomes a solid gray block, across it the shadow disappears.
+
+### Script
+`scripts/lib/pdf-soft-masks.mjs` (library; used by `export-pdf.mjs`) and `scripts/fix-pdf-soft-masks.mjs` (CLI for existing PDFs). Zero dependencies.
+
+### Functional Requirements
+- `export-pdf.mjs` re-anchors every luminosity soft-mask form to page space before writing the file (`/Matrix` = inverse of the transform at its `gs`, content prefixed with that transform, BBox mapped) and reports `soft masks re-anchored for macOS Preview: N`; `--keep-soft-masks` leaves Chrome's output byte for byte; an unsupported PDF structure is written as printed with a visible `!` note.
+- The rewrite changes coordinate bookkeeping only: spec-compliant viewers (Chrome, Acrobat, Firefox, poppler) render before and after pixel-identically. It is appended as an incremental update and is idempotent.
+- `fix-pdf-soft-masks.mjs <pdf> [-o <out>] [--check]` applies the same rewrite to a PDF exported earlier or saved from the browser's print dialog; `--check` exits 0 when nothing needs re-anchoring, 1 otherwise.
+- A mask set under several transforms, an unreadable mask form, cross-reference streams or encryption are reported and left untouched — never silently altered.
+- The in-deck menu's print path (Export to PDF, Ctrl/Cmd+P; block v13) prints every blurred, non-inset box-shadow as a pre-rendered image behind its element (same colour, offsets, blur, spread, radii; element kept vector) because the browser's PDF cannot be post-processed; the deck is restored byte for byte afterwards. `window.nbgDeckMenuConfig.rasterShadows = false` keeps the CSS shadows.
+
+### How to Use
+```
+node "<skill-root>/scripts/export-pdf.mjs" my-deck.html                 # re-anchoring is on by default
+node "<skill-root>/scripts/fix-pdf-soft-masks.mjs" older-deck.pdf --check
+node "<skill-root>/scripts/fix-pdf-soft-masks.mjs" older-deck.pdf        # in place; -o writes elsewhere
+```
+
+## Updating an Existing Deck
+
+### Function
+Bring a deck that already exists — delivered earlier, or a user's own — to the skill's current editing tools (the inlined `nbg-deck-menu-script` block) without regenerating it, and re-export its PDF.
+
+### Scripts
+`<deck>.rebuild.mjs` (delivered next to every deck since v1.16.0; written by `write-rebuild-script.mjs`), else `add-deck-menu.mjs` → `verify-deck.mjs --strict` → `write-rebuild-script.mjs` → `export-pdf.mjs` by hand (`fix-pdf-soft-masks.mjs` when the PDF cannot be re-exported on the host).
+
+### Functional Requirements
+- The slides, copy, CSS, embedded images and logos are never touched; only the editor block is replaced and the PDF re-exported. A backup copy of the deck is kept (`<deck>.backup-<stamp>.html`, by the rebuild script or by hand).
+- `add-deck-menu.mjs` is idempotent (`added` / `upgraded from vN` / `refreshed` / `already current`), recognises the v1 PDF-only block, and carries the existing block's configuration (`window.nbgDeckMenuConfig`) over.
+- The agent reads the deck's block version (`data-nbg-deck-menu="N"`) and the skill's (`var VERSION` in `lib/deck-menu.js`), reports old → new, PASS of the strict gate and of the export, and the backup file name.
+- Viewers' in-browser edits (stored per file path and title) survive an update in place; a copy under a new name starts clean.
+
+### How to Use
+`SKILL.md` → "Updating an existing deck to the current skill" (symptoms of an old block, both paths, the block-version history).
