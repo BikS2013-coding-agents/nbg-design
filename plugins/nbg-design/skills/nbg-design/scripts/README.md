@@ -38,6 +38,9 @@ node "<skill-root>/scripts/embed-assets.mjs" my-deck.html
 - Define each token **once** (e.g. a CSS `background-image: url("{{PHOTO_STREET}}")` class)
   and reuse the class, so the large URI appears only once in the file.
 - Fails loudly if a token has no matching asset or the asset isn't a `data:image/` URI.
+- `--theme biks2013` takes the assets of the BikS2013 personal theme (`BikS2013-Design/assets/`) instead of
+  the NBG ones (`--theme nbg`, the default); the tokens are the same in every theme. `--assets <dir>` still
+  overrides the directory outright. Unknown theme names fail.
 - `-o out.html` writes to a new file; default overwrites in place.
 
 ## 2. Verify the deck — `verify-deck.mjs`
@@ -573,6 +576,19 @@ node "<skill-root>/scripts/add-deck-menu.mjs" my-deck.html [-o <out.html>] [--re
 - The CLI exporter prints the file on disk, not a viewer's unsaved edits: to get a PDF of an
   edited deck, export the saved `-edited.html` copy.
 
+### The theme (block v14, v1.20.0)
+
+`add-deck-menu.mjs <deck> --theme biks2013` records `{"theme":"biks2013"}` in the block's configuration
+(`window.nbgDeckMenuConfig`), and the editor then serves the BikS2013 personal theme: the swatches of the
+formatting, shape and SVG toolbars are the BikS2013 palette (ink `#1B1D21`, copper `#C8623A`, copper
+light `#E08A5E`, amber `#E3A64A`, black `#111316`, grey `#6E7379`, paper `#F6F3EC`, white), the
+editor's own accent colours and font follow the theme, the assistant's system prompt and its built-in
+prompts speak of the BikS2013 system, and the menu is titled "BikS2013 deck". `--theme nbg` (the
+default) is the NBG editor as before. Re-running the CLI without `--theme` keeps the theme the block
+carries, as it keeps every other configuration key, and the rebuild script carries it over on every
+rebuild. `theme` is the sixth configuration key next to `mode`, `root`, `unit`, `title` and `aiSystem`;
+only `nbg` and `biks2013` are accepted.
+
 ## 6. Rebuild script — `write-rebuild-script.mjs`
 
 The editor block a deck carries (section 5) is a snapshot of the editing tools at delivery time.
@@ -625,6 +641,7 @@ node my-deck.rebuild.mjs --scripts <dir>    # the skill's scripts/ directory, ex
 
 ```
 # 1. author my-deck.html using {{TOKEN}} placeholders for every image
+#    (a BikS2013 personal deck: add --theme biks2013 to embed-assets.mjs and add-deck-menu.mjs below)
 node "<skill-root>/scripts/embed-assets.mjs"    my-deck.html
 node "<skill-root>/scripts/add-deck-menu.mjs"   my-deck.html            # standard: right-click menu (edit text / export PDF)
 node "<skill-root>/scripts/verify-deck.mjs"     my-deck.html --strict   # mandatory, headless-safe

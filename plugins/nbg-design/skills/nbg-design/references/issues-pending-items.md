@@ -166,3 +166,14 @@
 - Solution: Added a viewport-sized `.slide-frame`, kept the internal 1920×1080 slide artboard for design fidelity, and replaced the height-sensitive CSS scaling with `visualViewport`/`innerWidth`/`innerHeight` measurements that explicitly calculate scale plus x/y centering offsets. The document/body are fixed to the viewport and overflow is hidden.
 - Prevention: Updated `config/pi-agent-nbg-design.yaml` with stricter `presentation_generation_rules.html_output_layout` guidance that warns not to rely on an unscaled transformed artboard's layout box for page height.
 - Verification: Validated required content markers, YAML syntax, and viewport-fit calculations for common desktop/laptop viewport sizes.
+
+### 2026-09-12 — Pending: BikS2013 theme photography awaits review (skill v1.20.0)
+
+The BikS2013 personal theme ships without photography. Twenty-one candidates (seven subjects × OpenAI
+GPT Image 2.5 Flare, GPT Image 2.5 Sunburst and Google Gemini 3.1 Flash Image) are in the development
+workspace (`docs/nbg-design-docs/biks2013-theme/candidates/gallery.html`); once the user chooses, the
+photos enter `BikS2013-Design/assets/` as `photo-<subject>.jpeg` + `.datauri.txt` and SKILL.md "Themes"
+gains a catalogue table. The templates reference `assets/photo-{city-ride,road-dawn,workshop-bike,home-office}.jpeg`
+and hide a missing photo. Observed on the same day: Gemini 3.8 Flash's native image output answers
+"Image generation is not available in your country" (HTTP 400, `FAILED_PRECONDITION`) from Greece,
+while `gemini-3.1-flash-image` works — a regional restriction, not a key problem.

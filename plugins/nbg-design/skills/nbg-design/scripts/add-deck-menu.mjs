@@ -23,9 +23,11 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const USAGE = `NBG deck — add the right-click menu (Edit text / Export to PDF / Save edited copy)
-Usage: node add-deck-menu.mjs <deck.html> [-o <out.html>] [--remove]
+Usage: node add-deck-menu.mjs <deck.html> [-o <out.html>] [--theme <nbg|biks2013>] [--remove]
 
   -o, --out   Write to a new file (default: overwrite in place).
+  --theme     The deck's theme (default nbg): the toolbars' swatches, the editor's accent colours, the
+              assistant's prompts and the menu title follow it. Re-running keeps the theme recorded earlier.
   --remove    Strip the menu block instead of adding it.
 
 Exit code 0 = done, 1 = error.`;
@@ -40,13 +42,15 @@ function parseArgs(argv) {
     const x = argv[i];
     if (x === '-o' || x === '--out') a.out = argv[++i];
     else if (x === '--remove') a.remove = true;
+    else if (x === '--theme') a.theme = argv[++i];
     else if (x === '-h' || x === '--help') a.help = true;
     else a._.push(x);
   }
   return a;
 }
 
-const CONFIG_KEYS = ['mode', 'root', 'unit', 'title', 'aiSystem'];
+const CONFIG_KEYS = ['mode', 'root', 'unit', 'title', 'aiSystem', 'theme'];
+export const THEMES = ['nbg', 'biks2013'];
 
 // The configuration prelude: only the known string keys, or nothing at all (a deck keeps the defaults).
 export function buildConfigPrelude(config) {
@@ -61,6 +65,7 @@ export function buildConfigPrelude(config) {
     clean[k] = v;
   }
   if (clean.mode && clean.mode !== 'deck' && clean.mode !== 'page') throw new Error(`menu config mode must be "deck" or "page", not "${clean.mode}"`);
+  if (clean.theme && !THEMES.includes(clean.theme)) throw new Error(`menu config theme must be one of , not ""`);
   if (!Object.keys(clean).length) return '';
   const json = JSON.stringify(clean).replace(/</g, '\\u003c');   // never a "</script" inside the block
   return `window.nbgDeckMenuConfig = ${json};\n`;
@@ -120,7 +125,9 @@ export function main() {
     const html = readFileSync(file, 'utf8');
     // Re-running on a file that already carries a block keeps that block's configuration (page mode,
     // root, labels) — an update never turns a configured page back into a default deck.
-    const r = args.remove ? removeMenu(html) : addMenu(html, readMenuConfig(html) || undefined);
+    const carried = readMenuConfig(html);
+    const config = args.theme ? { ...(carried || {}), theme: args.theme } : (carried || undefined);
+    const r = args.remove ? removeMenu(html) : addMenu(html, config);
     writeFileSync(out, r.html, 'utf8');
     console.log(`${args.remove ? 'deck menu' : `deck menu v${r.version}`}: ${r.status} → ${out}`);
     process.exit(0);

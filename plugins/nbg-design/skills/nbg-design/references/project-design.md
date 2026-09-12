@@ -220,6 +220,31 @@ This project contains the assets of a presentation design system inspired by the
 - Decision (user request, 2026-09-06): the skill carries explicit instructions for bringing an existing deck to the current editing tools — `SKILL.md` → "Updating an existing deck to the current skill" — so an agent asked to "update / refresh / re-embed the latest scripts" follows one procedure instead of regenerating the deck: read the block version (`data-nbg-deck-menu`), use `<deck>.rebuild.mjs` when present, otherwise the same steps by hand (backup, `add-deck-menu.mjs`, `verify-deck.mjs --strict`, `write-rebuild-script.mjs`, `export-pdf.mjs`; `fix-pdf-soft-masks.mjs` for a PDF that cannot be re-exported on the host), then report old → new, the gates and the backup. The trigger description names the use case.
 - Fix on the way: the `add-deck-menu.mjs` CLI called `addMenu(html)` without the existing block's configuration, so re-running it on a configured file (page mode, root, labels) would have reset it to a default deck; it now passes `readMenuConfig(html)`. Verified by `test_scripts/add-deck-menu-upgrade.mjs` (older block upgraded in place, second run a no-op, configuration preserved, v1 PDF-only block replaced, `--remove`).
 
+### BikS2013 personal theme (skill v1.20.0, block v14)
+
+- **Request (2026-09-12).** A theme to use alternatively with the NBG one, for presentations given in a
+  personal capacity under the user's "BikS2013" label, with alternative visual versions prepared by the
+  current OpenAI and Google image models.
+- **Design.** A theme is a folder next to `NBG-Design/` with the same three design-system files and an
+  `assets/` folder answering the same `{{TOKEN}}` names, so every guardrail, script and template contract
+  stays as it is: `BikS2013-Design/` holds the re-themed design-system page, the nine templates (same
+  `window.<Name>` exports, personal placeholder copy, photos that hide themselves while the photo set is
+  pending) and the lockups of the logo the user chose from three drawn concepts: a copper wheel emblem
+  (rim, dashed arc, six spokes, hub) beside the wordmark ("2013" in copper) — primary, knockout, footer size
+  and the emblem alone, rendered from SVG. Palette: ink `#1B1D21`, copper `#C8623A`, copper light `#E08A5E`, amber `#E3A64A`, black
+  `#111316`, grey 1 `#C9CCD1`, grey 2 `#6E7379`, paper `#F6F3EC`, white. Type: Avenir Next → Inter →
+  Helvetica; a monospace stack for eyebrows and page numbers. Selection rule in SKILL.md "Themes": `nbg`
+  unless the deck is personal / BikS2013; never both on one deck.
+- **Scripts.** `embed-assets.mjs --theme <nbg|biks2013>` resolves the theme's assets folder (tokens
+  unchanged); `add-deck-menu.mjs --theme` writes `theme` into the block configuration (sixth key,
+  validated); `lib/deck-menu.js` (block v14) derives the toolbars' swatches, its accent colours and
+  font, the assistant's prompts and the default title from `CFG.theme`; `verify-deck.mjs` also flags bare
+  `>BikS2013<` text nodes. The rebuild script carries the theme like any other configuration key.
+- **Photography.** Not bundled yet: 21 candidates (seven subjects × GPT Image 2.5 Flare, GPT Image 2.5
+  Sunburst, Gemini 3.1 Flash Image) await review in the development workspace; Gemini 3.8 Flash's own
+  image output refuses requests from Greece ("Image generation is not available in your country"), so
+  the Gemini column comes from the dedicated image model.
+
 ## Configuration Policy
 - Secrets, API keys, tokens, and expiring credentials must not be stored in project YAML files.
 - Missing required presentation inputs must be surfaced to the user; they must not be replaced with undocumented fallback values.

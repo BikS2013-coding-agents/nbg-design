@@ -68,6 +68,19 @@ in the NBG teal-and-cream palette. Every photo has a ready-to-embed data URI and
 token; `SKILL.md` → "Photography catalogue" describes each one so the right subject and orientation
 are picked per slide.
 
+### Themes
+
+Since v1.20.0 the skill carries two themes on the same templates, scripts and guardrails. `nbg`
+(the default) is the NBG-inspired system described above. `biks2013` is the **BikS2013 personal
+theme** for presentations given in a personal capacity — talks, meetups, workshops, project
+write-ups: ink and copper on warm paper, Avenir Next, and the BikS2013 wheel lockups
+(`BikS2013-Design/`). A deck is authored with the same `{{LOGO_*}}` tokens and built with
+`embed-assets.mjs --theme biks2013` and `add-deck-menu.mjs --theme biks2013`; the in-deck toolbars then
+offer the BikS2013 palette, the assistant is briefed on it, and the rebuild script keeps the theme.
+`SKILL.md` → "Themes" holds the selection rule (the bank's material stays `nbg`; never mix the two on
+one deck), the palette, the type stack and the logo rules. The theme's photography is still under
+review, so BikS2013 decks currently use the type-led templates or a photo the user supplies.
+
 ## Installation
 
 The plugin is distributed through the public marketplace

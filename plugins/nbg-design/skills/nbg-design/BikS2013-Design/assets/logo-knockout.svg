@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 150" width="760" height="150">
+  <g transform="translate(75 75)" fill="none" stroke="#C8623A" stroke-linecap="round">
+    <circle r="62" stroke-width="7"/>
+    <circle r="40" stroke-width="4" stroke-dasharray="14 10" transform="rotate(-20)"/>
+    <circle r="9" fill="#C8623A" stroke="none"/>
+    <g stroke-width="3"><path d="M0 -58 L0 58" transform="rotate(0)"/><path d="M0 -58 L0 58" transform="rotate(60)"/><path d="M0 -58 L0 58" transform="rotate(120)"/></g>
+  </g>
+  <text x="168" y="118" font-family='"Avenir Next", "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif' font-weight="600" font-size="118" letter-spacing="-3" fill="#FFFFFF">BikS<tspan fill="#C8623A" font-weight="400">2013</tspan></text>
+</svg>

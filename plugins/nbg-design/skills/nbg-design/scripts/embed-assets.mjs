@@ -21,15 +21,18 @@ import { dirname, resolve } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SKILL_ROOT = resolve(__dirname, '..');                       // scripts/ -> skill root
-const DEFAULT_ASSETS = resolve(SKILL_ROOT, 'NBG-Design', 'assets');
+const THEMES = { nbg: 'NBG-Design', biks2013: 'BikS2013-Design' };   // theme -> its folder in the skill (SKILL.md "Themes")
+const DEFAULT_ASSETS = resolve(SKILL_ROOT, THEMES.nbg, 'assets');
 
 const USAGE = `NBG asset embedder
-Usage: node embed-assets.mjs <deck.html> [-o <out.html>] [--assets <dir>]
+Usage: node embed-assets.mjs <deck.html> [-o <out.html>] [--theme <nbg|biks2013>] [--assets <dir>]
 
   <deck.html>     HTML deck containing {{TOKEN}} placeholders
                   (e.g. {{LOGO_KNOCKOUT}}, {{LOGO_PRIMARY}}, {{LOGO_SMALL}}, {{PHOTO_STREET}}).
   -o, --out       Output path (default: overwrite the input file in place).
-  --assets <dir>  Override the assets directory (default: the skill's NBG-Design/assets).
+  --theme <name>  Take the assets of that theme: nbg (default, NBG-Design/assets) or biks2013
+                  (BikS2013-Design/assets). The tokens are the same in every theme.
+  --assets <dir>  Override the assets directory (default: the theme's assets).
 
 Tokens map to files by lower-casing and turning '_' into '-', then adding '.datauri.txt':
   {{PHOTO_STREET}}  -> photo-street.datauri.txt
@@ -43,6 +46,7 @@ function parseArgs(argv) {
     const x = argv[i];
     if (x === '-o' || x === '--out') a.out = argv[++i];
     else if (x === '--assets') a.assets = argv[++i];
+    else if (x === '--theme') a.theme = argv[++i];
     else if (x === '-h' || x === '--help') a.help = true;
     else a._.push(x);
   }
@@ -58,7 +62,8 @@ function main() {
 
   const input = resolve(process.cwd(), args._[0]);
   const out = args.out ? resolve(process.cwd(), args.out) : input;
-  const assetsDir = args.assets ? resolve(process.cwd(), args.assets) : DEFAULT_ASSETS;
+  if (args.theme && !THEMES[args.theme]) fail(`unknown theme "${args.theme}" (known: ${Object.keys(THEMES).join(', ')})`);
+  const assetsDir = args.assets ? resolve(process.cwd(), args.assets) : args.theme ? resolve(SKILL_ROOT, THEMES[args.theme], 'assets') : DEFAULT_ASSETS;
 
   if (!existsSync(input)) fail(`input not found: ${input}`);
   if (!existsSync(assetsDir)) {

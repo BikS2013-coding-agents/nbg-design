@@ -1,6 +1,6 @@
 ---
 name: nbg-design
-description: Use when creating presentations in a design system inspired by the brand image of the National Bank of Greece (NBG), HTML slides (with a built-in right-click menu for in-place text editing with a formatting toolbar, shape resize/move, editing of the parts of inline SVGs, an AI assistant panel, "Export to PDF" and "Save edited copy", plus a per-deck rebuild script that re-embeds newer versions of those editing tools), updating an existing deck to the skill's current editing tools, slide specifications, PDF exports of HTML decks (one page per slide, aesthetics preserved) — all on the bundled NBG-inspired presentation design system, templates, logos, photography, screenshots, and guardrails.
+description: Use when creating presentations in a design system inspired by the brand image of the National Bank of Greece (NBG), HTML slides (with a built-in right-click menu for in-place text editing with a formatting toolbar, shape resize/move, editing of the parts of inline SVGs, an AI assistant panel, "Export to PDF" and "Save edited copy", plus a per-deck rebuild script that re-embeds newer versions of those editing tools), updating an existing deck to the skill's current editing tools, slide specifications, PDF exports of HTML decks (one page per slide, aesthetics preserved) — all on the bundled NBG-inspired presentation design system, templates, logos, photography, screenshots, and guardrails. Also ships the BikS2013 personal theme (ink and copper on warm paper, the BikS2013 wheel lockups) for presentations given in a personal capacity, selected per deck with the same templates, scripts and guardrails.
 ---
 
 # NBG Design
@@ -34,12 +34,57 @@ Approved defaults:
 - If no deck language is specified, use English (`en`). The design system supports `en` (English), `gr` (Greek) and `bi` (bilingual); any other value must come from the user.
 - If no final output format is specified, use HTML (`html`).
 - The NBG logo is shown (`show_logo: true`) unless the user asks to hide it.
+- The theme is `nbg` unless the user asks for a personal / BikS2013 presentation, or says the deck is not for the bank — then `biks2013` (see "Themes"). When it is unclear whether a deck is the bank's or personal, ask.
 
 Supported output formats: `html` (default) and `pdf` (always exported from the finished HTML deck — see "PDF output"). **PowerPoint (.pptx) is out of scope**: this skill produces HTML presentations and their PDF export only. If PowerPoint is requested, say so plainly and deliver the HTML deck (and its PDF) instead — never improvise a conversion. A request for "a PDF", "PDF version", "print version", or "send as PDF" selects `pdf`.
 
 Do not create any other fallback configuration values unless the user explicitly approves the exception.
 
 The skill holds no credentials. API keys for the in-deck assistant (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `AZURE_OPENAI_API_KEY`, …) are the viewer's and live only in their browser; never write a key, token or endpoint secret into this skill, into a deck, or into a saved copy.
+
+## Themes
+
+The skill ships two themes. Both share the 1920×1080 geometry, the nine templates (same names, same props), every guardrail in this file, the scripts, the in-deck menu, the rebuild script and the PDF export. A theme decides the folder the design-system files and assets come from, the palette, the font stack and the logo lockups.
+
+| Theme | Use | Folder | Palette | Type | Logo |
+| --- | --- | --- | --- | --- | --- |
+| `nbg` (default) | the bank's material: presentations for or about the National Bank of Greece | `NBG-Design/` | teal-led ("Design-system reference") | Aptos | the NBG lockups |
+| `biks2013` | presentations given in a personal capacity under the **BikS2013** label: talks, meetups, workshops, project write-ups, field notes | `BikS2013-Design/` | ink and copper on warm paper (below) | Avenir Next | the BikS2013 wheel lockups |
+
+Selecting the theme:
+
+- `nbg` unless the user asks for a personal / BikS2013 presentation, names the BikS2013 label, or says the deck is not for the bank — then `biks2013`. When it is unclear whether a deck is the bank's or personal, ask; never guess.
+- One theme per deck. Never put NBG teal or cyan, NBG photography or the NBG logo on a BikS2013 deck, and never put copper, the wheel lockups or BikS2013 copy on an NBG deck.
+- Every mention of "NBG" in the rules below (folder, palette, lockups, font stack) reads as the selected theme's folder, palette, lockups and font stack. Nothing else changes.
+
+Under `biks2013`:
+
+1. Read `BikS2013-Design/BikS2013 Design System.html` and `BikS2013-Design/slide-templates.jsx` instead of the NBG files (the templates are `window.Cover1` … `window.ContentStat`, re-themed and with personal placeholder copy).
+2. Author with the same tokens — `{{LOGO_PRIMARY}}`, `{{LOGO_KNOCKOUT}}`, `{{LOGO_SMALL}}` — and embed with `node "<skill-root>/scripts/embed-assets.mjs" <deck>.html --theme biks2013` (the tokens resolve from `BikS2013-Design/assets/`).
+3. Add the menu with `node "<skill-root>/scripts/add-deck-menu.mjs" <deck>.html --theme biks2013`: the formatting, shape and SVG toolbars then offer the BikS2013 palette, the editor's own accents follow it, the assistant is briefed on the BikS2013 system, the menu is titled "BikS2013 deck", and the rebuild script keeps the theme on every rebuild.
+4. `verify-deck.mjs --strict`, `screenshot-deck.mjs`, `export-pdf.mjs` and `write-rebuild-script.mjs` run exactly as for an NBG deck.
+
+BikS2013 palette (the only colours a BikS2013 deck, and its toolbars, may use):
+
+| Token | Hex | Role |
+| --- | --- | --- |
+| ink | `#1B1D21` | primary text on light surfaces; the ground of covers and dark dividers |
+| copper | `#C8623A` | the accent: rules, numerals, eyebrows, one word of a title, the "2013" of the lockup |
+| copper light | `#E08A5E` | the accent on dark grounds (numerals and accent bars on ink) |
+| amber | `#E3A64A` | second highlight, sparingly (< 6-word moments, a second chart series) |
+| black | `#111316` | stage dark (the Cover 1 ground) |
+| grey 1 | `#C9CCD1` | rules, muted surfaces |
+| grey 2 | `#6E7379` | secondary text (the toolbars' *Grey*) |
+| paper | `#F6F3EC` | light page background — paper, not white, replaces NBG cream |
+| white | `#FFFFFF` | text on dark panels; cards on paper |
+
+Typography: `"Avenir Next", "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif` for everything (Avenir Next is a macOS system font; Inter, then Helvetica, when absent — never swap the stack); eyebrows and page numbers may use the monospace stack `ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace`, the one nod to the coding-agent subject.
+
+Style: the line-art bicycle mark sets the tone — thin hairline rules, a dotted or dashed rule as the decorative motif (it echoes the mark's ground lines), one accent per slide, mostly monochrome content pages on paper, ink covers and dividers with a copper moment, generous whitespace.
+
+Logo: the BikS2013 lockup is a copper **wheel emblem** (rim, dashed inner arc, six spokes, hub) beside the wordmark `BikS2013` ("BikS" in the text colour, "2013" in copper), in `BikS2013-Design/assets/`: `logo-primary` (ink wordmark, for light backgrounds), `logo-knockout` (white wordmark, for dark backgrounds), `logo-small` (the primary lockup at footer size) and `logo-mark` (the wheel alone, square, for tight spots — token `{{LOGO_MARK}}`); the SVG sources sit next to the PNGs. The rules of "Logo rendering (MANDATORY)" apply unchanged: always the bundled image through its data URI, never a text label, initials, a box or a CSS/SVG re-creation.
+
+Photography: none is bundled yet. A 21-image candidate set (seven subjects — the re-drawn logo mark, a workshop with a bicycle frame, a drivetrain macro, a dawn road, an ink-and-copper "agents" still-life, a home office, a city ride — each by OpenAI GPT Image 2.5 Flare, GPT Image 2.5 Sunburst and Google Gemini 3.1 Flash Image) awaits the user's review in the development workspace (`docs/nbg-design-docs/biks2013-theme/candidates/gallery.html`); the chosen photos enter `BikS2013-Design/assets/` as `photo-<subject>.jpeg` + `.datauri.txt` and a catalogue table is added here. Until then, build BikS2013 decks on the type-led templates (`Cover3`, `DividerDark`, `DividerBright`, `ContentTwoColumn`, `ContentStat`) or on a photo the user supplies (embedded as a data URI). Do not borrow the NBG technology set (it is teal-toned, off this palette); the five NBG lifestyle photos may serve only as a stopgap the user agrees to. Never approximate a photo with a gradient.
 
 ## Design-system reference
 
@@ -128,12 +173,12 @@ Technology set (generated 2026-09, teal-and-cream palette, no text or logos; thr
 
 ## Design-system rules
 
-- Use the bundled NBG-inspired presentation design system; do not invent a parallel brand or visual system.
+- Use the bundled NBG-inspired presentation design system; do not invent a parallel brand or visual system. The BikS2013 theme is the one sanctioned alternative, and only for personal material (see "Themes").
 - Preserve the NBG 16:9 / 1920×1080 internal slide composition.
 - Use the NBG teal-led palette, quiet neutrals, generous whitespace, clear hierarchy, and restrained emphasis.
-- Use NBG logos and bundled photography from `NBG-Design/assets/`. The NBG logo must always be the bundled lockup image — never a text label, initials, a colored square/box, or any CSS/SVG re-creation. See "Logo rendering (MANDATORY)".
+- Use NBG logos and bundled photography from `NBG-Design/assets/` (under the BikS2013 theme: the BikS2013 lockups from `BikS2013-Design/assets/`). The logo must always be the bundled lockup image — never a text label, initials, a colored square/box, or any CSS/SVG re-creation. See "Logo rendering (MANDATORY)".
 - Treat bundled screenshots as visual references, not as source code.
-- Start decks with an NBG-style cover slide.
+- Start decks with a cover slide in one of the theme's cover templates.
 - Use divider slides for major sections.
 - Use content slides for explanations, comparisons, statistics, and takeaways.
 - Keep slide copy concise and use speaker-notes-style expansion where needed.
@@ -201,10 +246,10 @@ Hand-pasting large base64 blobs is the step that most often fails in non-interac
 
 1. **Author the deck with placeholder tokens, not inline data URIs.** Put a token wherever an image goes: `{{LOGO_PRIMARY}}`, `{{LOGO_KNOCKOUT}}`, `{{LOGO_SMALL}}`, and `{{PHOTO_FIELDS}}`, `{{PHOTO_HEART}}`, `{{PHOTO_PARTHENON}}`, `{{PHOTO_SKATE}}`, `{{PHOTO_STREET}}`, or any technology photo token from "Photography catalogue" (`{{PHOTO_DATACENTER_1}}`, `{{PHOTO_NETWORK_2}}`, `{{PHOTO_SECURITY_3}}`, …). Define each token **once** (e.g. a CSS `background-image: url("{{PHOTO_STREET}}")` class) and reuse the class.
 2. **Embed deterministically.** From any working directory:
-   `node "<skill-root>/scripts/embed-assets.mjs" <deck>.html`
+   `node "<skill-root>/scripts/embed-assets.mjs" <deck>.html` (a BikS2013 deck: add `--theme biks2013`)
    The script resolves the bundled assets relative to itself (not the cwd), so it works on any machine. It replaces every token with the verbatim `data:` URI and fails loudly if an asset is missing.
 3. **Add the in-deck right-click menu (standard for every delivered deck).**
-   `node "<skill-root>/scripts/add-deck-menu.mjs" <deck>.html`
+   `node "<skill-root>/scripts/add-deck-menu.mjs" <deck>.html` (a BikS2013 deck: add `--theme biks2013`, so the toolbars offer that palette)
    Inlines one self-contained `<script id="nbg-deck-menu-script">` before the last `</body>` (idempotent; re-running upgrades an older menu, including the v1.4 PDF-only one). Viewers get *Edit text* (in-place editing, also by double-click), *Resize / move shape*, *Export to PDF*, *Save edited copy* and *Discard edits*. See "In-deck right-click menu". Skip only if the user explicitly declines the menu, and then verify with `--no-deck-menu`.
 4. **Verify before delivery (browser-free — works headless).**
    `node "<skill-root>/scripts/verify-deck.mjs" <deck>.html --strict`
@@ -374,6 +419,13 @@ Assets:
 - Technology photography, 21 files `NBG-Design/assets/photo-<subject>-<n>.jpeg` (+ `.datauri.txt` each), where `<subject>` is one of `datacenter`, `team-analytics`, `network`, `chip`, `athens-dusk`, `security`, `developer` and `<n>` is `1`, `2` or `3` — see "Photography catalogue".
 - All `*.datauri.txt` files hold the ready-to-embed base64 data URI for the matching image (see "Image embedding (MANDATORY)").
 
+BikS2013 theme (see "Themes"):
+
+- `BikS2013-Design/BikS2013 Design System.html` — the theme's design-system reference (same structure as the NBG page).
+- `BikS2013-Design/slide-templates.jsx` — the nine templates, re-themed, with personal placeholder copy (a missing photo hides itself so the templates render before the photo set is chosen).
+- `BikS2013-Design/tweaks-panel.jsx` — the tweak helper (a copy of the NBG one).
+- `BikS2013-Design/assets/logo-primary.png`, `logo-knockout.png`, `logo-small.png`, `logo-mark.png` (+ `.datauri.txt` and `.svg` each) — the BikS2013 wheel lockups (primary / knockout / footer size / the emblem alone); no photography yet (candidates await review).
+
 Presentation screenshots:
 
 - `NBG-Design/screenshots/01-editorial.png`
@@ -408,10 +460,10 @@ Before delivering NBG slide work:
 - For HTML output, confirm the right-click deck menu was added with `scripts/add-deck-menu.mjs` (the strict gate checks for it and warns when the block is older than the skill's) and tell the user how to use it (double-click to edit text; right-click for Resize / move shape, Edit SVG, Export to PDF, Save edited copy), unless the user declined it.
 - For every deck with the menu, confirm `<deck>.rebuild.mjs` was written with `scripts/write-rebuild-script.mjs` after the menu (and after the PDF's name was settled: `--pdf` / `--no-pdf`), that `node <deck>.rebuild.mjs --check` reports `CURRENT`, and deliver it with the HTML and the PDF, telling the user it refreshes the deck's editing tools after a skill update.
 - Confirm every slide has a clear purpose.
-- Confirm colors match the bundled NBG palette.
+- Confirm colours match the deck's theme palette (NBG by default; BikS2013 under that theme) and that `embed-assets.mjs` and `add-deck-menu.mjs` were run with the matching `--theme`.
 - Confirm the language is consistent with the request or the approved English default.
 - Confirm the output format is consistent with the request or the approved HTML default.
-- Confirm NBG logo visibility and placement match the intended template.
+- Confirm logo visibility and placement (the theme's lockups) match the intended template.
 - For HTML output, confirm the full slide fits the viewport without clipping or unintended scrolling.
 - For HTML output, confirm rendered screenshots show no unintended overlaps among cards, text blocks, decorative shapes, logos, grouped rows/columns, footers, or page numbers.
 - If any overlap is found during visual verification, revise the layout and repeat the screenshot inspection before delivery; do not report the deck as complete while a collision remains.

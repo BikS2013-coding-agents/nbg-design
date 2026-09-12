@@ -15,7 +15,7 @@
  *     the grip to re-dock). Every control applies to the selected text when there is a selection
  *     and to the whole block otherwise: Bold / Italic / Underline / Strikethrough (semantic tags on
  *     a run), A− / A+ and an exact px size, font family (the design system's stacks), text colour
- *     (the NBG palette) — on a run these wrap exactly the selected text in a styled span, on the
+ *     (the theme's palette, NBG or BikS2013) — on a run these wrap exactly the selected text in a styled span, on the
  *     block they are inline style (line-height kept proportional) — alignment (block), Clear, Done.
  *     Block-level formatting is recorded as a 'style' edit. Shortcuts: Ctrl/Cmd+B/I/U,
  *     Ctrl/Cmd+Shift+> and < for size.
@@ -30,7 +30,7 @@
  *     changes; pointer deltas are divided by the slide's current scale so the artboard
  *     coordinates stay exact at any viewport size. "Reset shape" restores one element;
  *   - a shape toolbar (draggable) appears with the frame: X / Y / W / H fields, fill, border,
- *     corner radius, opacity, shadow (NBG palette), Reset, Done — all inline style on the element.
+ *     corner radius, opacity, shadow (the theme's palette), Reset, Done — all inline style on the element.
  *
  * Several shapes at once (text blocks, shapes and images alike)
  *   - Shift+click adds the smallest shape under the pointer to the selection (inside a selected shape it
@@ -76,7 +76,7 @@
  *     the part's parent coordinate system: x / y / width / height on a rect or image without a transform,
  *     x / y / cx / cy / x1… on a plain move of text, use, circle, ellipse, line — otherwise a matrix()
  *     prepended to the part's own transform, so the path data itself is never rewritten;
- *   - the SVG row of the floating toolbar: Parts, X / Y / W / H (SVG units), fill and stroke (the NBG palette,
+ *   - the SVG row of the floating toolbar: Parts, X / Y / W / H (SVG units), fill and stroke (the theme's palette,
  *     None, Default), stroke width, opacity, the text of a <text> part (one run), Order (front / forward /
  *     backward / back — document order inside the parent; Ctrl/Cmd+] / [), Duplicate (Ctrl/Cmd+D), Delete,
  *     Reset SVG (as designed), Done. Fill / stroke / width / opacity are written as presentation attributes,
@@ -190,11 +190,14 @@
  *   - unit:  the label of one root in the UI ('Slide' by default, 'Section' in page mode);
  *   - title: the menu's header and the detached windows' title ('NBG deck' / 'Page editor');
  *   - aiSystem: replaces the assistant's system prompt.
+ *   - theme: 'nbg' (default) or 'biks2013' (block v14) — the swatches of the formatting, shape and SVG
+ *            toolbars, the editor's own accent colours and font, the assistant's system prompt and built-in
+ *            prompts, and the default title follow the theme (SKILL.md "Themes").
  * Nothing else changes: the same edits, records, storage keys, saved copy and API.
  */
 (function () {
   if (window.nbgDeck) return;
-  var VERSION = 13;
+  var VERSION = 14;
   // configuration hook (see the header): root selector, page mode, labels
   var CFG = (typeof window.nbgDeckMenuConfig === 'object' && window.nbgDeckMenuConfig) || {};
   function cfgStr(k) { return typeof CFG[k] === 'string' && CFG[k].trim() ? CFG[k].trim() : ''; }
@@ -202,7 +205,8 @@
   var ROOT_SEL = cfgStr('root') || '.slide';
   try { document.querySelector(ROOT_SEL); } catch (e) { throw new Error('nbg deck menu: invalid root selector "' + ROOT_SEL + '" in window.nbgDeckMenuConfig.root'); }
   var UNIT = cfgStr('unit') || (PAGE_MODE ? 'Section' : 'Slide');          // one root, in labels: "Slide 2", "Section 2"
-  var TITLE = cfgStr('title') || (PAGE_MODE ? 'Page editor' : 'NBG deck');  // menu header, detached windows
+  var THEME = cfgStr('theme') === 'biks2013' ? 'biks2013' : 'nbg', BIKS = THEME === 'biks2013', THEME_NAME = BIKS ? 'BikS2013' : 'NBG';   // block v14: the theme
+  var TITLE = cfgStr('title') || (PAGE_MODE ? 'Page editor' : THEME_NAME + ' deck');  // menu header, detached windows
   var AREA = PAGE_MODE ? 'page' : 'slide', AREA_CAP = PAGE_MODE ? 'Page' : 'Slide';   // generic wording ("on the page")
   var WHOLE = PAGE_MODE ? 'page' : 'deck';                                            // the document ("download the page")
   function rootOf(el) { return el && el.closest ? el.closest(ROOT_SEL) : null; }
@@ -214,8 +218,13 @@
   function unitLabel(root) { return PAGE_MODE && allRoots().length <= 1 ? 'Page' : UNIT + ' ' + (slideIndex(root) + 1); }   // "Slide 2" / "Section 2" / "Page"
   function unitOf(root) { var n = allRoots().length; return unitLabel(root) + (n > 1 ? ' of ' + n : ''); }                  // "Slide 2 of 12"
   function unitPhrase(root) { var l = unitLabel(root); return l === 'Page' ? 'the page' : l.charAt(0).toLowerCase() + l.slice(1); }   // "slide 2" / "the page"
-  var ACCENT = '#003841', CYAN = '#00ADBF', INK = '#0A1416', CREAM = '#F5F8F6', MUTED = '#5B6B6D';
-  var FONT = "'Aptos', 'Inter', Helvetica, Arial, sans-serif";
+  var ACCENT = BIKS ? '#1B1D21' : '#003841', CYAN = BIKS ? '#C8623A' : '#00ADBF', INK = BIKS ? '#111316' : '#0A1416', CREAM = BIKS ? '#F6F3EC' : '#F5F8F6', MUTED = BIKS ? '#6E7379' : '#5B6B6D';
+  var FONT = BIKS ? "'Avenir Next', 'Inter', Helvetica, Arial, sans-serif" : "'Aptos', 'Inter', Helvetica, Arial, sans-serif";
+  // the swatches of every toolbar: the theme's palette (SKILL.md), the only colours a deck may use
+  var PALETTE = BIKS
+    ? [['#1B1D21', 'Ink'], ['#C8623A', 'Copper'], ['#E08A5E', 'Copper light'], ['#E3A64A', 'Amber'], ['#111316', 'Black'], ['#6E7379', 'Grey'], ['#F6F3EC', 'Paper'], ['#FFFFFF', 'White']]
+    : [['#003841', 'Deep teal'], ['#007B85', 'Teal'], ['#00ADBF', 'Bright cyan'], ['#00CFE7', 'Electric cyan'], ['#0A1416', 'Black'], ['#5B6B6D', 'Grey'], ['#F5F8F6', 'Cream'], ['#FFFFFF', 'White']];
+  var PALETTE_NAME = THEME_NAME + ' palette';
 
   // Pristine snapshot of the deck as loaded — BEFORE persisted edits are re-applied and before any
   // runtime element of ours exists. "Save edited copy" applies the edits to this markup.
@@ -634,7 +643,7 @@
     ['Helvetica, Arial, sans-serif', 'Helvetica'], ['Arial, sans-serif', 'Arial'], ['Georgia, serif', 'Georgia'],
     ["'Times New Roman', Times, serif", 'Times New Roman'], ["'Courier New', Courier, monospace", 'Courier New'],
   ];
-  var COLORS = [['', 'Default'], ['#003841', 'Deep teal'], ['#007B85', 'Teal'], ['#00ADBF', 'Bright cyan'], ['#00CFE7', 'Electric cyan'], ['#0A1416', 'Black'], ['#5B6B6D', 'Grey'], ['#F5F8F6', 'Cream'], ['#FFFFFF', 'White']];
+  var COLORS = [['', 'Default']].concat(PALETTE);
   var tools = null, toolsSel = null;
   function selectionInEditing() {
     var sel = window.getSelection();
@@ -796,7 +805,7 @@
     h += '<i class="nbg-tsep"></i>';
     h += '<select data-f="family" title="Font family — the selection, or the whole text" aria-label="Font family">' + FONTS.map(function (f) { return '<option value="' + f[0].replace(/"/g, '&quot;') + '">' + f[1] + '</option>'; }).join('') + '</select>';
     h += '<i class="nbg-tsep"></i>';
-    h += swatches('f="color" data-v', COLORS).replace('<span class="nbg-swatches">', '<span class="nbg-swatches" title="Text colour (NBG palette) — the selection, or the whole text">');
+    h += swatches('f="color" data-v', COLORS).replace('<span class="nbg-swatches">', '<span class="nbg-swatches" title="Text colour (' + PALETTE_NAME + ') — the selection, or the whole text">');
     h += '<i class="nbg-tsep"></i>';
     h += '<button type="button" data-f="align" data-v="left" title="Align left">⇤</button><button type="button" data-f="align" data-v="center" title="Centre">☰</button><button type="button" data-f="align" data-v="right" title="Align right">⇥</button>';
     h += '<i class="nbg-tsep"></i>';
@@ -1374,7 +1383,7 @@
 
   /* ---------- shape toolbar (shown while shapes are selected) ---------- */
   var stools = null;
-  var FILLS = [['', 'Default'], ['transparent', 'Transparent'], ['#003841', 'Deep teal'], ['#007B85', 'Teal'], ['#00ADBF', 'Bright cyan'], ['#00CFE7', 'Electric cyan'], ['#0A1416', 'Black'], ['#5B6B6D', 'Grey'], ['#F5F8F6', 'Cream'], ['#FFFFFF', 'White']];
+  var FILLS = [['', 'Default'], ['transparent', 'Transparent']].concat(PALETTE);
   var BORDERS = [['', 'Border: default'], ['0', 'No border'], ['1', 'Border 1 px'], ['2', 'Border 2 px'], ['3', 'Border 3 px'], ['4', 'Border 4 px'], ['6', 'Border 6 px']];
   var SHADOWS = [['', 'Shadow: default'], ['none', 'No shadow'], ['0 12px 32px rgba(10,20,22,.18)', 'Soft shadow'], ['0 24px 56px rgba(10,20,22,.30)', 'Strong shadow']];
   var ICONS = {
@@ -1463,10 +1472,10 @@
     h += '<label title="Width (several shapes: scales the selection from its top-left corner)">W<input type="number" data-s="width" min="16" step="1"></label>';
     h += '<label title="Height">H<input type="number" data-s="height" min="16" step="1"></label>';
     h += '<i class="nbg-tsep"></i>';
-    h += swatches('s="fill" data-v', FILLS).replace('<span class="nbg-swatches">', '<span class="nbg-swatches" title="Fill (NBG palette)">');
+    h += swatches('s="fill" data-v', FILLS).replace('<span class="nbg-swatches">', '<span class="nbg-swatches" title="Fill (' + PALETTE_NAME + ')">');
     h += '<i class="nbg-tsep"></i>';
     h += '<select data-s="border" title="Border">' + BORDERS.map(function (b) { return '<option value="' + b[0] + '">' + b[1] + '</option>'; }).join('') + '</select>';
-    h += swatches('s="bordercolor" data-v', COLORS).replace('<span class="nbg-swatches">', '<span class="nbg-swatches" title="Border colour (NBG palette)">');
+    h += swatches('s="bordercolor" data-v', COLORS).replace('<span class="nbg-swatches">', '<span class="nbg-swatches" title="Border colour (' + PALETTE_NAME + ')">');
     h += '<i class="nbg-tsep"></i>';
     h += '<label title="Corner radius (px)">◜<input type="number" data-s="radius" min="0" step="1"></label>';
     h += '<label title="Opacity (%)">◐<input type="number" data-s="opacity" min="0" max="100" step="5"></label>';
@@ -1576,7 +1585,7 @@
   var SVG_PART = /^(path|rect|circle|ellipse|line|polyline|polygon|text|image|use|g)$/;
   var SVG_SKIP = /^(defs|clipPath|mask|symbol|pattern|marker|linearGradient|radialGradient|filter|metadata|title|desc|style|script)$/;
   var SVG_GEOM_ATTRS = ['transform', 'x', 'y', 'width', 'height', 'cx', 'cy', 'x1', 'y1', 'x2', 'y2'];
-  var SVG_PAINTS = [['', 'Default'], ['none', 'None'], ['#003841', 'Deep teal'], ['#007B85', 'Teal'], ['#00ADBF', 'Bright cyan'], ['#00CFE7', 'Electric cyan'], ['#0A1416', 'Black'], ['#5B6B6D', 'Grey'], ['#F5F8F6', 'Cream'], ['#FFFFFF', 'White']];
+  var SVG_PAINTS = [['', 'Default'], ['none', 'None']].concat(PALETTE);
   function svgTag(el) { return el && el.nodeType === 1 && el.namespaceURI === SVG_NS ? el.tagName : ''; }   // SVG tag names keep their case (clipPath)
   // the outermost inline <svg> that holds t (inside a root, none of ours)
   function svgOwner(t) {
@@ -1944,9 +1953,9 @@
     h += '<label title="Width (several parts: scales the selection from its top-left corner)">W<input type="number" data-g="w" min="0" step="1"></label>';
     h += '<label title="Height">H<input type="number" data-g="h" min="0" step="1"></label>';
     h += '<i class="nbg-tsep"></i>';
-    h += swatches('g="fill" data-v', SVG_PAINTS).replace('<span class="nbg-swatches">', '<span class="nbg-swatches" title="Fill (NBG palette; None = no fill; Default = as designed) — every selected part">');
+    h += swatches('g="fill" data-v', SVG_PAINTS).replace('<span class="nbg-swatches">', '<span class="nbg-swatches" title="Fill (' + PALETTE_NAME + '; None = no fill; Default = as designed) — every selected part">');
     h += '<i class="nbg-tsep"></i>';
-    h += swatches('g="stroke" data-v', SVG_PAINTS).replace('<span class="nbg-swatches">', '<span class="nbg-swatches" title="Stroke colour (NBG palette; None = no stroke; Default = as designed) — every selected part">');
+    h += swatches('g="stroke" data-v', SVG_PAINTS).replace('<span class="nbg-swatches">', '<span class="nbg-swatches" title="Stroke colour (' + PALETTE_NAME + '; None = no stroke; Default = as designed) — every selected part">');
     h += '<label title="Stroke width (SVG units)">╱<input type="number" data-g="sw" min="0" step="0.5"></label>';
     h += '<label title="Opacity (%)">◐<input type="number" data-g="opacity" min="0" max="100" step="5"></label>';
     h += '<i class="nbg-tsep"></i>';
@@ -2434,19 +2443,21 @@
     { id: 'b:rewrite', name: 'Rewrite the selection’s text', mode: 'replace', text: 'Rewrite the text inside the selected element as the viewer asks in the additional instructions (shorter, clearer, a different tone, another language…). Keep the element’s tag, attributes, inline markup structure (spans, line breaks, lists, links) and images; change only the words. Return the complete replacement HTML for the element.' },
   ] : [
     { id: 'b:free', name: 'Free request', mode: '', text: '' },
-    { id: 'b:review', name: 'Review the slide', mode: 'answer', text: 'Review this slide as an experienced presentation designer who knows the NBG design system. Judge the visual hierarchy, the amount of content, alignment and spacing, the consistency of colours and type with the NBG palette and font stacks, and the clarity of the message. Give at most eight findings as a numbered list, most important first; each finding names what to change and how. Do not restate what the slide says.' },
+    { id: 'b:review', name: 'Review the slide', mode: 'answer', text: 'Review this slide as an experienced presentation designer who knows the ' + THEME_NAME + ' design system. Judge the visual hierarchy, the amount of content, alignment and spacing, the consistency of colours and type with the ' + THEME_NAME + ' palette and font stacks, and the clarity of the message. Give at most eight findings as a numbered list, most important first; each finding names what to change and how. Do not restate what the slide says.' },
     { id: 'b:proof', name: 'Proofread the text', mode: 'answer', text: 'Proofread every piece of text on this slide: spelling, grammar, punctuation, capitalisation, inconsistent wording and terminology, numbers and dates. List each problem as “before → after” with a short reason. Say “No issues found” when there is nothing to fix. Keep the language of the slide.' },
     { id: 'b:copy', name: 'Tighten the copy', mode: 'answer', text: 'Propose tighter, clearer wording for the texts on this slide: a title of at most eight words, and body texts that keep every fact but drop filler. Show each text as “current → proposed”. Keep the language, the tone of a bank’s executive presentation, and the meaning.' },
     { id: 'b:notes', name: 'Speaker notes', mode: 'answer', text: 'Write speaker notes for this slide: what the presenter should say in about 90 seconds, in plain spoken language, in the language of the slide, covering every element on it in a sensible order. End with one sentence that leads to the next slide.' },
-    { id: 'b:restyle', name: 'Restyle the selection', mode: 'replace', text: 'Change the selected element as the viewer asks in the additional instructions (colours, fill, borders, spacing, size, typography, alignment). Keep its tag, its classes, its id, its images and its text unless the instructions say otherwise. Use the NBG palette and font stacks. Return the complete replacement HTML for the element.' },
+    { id: 'b:restyle', name: 'Restyle the selection', mode: 'replace', text: 'Change the selected element as the viewer asks in the additional instructions (colours, fill, borders, spacing, size, typography, alignment). Keep its tag, its classes, its id, its images and its text unless the instructions say otherwise. Use the ' + THEME_NAME + ' palette and font stacks. Return the complete replacement HTML for the element.' },
     { id: 'b:rewrite', name: 'Rewrite the selection’s text', mode: 'replace', text: 'Rewrite the text inside the selected element as the viewer asks in the additional instructions (shorter, clearer, a different tone, another language…). Keep the element’s tag, attributes, inline markup structure (spans, line breaks, lists) and images; change only the words. Return the complete replacement HTML for the element.' },
   ];
   var AI_SYSTEM_PAGE = 'You are assisting a viewer who edits an HTML web page in place in the browser. ' +
     'The viewer’s message may carry, as the viewer chose: a screenshot of the page (or of the current section), the page’s full HTML source with its stylesheet, the HTML source of the element(s) the viewer selected, and an image taken from the viewer’s clipboard. Work with what is attached and do not ask for what is missing. ' +
     'In the sources, embedded images appear as src="nbg-image:N" (or url(nbg-image:N)) placeholders standing for the original image data — keep such placeholders exactly as they are. Stay consistent with the page’s existing colours, fonts and layout when you propose visual changes.';
-  var AI_SYSTEM = cfgStr('aiSystem') ? cfgStr('aiSystem') : PAGE_MODE ? AI_SYSTEM_PAGE : 'You are assisting a viewer of an HTML slide deck built with the National Bank of Greece (NBG) presentation design system: 1920×1080 slides, the Aptos font stack (Aptos, Inter, Helvetica, Arial), and the NBG palette — deep teal #003841, teal #007B85, bright cyan #00ADBF, electric cyan #00CFE7, black #0A1416, grey #5B6B6D, cream #F5F8F6, white #FFFFFF. ' +
+  var AI_SYSTEM = cfgStr('aiSystem') ? cfgStr('aiSystem') : PAGE_MODE ? AI_SYSTEM_PAGE : (BIKS
+    ? 'You are assisting a viewer of an HTML slide deck built with the BikS2013 personal presentation design system (the personal theme of the nbg-design skill): 1920×1080 slides, the Avenir Next font stack (Avenir Next, Inter, Helvetica, Arial), and the BikS2013 palette — ink #1B1D21, copper #C8623A, copper light #E08A5E, amber #E3A64A, black #111316, grey #6E7379, paper #F6F3EC, white #FFFFFF. '
+    : 'You are assisting a viewer of an HTML slide deck built with the National Bank of Greece (NBG) presentation design system: 1920×1080 slides, the Aptos font stack (Aptos, Inter, Helvetica, Arial), and the NBG palette — deep teal #003841, teal #007B85, bright cyan #00ADBF, electric cyan #00CFE7, black #0A1416, grey #5B6B6D, cream #F5F8F6, white #FFFFFF. ') +
     'The viewer’s message may carry, as the viewer chose: a screenshot of the current slide, the slide’s full HTML source with the deck’s stylesheet, the HTML source of the element(s) the viewer selected, and an image taken from the viewer’s clipboard. Work with what is attached and do not ask for what is missing. ' +
-    'In the sources, embedded images appear as src="nbg-image:N" (or url(nbg-image:N)) placeholders standing for the original image data — keep such placeholders exactly as they are. Stay within the NBG palette and font stacks when you propose visual changes.';
+    'In the sources, embedded images appear as src="nbg-image:N" (or url(nbg-image:N)) placeholders standing for the original image data — keep such placeholders exactly as they are. Stay within the ' + THEME_NAME + ' palette and font stacks when you propose visual changes.';
   var AI_MODE_TEXT = {
     answer: 'Reply in plain text; Markdown is fine. Be concise and concrete.',
     replace: 'Your entire reply must be the replacement HTML for the selected element: exactly one root element with the same tag name as the selected element, with its attributes, inline styles and contents changed as requested, and nothing else — no explanation, no Markdown code fence. Do not add scripts, event handlers or external resources. Keep image placeholders unchanged.',

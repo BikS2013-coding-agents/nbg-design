@@ -269,3 +269,28 @@ Bring a deck that already exists — delivered earlier, or a user's own — to t
 
 ### How to Use
 `SKILL.md` → "Updating an existing deck to the current skill" (symptoms of an old block, both paths, the block-version history).
+
+## BikS2013 Personal Theme (skill v1.20.0)
+
+### Function
+
+A second theme — the BikS2013 personal theme — selectable per deck as an alternative to the NBG-inspired
+system, for presentations given in a personal capacity under the BikS2013 label.
+
+### Files
+
+- `BikS2013-Design/BikS2013 Design System.html`, `BikS2013-Design/slide-templates.jsx`,
+  `BikS2013-Design/tweaks-panel.jsx`, `BikS2013-Design/assets/logo-{primary,knockout,small,mark}.png` (+ `.datauri.txt`, `.svg`).
+- `scripts/embed-assets.mjs --theme`, `scripts/add-deck-menu.mjs --theme`, `scripts/lib/deck-menu.js` (block v14), `scripts/verify-deck.mjs`.
+
+### Functional Requirements
+
+1. The theme is `nbg` unless the user asks for a personal / BikS2013 presentation or says the deck is not the bank's; when unclear, the agent asks.
+2. Both themes share the 1920×1080 geometry, the nine templates (same names and props), every guardrail, the scripts, the menu, the rebuild script and the PDF export.
+3. A BikS2013 deck uses only the BikS2013 palette, the Avenir Next stack and the BikS2013 lockups (through the same `{{LOGO_*}}` tokens); an NBG deck never carries them.
+4. `embed-assets.mjs --theme biks2013` resolves the tokens from `BikS2013-Design/assets/`; `add-deck-menu.mjs --theme biks2013` makes the toolbars offer the BikS2013 palette, briefs the assistant on it, titles the menu "BikS2013 deck" and is kept on rebuilds.
+5. Until the photo set is reviewed and bundled, BikS2013 decks use the type-led templates or a user-supplied photo; NBG technology photos are never borrowed.
+
+### How to Use
+
+Author with tokens, then `embed-assets.mjs <deck> --theme biks2013`, `add-deck-menu.mjs <deck> --theme biks2013`, `verify-deck.mjs <deck> --strict`, `write-rebuild-script.mjs`, `export-pdf.mjs` — see SKILL.md "Themes".

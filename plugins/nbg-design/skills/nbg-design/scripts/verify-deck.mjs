@@ -13,7 +13,7 @@
 // In --strict mode these ALSO fail (exit 1); otherwise they are reported as warnings:
 //   - fewer than --min-images embedded images (default 2)
 //   - file smaller than --min-bytes (default 200000) — a photo-less deck is the classic tell
-//   - bare ">NBG<" / ">NPG<" text nodes (a likely text/box substitute for the logo lockup)
+//   - bare ">NBG<" / ">NPG<" / ">BikS2013<" text nodes (a likely text/box substitute for the logo lockup)
 //
 // Run with --strict before delivery. Zero dependencies; any Node >= 16.
 
@@ -23,7 +23,7 @@ import { resolve } from 'node:path';
 const USAGE = `NBG deck verifier (browser-free)
 Usage: node verify-deck.mjs <deck.html> [--strict] [--min-images N] [--min-bytes N]
 
-  --strict          Promote warnings (image count, file size, bare-NBG text) to failures.
+  --strict          Promote warnings (image count, file size, bare NBG / BikS2013 text) to failures.
                     Use this before delivering any deck.
   --min-images N    Minimum embedded images expected (default 2).
   --min-bytes N     Minimum file size in bytes (default 200000).
@@ -85,16 +85,16 @@ function main() {
 
   // 4 / 5 / 6 — soft (or strict) signals
   if (imgCount < args.minImages) {
-    warn.push(`Only ${imgCount} embedded image(s) (expected >= ${args.minImages}). A real NBG deck embeds the logo plus photography.`);
+    warn.push(`Only ${imgCount} embedded image(s) (expected >= ${args.minImages}). A real deck embeds the logo plus photography.`);
   }
   const bytes = Buffer.byteLength(html, 'utf8');
   if (bytes < args.minBytes) {
     warn.push(`Deck is ${bytes.toLocaleString()} bytes (< ${args.minBytes.toLocaleString()}). A photo-less deck is the classic "assets not embedded" tell.`);
   }
   const nbgText = [];
-  lines.forEach((ln, i) => { if (/>\s*(NBG|NPG)\s*</.test(ln)) nbgText.push(i + 1); });
+  lines.forEach((ln, i) => { if (/>\s*(NBG|NPG|BikS2013|BikS)\s*</.test(ln)) nbgText.push(i + 1); });
   if (nbgText.length) {
-    warn.push(`${nbgText.length} bare ">NBG/NPG<" text node(s) at line(s) ${nbgText.slice(0, 12).join(', ')}${nbgText.length > 12 ? '…' : ''} — verify none is a text/box substitute for the bundled logo lockup.`);
+    warn.push(`${nbgText.length} bare ">NBG/NPG/BikS2013<" text node(s) at line(s) ${nbgText.slice(0, 12).join(', ')}${nbgText.length > 12 ? '…' : ''} — verify none is a text/box substitute for the bundled logo lockup.`);
   }
 
   // 7 — in-deck right-click menu: Edit text / Export to PDF / Save edited copy (added by add-deck-menu.mjs)
