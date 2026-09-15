@@ -1,14 +1,14 @@
 // AIHub slide templates — each is a 1920x1080 deck artboard. Same geometry as the NBG templates,
 // re-themed after the NBG Technology Hub developer portal (developer.nbg.gr): navy-to-lagoon grounds,
 // Oswald condensed uppercase titles and numerals, sun-yellow bracketed eyebrows, a circuit-line motif,
-// the NBG Technology Hub lockups. Photos: the NBG technology set, shared (../NBG-Design/assets/ here;
+// the NBG AI Hub lockups. Photos bleed into the ground (feather + bottom scrim), never a hard card. Photos: the NBG technology set, shared (../NBG-Design/assets/ here;
 // {{PHOTO_*}} tokens resolve through the theme's search path in a deck). A missing photo hides itself.
 // Wrap them in <SlideFrame> in the host doc to scale into the layout.
 
 const { useState } = React;
 
 const hidePhoto = (e) => { e.currentTarget.style.display = "none"; };
-// titles and numerals: Oswald (embedded in decks through the {{FONT_OSWALD_*}} tokens), condensed fallbacks
+// titles and numerals: Oswald (embedded in decks through the {{FONT_OSWALD}} token), condensed fallbacks
 const HEAD = '"Oswald", "Avenir Next Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif';
 
 // ---- shared bits ----------------------------------------------------------
@@ -20,7 +20,7 @@ const LogoMark = ({ variant = "primary", height = 56 }) => {
       : variant === "small"
       ? "assets/logo-small.png"
       : "assets/logo-primary.png";
-  return <img src={src} alt="NBG Technology Hub" style={{ height, width: "auto", display: "block" }} />;
+  return <img src={src} alt="NBG AI Hub" style={{ height, width: "auto", display: "block" }} />;
 };
 
 const PageFooter = ({ pageNum, dark = false, ftrLabel = "" }) => (
@@ -79,15 +79,14 @@ window.Cover1 = function Cover1({ accent = "#012A30", lang = "en", showLogo = tr
         overflow: "hidden",
       }}
     >
-      {/* right image block — slightly inset, generous corner radius */}
+      {/* right photo — full height, bleeding off the right edge; the feather below dissolves its left edge into the ground */}
       <div
         style={{
           position: "absolute",
-          top: 100,
-          right: 60,
-          width: 720,
-          height: 880,
-          borderRadius: 18,
+          top: 0,
+          right: 0,
+          bottom: 0,
+          width: 1000,
           overflow: "hidden",
           background: `linear-gradient(135deg, ${accent} 0%, #01202A 100%)`,
         }}
@@ -106,15 +105,26 @@ window.Cover1 = function Cover1({ accent = "#012A30", lang = "en", showLogo = tr
         />
       </div>
 
-      {/* subtle vignette over image left edge → blends into deep bg */}
+      {/* feather: the ground colour dissolving into the photo (60% solid, then transparent) */}
       <div
         style={{
           position: "absolute",
           top: 0,
-          right: 780,
-          width: 240,
-          height: "100%",
-          background: "linear-gradient(90deg, transparent 0%, #01323F 100%)",
+          left: 0,
+          bottom: 0,
+          width: 1300,
+          background: "linear-gradient(90deg, #012A30 0%, #012A30 60%, rgba(1,42,48,0) 100%)",
+        }}
+      />
+      {/* bottom scrim: keeps the lockup and meta legible where the photo runs under them */}
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: 220,
+          background: "linear-gradient(to top, rgba(1,42,48,0.95), rgba(1,42,48,0))",
         }}
       />
 
@@ -161,8 +171,8 @@ window.Cover1 = function Cover1({ accent = "#012A30", lang = "en", showLogo = tr
           }}
         >
           <T
-            en="Powerful technology that goes beyond banking — the NBG Technology Hub in one deck."
-            gr="Ισχυρή τεχνολογία πέρα από την τραπεζική — το NBG Technology Hub σε μία παρουσίαση."
+            en="Powerful technology that goes beyond banking — the NBG AI Hub in one deck."
+            gr="Ισχυρή τεχνολογία πέρα από την τραπεζική — το NBG AI Hub σε μία παρουσίαση."
             lang={lang}
           />
         </div>
@@ -471,7 +481,7 @@ window.Cover3 = function Cover3({ accent = "#33B3BF", lang = "en", showLogo = tr
             lineHeight: 1.5,
           }}
         >
-          <div>NBG Technology Hub</div>
+          <div>NBG AI Hub</div>
           <div>Athens · 14 March 2026</div>
         </div>
       </div>
@@ -495,16 +505,16 @@ window.DividerImage = function DividerImage({ accent = "#FFF77D", lang = "en" })
         overflow: "hidden",
       }}
     >
-      {/* image card right */}
+      {/* photo right — full height, bleeding off the edge, feathered into the ground below */}
       <div
         style={{
           position: "absolute",
-          top: 100,
-          right: 60,
-          width: 1100,
-          height: 880,
-          borderRadius: 24,
+          top: 0,
+          right: 0,
+          bottom: 0,
+          width: 1280,
           overflow: "hidden",
+          background: "#01202A",
         }}
       >
         <img
@@ -514,6 +524,9 @@ window.DividerImage = function DividerImage({ accent = "#FFF77D", lang = "en" })
           style={{ width: "100%", height: "100%", objectFit: "cover" }}
         />
       </div>
+      {/* feather + bottom scrim */}
+      <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 1150, background: "linear-gradient(90deg, #012A30 0%, #012A30 60%, rgba(1,42,48,0) 100%)" }} />
+      <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 190, background: "linear-gradient(to top, rgba(1,42,48,0.95), rgba(1,42,48,0))" }} />
 
       {/* huge number */}
       <div
@@ -869,8 +882,8 @@ window.ContentImageRight = function ContentImageRight({ accent = "#012A30", lang
         }}
       >
         <T
-          en="Source: NBG Technology Hub portal analytics, 2026. Sandbox figures unless stated otherwise."
-          gr="Πηγή: Αναλυτικά στοιχεία πύλης NBG Technology Hub, 2026."
+          en="Source: NBG AI Hub portal analytics, 2026. Sandbox figures unless stated otherwise."
+          gr="Πηγή: Αναλυτικά στοιχεία πύλης NBG AI Hub, 2026."
           lang={lang}
         />
       </div>
@@ -1183,6 +1196,8 @@ window.ContentStat = function ContentStat({ accent = "#33B3BF", lang = "en" }) {
                 style={{
                   fontSize: 32,
                   fontWeight: 500,
+                  fontFamily: HEAD,   // data numeral: Oswald 500, tabular, no tracking (display numerals are 300)
+                  letterSpacing: 0,
                   color: "#012A30",
                   fontVariantNumeric: "tabular-nums",
                 }}

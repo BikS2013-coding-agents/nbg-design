@@ -35,7 +35,7 @@ Usage: node embed-assets.mjs <deck.html> [-o <out.html>] [--theme <nbg|biks2013>
   --theme <name>  Take the assets of that theme: nbg (default, NBG-Design/assets), biks2013
                   (BikS2013-Design/assets) or aihub (AIHub-Design/assets, then NBG-Design/assets for the
                   shared technology photography). The tokens are the same in every theme; font tokens
-                  ({{FONT_OSWALD_500}} -> font-oswald-500.datauri.txt, a data:font/ URI) work the same way.
+                  ({{FONT_OSWALD}} -> font-oswald.datauri.txt, a data:font/ URI) work the same way.
   --assets <dir>  Override the assets directory (default: the theme's assets).
 
 Tokens map to files by lower-casing and turning '_' into '-', then adding '.datauri.txt':

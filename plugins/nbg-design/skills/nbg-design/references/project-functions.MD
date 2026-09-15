@@ -299,19 +299,19 @@ Author with tokens, then `embed-assets.mjs <deck> --theme biks2013`, `add-deck-m
 
 ### Function
 
-A third theme — the AIHub theme, after the NBG Technology Hub developer portal — selectable per deck for AI Hub, Technology Hub and developer-facing presentations.
+A third theme — the AIHub theme of the NBG AI Hub, after the NBG developer portal — selectable per deck for AI Hub and developer-facing presentations.
 
 ### Files
 
-- `AIHub-Design/AIHub Design System.html`, `AIHub-Design/slide-templates.jsx`, `AIHub-Design/tweaks-panel.jsx`, `AIHub-Design/assets/logo-{knockout,primary,small,mark,mark-navy}.png` (+ `.datauri.txt`), `AIHub-Design/assets/font-oswald-{300,400,500,700}.woff2` (+ `.datauri.txt`).
+- `AIHub-Design/AIHub Design System.html`, `AIHub-Design/slide-templates.jsx`, `AIHub-Design/tweaks-panel.jsx`, `AIHub-Design/assets/logo-{knockout,primary,small,mark,mark-navy}.png` (+ `.datauri.txt`), `AIHub-Design/assets/font-oswald.woff2` (+ `.datauri.txt`, the variable font).
 - `scripts/embed-assets.mjs` (per-theme asset search path, font tokens), `scripts/add-deck-menu.mjs --theme aihub`, `scripts/lib/deck-menu.js` (block v15, theme table), `scripts/verify-deck.mjs`.
 
 ### Functional Requirements
 
 1. The theme is `aihub` when the deck is for the AI Hub, the NBG Technology Hub, the developer portal or a developer audience, or when the user names it; when unclear, the agent asks.
-2. An AIHub deck uses only the AIHub palette, Oswald (embedded through the font tokens) for titles and numerals with the Segoe UI stack for body, the NBG Technology Hub lockups, and the NBG technology photography (shared); never the corporate NBG lockup or the lifestyle photos.
+2. An AIHub deck uses only the AIHub palette, Oswald (embedded through the font tokens) for titles and numerals with the Segoe UI stack for body, the NBG AI Hub lockups, and the NBG technology photography (shared); never the corporate NBG lockup or the lifestyle photos. Data numerals are Oswald 500 tabular (display numerals 300); photos feather into the ground with a bottom scrim; a slide renders the lockup once.
 3. `embed-assets.mjs --theme aihub` resolves tokens from `AIHub-Design/assets/` and then `NBG-Design/assets/`; `add-deck-menu.mjs --theme aihub` makes the toolbars offer the AIHub palette, briefs the assistant and titles the menu "AIHub deck".
 
 ### How to Use
 
-Author with tokens (logos, photos, `{{FONT_OSWALD_*}}` in `@font-face`), then the standard pipeline with `--theme aihub` on the embedder and the menu script — see SKILL.md "Themes".
+Author with tokens (logos, photos, `{{FONT_OSWALD}}` in `@font-face`), then the standard pipeline with `--theme aihub` on the embedder and the menu script — see SKILL.md "Themes".

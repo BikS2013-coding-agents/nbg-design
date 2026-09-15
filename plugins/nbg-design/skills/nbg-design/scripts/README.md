@@ -41,8 +41,8 @@ node "<skill-root>/scripts/embed-assets.mjs" my-deck.html
 - `--theme <name>` takes the assets of a theme instead of the NBG ones (`--theme nbg`, the default): `biks2013`
   resolves from `BikS2013-Design/assets/`; `aihub` from `AIHub-Design/assets/` and then, for the shared technology
   photography, from `NBG-Design/assets/` (each theme declares its search path; its own folder always wins). The
-  tokens are the same in every theme, and font tokens work the same way (`{{FONT_OSWALD_500}}` →
-  `font-oswald-500.datauri.txt`, a `data:font/woff2` URI for `@font-face`). `--assets <dir>` still overrides the
+  tokens are the same in every theme, and font tokens work the same way (`{{FONT_OSWALD}}` →
+  `font-oswald.datauri.txt`, a `data:font/woff2` URI for `@font-face`). `--assets <dir>` still overrides the
   directory outright. Unknown theme names fail.
 - `-o out.html` writes to a new file; default overwrites in place.
 
@@ -593,7 +593,7 @@ The themes are one table in `lib/deck-menu.js` (`THEMES`: name, accents, font, p
 default) is the NBG editor as before. Re-running the CLI without `--theme` keeps the theme the block
 carries, as it keeps every other configuration key, and the rebuild script carries it over on every
 rebuild. `theme` is the sixth configuration key next to `mode`, `root`, `unit`, `title` and `aiSystem`;
-only `nbg`, `biks2013` and `aihub` are accepted.
+only `nbg`, `biks2013` and `aihub` are accepted (block v16 names the AIHub brand "NBG AI Hub" in the assistant's briefing).
 
 ## 6. Rebuild script — `write-rebuild-script.mjs`
 
@@ -648,7 +648,7 @@ node my-deck.rebuild.mjs --scripts <dir>    # the skill's scripts/ directory, ex
 ```
 # 1. author my-deck.html using {{TOKEN}} placeholders for every image
 #    (a BikS2013 personal deck: add --theme biks2013 to embed-assets.mjs and add-deck-menu.mjs below;
-#     an AIHub deck: --theme aihub, and declare the Oswald @font-face rules through the {{FONT_OSWALD_*}} tokens)
+#     an AIHub deck: --theme aihub, and declare the Oswald @font-face rule through the {{FONT_OSWALD}} token)
 node "<skill-root>/scripts/embed-assets.mjs"    my-deck.html
 node "<skill-root>/scripts/add-deck-menu.mjs"   my-deck.html            # standard: right-click menu (edit text / export PDF)
 node "<skill-root>/scripts/verify-deck.mjs"     my-deck.html --strict   # mandatory, headless-safe

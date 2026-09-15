@@ -77,11 +77,12 @@ write-ups: ink and copper on warm paper, Avenir Next, and the BikS2013 wheel loc
 (`BikS2013-Design/`). A deck is authored with the same `{{LOGO_*}}` tokens and built with
 `embed-assets.mjs --theme biks2013` and `add-deck-menu.mjs --theme biks2013`; the in-deck toolbars then
 offer the BikS2013 palette, the assistant is briefed on it, and the rebuild script keeps the theme.
-Since v1.21.0 a third theme, `aihub`, carries the look of the NBG Technology Hub developer portal
-(developer.nbg.gr) for AI Hub and developer-facing material: navy-to-lagoon grounds, Oswald condensed
-uppercase titles (embedded through font tokens), sun-yellow bracketed eyebrows, a circuit-line motif, the
-NBG Technology Hub lockups, and the NBG technology photography shared through the theme's asset search
-path (`AIHub-Design/`). `SKILL.md` → "Themes" holds the selection rule (the bank's material stays `nbg`;
+Since v1.21.0 a third theme, `aihub`, carries the look of the NBG developer portal (developer.nbg.gr)
+for the **NBG AI Hub** and developer-facing material: navy-to-lagoon grounds, Oswald condensed uppercase
+titles (embedded through font tokens), sun-yellow bracketed eyebrows, a circuit-line motif, photos that
+feather into the ground, the NBG AI Hub lockups, and the NBG technology photography shared through the
+theme's asset search path (`AIHub-Design/`). v1.22.0 folds in the pilot findings: data numerals in Oswald
+500, the feather-and-scrim photo treatment, one lockup per slide, the "NBG AI Hub" name and lockup. `SKILL.md` → "Themes" holds the selection rule (the bank's material stays `nbg`;
 never mix themes on one deck), each palette, type stack and logo rules. The theme's photography is still under
 review, so BikS2013 decks currently use the type-led templates or a photo the user supplies.
 

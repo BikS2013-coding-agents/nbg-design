@@ -190,14 +190,14 @@
  *   - unit:  the label of one root in the UI ('Slide' by default, 'Section' in page mode);
  *   - title: the menu's header and the detached windows' title ('NBG deck' / 'Page editor');
  *   - aiSystem: replaces the assistant's system prompt.
- *   - theme: 'nbg' (default), 'biks2013' (block v14) or 'aihub' (block v15) — the swatches of the formatting, shape and SVG
+ *   - theme: 'nbg' (default), 'biks2013' (block v14) or 'aihub' (block v15; v16 names the brand NBG AI Hub) — the swatches of the formatting, shape and SVG
  *            toolbars, the editor's own accent colours and font, the assistant's system prompt and built-in
  *            prompts, and the default title follow the theme (SKILL.md "Themes").
  * Nothing else changes: the same edits, records, storage keys, saved copy and API.
  */
 (function () {
   if (window.nbgDeck) return;
-  var VERSION = 15;
+  var VERSION = 16;
   // configuration hook (see the header): root selector, page mode, labels
   var CFG = (typeof window.nbgDeckMenuConfig === 'object' && window.nbgDeckMenuConfig) || {};
   function cfgStr(k) { return typeof CFG[k] === 'string' && CFG[k].trim() ? CFG[k].trim() : ''; }
@@ -219,7 +219,7 @@
     aihub: { name: 'AIHub', accent: '#012A30', cyan: '#1C869D', ink: '#0B1F26', cream: '#F3F6F8', muted: '#5C6B73',
       font: "'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif",
       palette: [['#012A30', 'Navy'], ['#024A6C', 'Deep blue'], ['#1C869D', 'Lagoon'], ['#33B3BF', 'Cyan'], ['#FFF77D', 'Sun'], ['#FFDB7A', 'Amber'], ['#B1BACC', 'Grey'], ['#F3F6F8', 'Mist'], ['#FFFFFF', 'White']],
-      ai: 'You are assisting a viewer of an HTML slide deck built with the AIHub presentation theme of the nbg-design skill, inspired by the NBG Technology Hub developer portal (developer.nbg.gr): 1920×1080 slides, Oswald (condensed, uppercase) for titles and numerals with the Segoe UI / Helvetica stack for body text, and the AIHub palette — navy #012A30, deep blue #024A6C, ocean #005782, lagoon #1C869D, cyan #33B3BF, sun yellow #FFF77D, amber #FFDB7A, grey #B1BACC, mist #F3F6F8, white #FFFFFF. ' }
+      ai: 'You are assisting a viewer of an HTML slide deck built with the AIHub presentation theme of the nbg-design skill — the theme of the NBG AI Hub (write the brand as "NBG AI Hub"), after the NBG developer portal developer.nbg.gr: 1920×1080 slides, Oswald (condensed, uppercase) for titles and numerals with the Segoe UI / Helvetica stack for body text, and the AIHub palette — navy #012A30, deep blue #024A6C, ocean #005782, lagoon #1C869D, cyan #33B3BF, sun yellow #FFF77D, amber #FFDB7A, grey #B1BACC, mist #F3F6F8, white #FFFFFF. ' }
   };
   var THEME = THEMES[cfgStr('theme')] ? cfgStr('theme') : 'nbg', THEME_DEF = THEMES[THEME], THEME_NAME = THEME_DEF.name;
   var TITLE = cfgStr('title') || (PAGE_MODE ? 'Page editor' : THEME_NAME + ' deck');

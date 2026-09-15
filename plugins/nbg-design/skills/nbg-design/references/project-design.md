@@ -255,12 +255,28 @@ This project contains the assets of a presentation design system inspired by the
   "[ link ]" labels, circuit-line decorations, and the white "NBG Technology Hub" logo (a dashed-line
   building over a spaced wordmark). The theme folder `AIHub-Design/` mirrors the other two; the lockups
   are rendered from the portal's PNG (white as published for dark grounds, navy-tinted for light, footer
-  size, the building alone); the Oswald faces (OFL, latin subset, 300–700) are bundled as
-  `font-oswald-<weight>.woff2` + data URIs and embedded through `{{FONT_OSWALD_<weight>}}` tokens; the
+  size, the building alone); the Oswald variable font (OFL, latin subset, weights 200–700) is bundled as
+  `font-oswald.woff2` + data URI and embedded through the `{{FONT_OSWALD}}` token; the
   NBG technology photography is shared through a per-theme **asset search path** in `embed-assets.mjs`
   (`aihub: ['AIHub-Design', 'NBG-Design']`), which also accepts `data:font/` URIs. `deck-menu.js` (block
   v15) now keeps the themes in one table (`THEMES`: name, accents, font, palette, briefing) instead of
   per-theme ternaries. Greek titles fall back to a condensed system face (Oswald has no Greek glyphs).
+
+### AIHub pilot findings folded in (skill v1.22.0, block v16)
+
+- **Request (2026-09-15).** The first deck built on the AIHub theme ("Claude Code on DeepSeek", 16 slides)
+  was reviewed and its fixes recorded as skill feedback: data figures in Oswald 300 were illegible at
+  viewport scale; photos met the ground as a hard card with a vignette band; covers rendered the lockup
+  twice (hero plus footer); the brand is "NBG AI Hub", and the bundled lockup read "Technology Hub".
+- **Design.** (1) Two numeral kinds in SKILL.md and the templates: display numerals (≥ 48 px) Oswald 300,
+  data numerals (≤ 36 px) Oswald 500, tabular, no negative tracking, ≥ 26 px. (2) Photos bleed into the
+  ground: full-height photo off the edge, a feather (ground colour → transparent, 60 % solid) and a bottom
+  scrim wherever the photo runs under the footer or lockup; `Cover1` and `DividerImage` of the AIHub
+  templates carry it. (3) A guardrail for every theme: a slide renders the lockup once — hero lockup on
+  covers and back covers without a footer, footer lockup elsewhere; in the checklist. (4) The theme's brand
+  is NBG AI Hub: a new lockup composed from the portal's building mark and a "NBG AI — HUB" wordmark in the
+  portal's manner replaces the Technology Hub lockups (kept in the development docs); templates, page,
+  SKILL.md, the assistant's briefing (block v16) and the verifier's bare-text check use the new name.
 
 ## Configuration Policy
 - Secrets, API keys, tokens, and expiring credentials must not be stored in project YAML files.

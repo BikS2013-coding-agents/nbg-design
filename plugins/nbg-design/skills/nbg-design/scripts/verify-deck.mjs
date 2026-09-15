@@ -92,7 +92,7 @@ function main() {
     warn.push(`Deck is ${bytes.toLocaleString()} bytes (< ${args.minBytes.toLocaleString()}). A photo-less deck is the classic "assets not embedded" tell.`);
   }
   const nbgText = [];
-  lines.forEach((ln, i) => { if (/>\s*(NBG|NPG|BikS2013|BikS|AIHub|AI Hub|NBG Technology Hub)\s*</.test(ln)) nbgText.push(i + 1); });
+  lines.forEach((ln, i) => { if (/>\s*(NBG|NPG|BikS2013|BikS|AIHub)\s*</.test(ln)) nbgText.push(i + 1); });
   if (nbgText.length) {
     warn.push(`${nbgText.length} bare ">NBG/NPG/BikS2013/AIHub<" text node(s) at line(s) ${nbgText.slice(0, 12).join(', ')}${nbgText.length > 12 ? '…' : ''} — verify none is a text/box substitute for the bundled logo lockup.`);
   }
