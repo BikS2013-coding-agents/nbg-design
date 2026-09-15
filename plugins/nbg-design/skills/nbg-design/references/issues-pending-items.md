@@ -177,3 +177,10 @@ gains a catalogue table. The templates reference `assets/photo-{city-ride,road-d
 and hide a missing photo. Observed on the same day: Gemini 3.8 Flash's native image output answers
 "Image generation is not available in your country" (HTTP 400, `FAILED_PRECONDITION`) from Greece,
 while `gemini-3.1-flash-image` works — a regional restriction, not a key problem.
+
+### 2026-09-15 — Note: Oswald carries no Greek glyphs (AIHub theme, skill v1.21.0)
+
+The AIHub theme's title face, Oswald (bundled, latin subset), has no Greek characters; Greek titles on an
+AIHub deck render in the condensed system fallback (`Avenir Next Condensed` / `Arial Narrow`). Documented in
+SKILL.md "Themes"; a Greek-capable condensed face would be a design-system decision. Sun yellow `#FFF77D`
+is illegible on light surfaces by design and is restricted to dark grounds.

@@ -38,9 +38,12 @@ node "<skill-root>/scripts/embed-assets.mjs" my-deck.html
 - Define each token **once** (e.g. a CSS `background-image: url("{{PHOTO_STREET}}")` class)
   and reuse the class, so the large URI appears only once in the file.
 - Fails loudly if a token has no matching asset or the asset isn't a `data:image/` URI.
-- `--theme biks2013` takes the assets of the BikS2013 personal theme (`BikS2013-Design/assets/`) instead of
-  the NBG ones (`--theme nbg`, the default); the tokens are the same in every theme. `--assets <dir>` still
-  overrides the directory outright. Unknown theme names fail.
+- `--theme <name>` takes the assets of a theme instead of the NBG ones (`--theme nbg`, the default): `biks2013`
+  resolves from `BikS2013-Design/assets/`; `aihub` from `AIHub-Design/assets/` and then, for the shared technology
+  photography, from `NBG-Design/assets/` (each theme declares its search path; its own folder always wins). The
+  tokens are the same in every theme, and font tokens work the same way (`{{FONT_OSWALD_500}}` →
+  `font-oswald-500.datauri.txt`, a `data:font/woff2` URI for `@font-face`). `--assets <dir>` still overrides the
+  directory outright. Unknown theme names fail.
 - `-o out.html` writes to a new file; default overwrites in place.
 
 ## 2. Verify the deck — `verify-deck.mjs`
@@ -576,18 +579,21 @@ node "<skill-root>/scripts/add-deck-menu.mjs" my-deck.html [-o <out.html>] [--re
 - The CLI exporter prints the file on disk, not a viewer's unsaved edits: to get a PDF of an
   edited deck, export the saved `-edited.html` copy.
 
-### The theme (block v14, v1.20.0)
+### The theme (block v14, v1.20.0; block v15 adds `aihub`, v1.21.0)
 
 `add-deck-menu.mjs <deck> --theme biks2013` records `{"theme":"biks2013"}` in the block's configuration
 (`window.nbgDeckMenuConfig`), and the editor then serves the BikS2013 personal theme: the swatches of the
 formatting, shape and SVG toolbars are the BikS2013 palette (ink `#1B1D21`, copper `#C8623A`, copper
 light `#E08A5E`, amber `#E3A64A`, black `#111316`, grey `#6E7379`, paper `#F6F3EC`, white), the
 editor's own accent colours and font follow the theme, the assistant's system prompt and its built-in
-prompts speak of the BikS2013 system, and the menu is titled "BikS2013 deck". `--theme nbg` (the
+prompts speak of the BikS2013 system, and the menu is titled "BikS2013 deck". `--theme aihub` (block v15) serves the AIHub theme the same way: the AIHub palette (navy `#012A30`, deep blue
+`#024A6C`, lagoon `#1C869D`, cyan `#33B3BF`, sun `#FFF77D`, amber `#FFDB7A`, grey `#B1BACC`, mist `#F3F6F8`,
+white), the Segoe UI editor font, an assistant briefed on the developer-portal look, the title "AIHub deck".
+The themes are one table in `lib/deck-menu.js` (`THEMES`: name, accents, font, palette, briefing). `--theme nbg` (the
 default) is the NBG editor as before. Re-running the CLI without `--theme` keeps the theme the block
 carries, as it keeps every other configuration key, and the rebuild script carries it over on every
 rebuild. `theme` is the sixth configuration key next to `mode`, `root`, `unit`, `title` and `aiSystem`;
-only `nbg` and `biks2013` are accepted.
+only `nbg`, `biks2013` and `aihub` are accepted.
 
 ## 6. Rebuild script — `write-rebuild-script.mjs`
 
@@ -641,7 +647,8 @@ node my-deck.rebuild.mjs --scripts <dir>    # the skill's scripts/ directory, ex
 
 ```
 # 1. author my-deck.html using {{TOKEN}} placeholders for every image
-#    (a BikS2013 personal deck: add --theme biks2013 to embed-assets.mjs and add-deck-menu.mjs below)
+#    (a BikS2013 personal deck: add --theme biks2013 to embed-assets.mjs and add-deck-menu.mjs below;
+#     an AIHub deck: --theme aihub, and declare the Oswald @font-face rules through the {{FONT_OSWALD_*}} tokens)
 node "<skill-root>/scripts/embed-assets.mjs"    my-deck.html
 node "<skill-root>/scripts/add-deck-menu.mjs"   my-deck.html            # standard: right-click menu (edit text / export PDF)
 node "<skill-root>/scripts/verify-deck.mjs"     my-deck.html --strict   # mandatory, headless-safe

@@ -21,8 +21,10 @@ import { dirname, resolve } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SKILL_ROOT = resolve(__dirname, '..');                       // scripts/ -> skill root
-const THEMES = { nbg: 'NBG-Design', biks2013: 'BikS2013-Design' };   // theme -> its folder in the skill (SKILL.md "Themes")
-const DEFAULT_ASSETS = resolve(SKILL_ROOT, THEMES.nbg, 'assets');
+// theme -> the folders its tokens resolve from, in order (SKILL.md "Themes"). A theme that declares a second
+// folder shares that folder's photography (aihub shares the NBG technology set); its own folder always wins.
+const THEMES = { nbg: ['NBG-Design'], biks2013: ['BikS2013-Design'], aihub: ['AIHub-Design', 'NBG-Design'] };
+const DEFAULT_ASSETS = resolve(SKILL_ROOT, THEMES.nbg[0], 'assets');
 
 const USAGE = `NBG asset embedder
 Usage: node embed-assets.mjs <deck.html> [-o <out.html>] [--theme <nbg|biks2013>] [--assets <dir>]
@@ -30,8 +32,10 @@ Usage: node embed-assets.mjs <deck.html> [-o <out.html>] [--theme <nbg|biks2013>
   <deck.html>     HTML deck containing {{TOKEN}} placeholders
                   (e.g. {{LOGO_KNOCKOUT}}, {{LOGO_PRIMARY}}, {{LOGO_SMALL}}, {{PHOTO_STREET}}).
   -o, --out       Output path (default: overwrite the input file in place).
-  --theme <name>  Take the assets of that theme: nbg (default, NBG-Design/assets) or biks2013
-                  (BikS2013-Design/assets). The tokens are the same in every theme.
+  --theme <name>  Take the assets of that theme: nbg (default, NBG-Design/assets), biks2013
+                  (BikS2013-Design/assets) or aihub (AIHub-Design/assets, then NBG-Design/assets for the
+                  shared technology photography). The tokens are the same in every theme; font tokens
+                  ({{FONT_OSWALD_500}} -> font-oswald-500.datauri.txt, a data:font/ URI) work the same way.
   --assets <dir>  Override the assets directory (default: the theme's assets).
 
 Tokens map to files by lower-casing and turning '_' into '-', then adding '.datauri.txt':
@@ -63,9 +67,11 @@ function main() {
   const input = resolve(process.cwd(), args._[0]);
   const out = args.out ? resolve(process.cwd(), args.out) : input;
   if (args.theme && !THEMES[args.theme]) fail(`unknown theme "${args.theme}" (known: ${Object.keys(THEMES).join(', ')})`);
-  const assetsDir = args.assets ? resolve(process.cwd(), args.assets) : args.theme ? resolve(SKILL_ROOT, THEMES[args.theme], 'assets') : DEFAULT_ASSETS;
+  const assetsDirs = args.assets ? [resolve(process.cwd(), args.assets)] : args.theme ? THEMES[args.theme].map((d) => resolve(SKILL_ROOT, d, 'assets')) : [DEFAULT_ASSETS];
+  const assetsDir = assetsDirs[0];
 
   if (!existsSync(input)) fail(`input not found: ${input}`);
+  for (const d of assetsDirs) if (!existsSync(d)) fail(`assets directory not found: ${d}`);
   if (!existsSync(assetsDir)) {
     fail(`assets directory not found: ${assetsDir}\n` +
          `  The skill's NBG-Design/assets folder must travel with this script.\n` +
@@ -82,14 +88,16 @@ function main() {
 
   const report = [];
   for (const tok of tokens) {
-    const file = resolve(assetsDir, tokenToFile(tok));
-    if (!existsSync(file)) {
-      fail(`no asset for token {{${tok}}} (looked for ${tokenToFile(tok)} in ${assetsDir}).\n` +
-           `  Valid asset stems: ${availableStems(assetsDir).join(', ') || '(none found)'}`);
+    // first folder of the theme's search path that has the asset wins (the theme's own folder comes first)
+    const dir = assetsDirs.find((d) => existsSync(resolve(d, tokenToFile(tok))));
+    if (!dir) {
+      fail(`no asset for token {{${tok}}} (looked for ${tokenToFile(tok)} in ${assetsDirs.join(', ')}).\n` +
+           `  Valid asset stems: ${[...new Set(assetsDirs.flatMap((d) => existsSync(d) ? availableStems(d) : []))].join(', ') || '(none found)'}`);
     }
+    const file = resolve(dir, tokenToFile(tok));
     const uri = readFileSync(file, 'utf8').trim();
-    if (!uri.startsWith('data:image/')) {
-      fail(`${tokenToFile(tok)} does not start with "data:image/" (got ${JSON.stringify(uri.slice(0, 24))}).`);
+    if (!uri.startsWith('data:image/') && !uri.startsWith('data:font/')) {
+      fail(`${tokenToFile(tok)} does not start with "data:image/" or "data:font/" (got ${JSON.stringify(uri.slice(0, 24))}).`);
     }
     const re = new RegExp(`\\{\\{${tok}\\}\\}`, 'g');
     const count = (html.match(re) || []).length;

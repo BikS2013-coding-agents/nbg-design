@@ -294,3 +294,24 @@ system, for presentations given in a personal capacity under the BikS2013 label.
 ### How to Use
 
 Author with tokens, then `embed-assets.mjs <deck> --theme biks2013`, `add-deck-menu.mjs <deck> --theme biks2013`, `verify-deck.mjs <deck> --strict`, `write-rebuild-script.mjs`, `export-pdf.mjs` — see SKILL.md "Themes".
+
+## AIHub Theme (skill v1.21.0)
+
+### Function
+
+A third theme — the AIHub theme, after the NBG Technology Hub developer portal — selectable per deck for AI Hub, Technology Hub and developer-facing presentations.
+
+### Files
+
+- `AIHub-Design/AIHub Design System.html`, `AIHub-Design/slide-templates.jsx`, `AIHub-Design/tweaks-panel.jsx`, `AIHub-Design/assets/logo-{knockout,primary,small,mark,mark-navy}.png` (+ `.datauri.txt`), `AIHub-Design/assets/font-oswald-{300,400,500,700}.woff2` (+ `.datauri.txt`).
+- `scripts/embed-assets.mjs` (per-theme asset search path, font tokens), `scripts/add-deck-menu.mjs --theme aihub`, `scripts/lib/deck-menu.js` (block v15, theme table), `scripts/verify-deck.mjs`.
+
+### Functional Requirements
+
+1. The theme is `aihub` when the deck is for the AI Hub, the NBG Technology Hub, the developer portal or a developer audience, or when the user names it; when unclear, the agent asks.
+2. An AIHub deck uses only the AIHub palette, Oswald (embedded through the font tokens) for titles and numerals with the Segoe UI stack for body, the NBG Technology Hub lockups, and the NBG technology photography (shared); never the corporate NBG lockup or the lifestyle photos.
+3. `embed-assets.mjs --theme aihub` resolves tokens from `AIHub-Design/assets/` and then `NBG-Design/assets/`; `add-deck-menu.mjs --theme aihub` makes the toolbars offer the AIHub palette, briefs the assistant and titles the menu "AIHub deck".
+
+### How to Use
+
+Author with tokens (logos, photos, `{{FONT_OSWALD_*}}` in `@font-face`), then the standard pipeline with `--theme aihub` on the embedder and the menu script — see SKILL.md "Themes".

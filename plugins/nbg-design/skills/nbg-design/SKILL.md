@@ -1,6 +1,6 @@
 ---
 name: nbg-design
-description: Use when creating presentations in a design system inspired by the brand image of the National Bank of Greece (NBG), HTML slides (with a built-in right-click menu for in-place text editing with a formatting toolbar, shape resize/move, editing of the parts of inline SVGs, an AI assistant panel, "Export to PDF" and "Save edited copy", plus a per-deck rebuild script that re-embeds newer versions of those editing tools), updating an existing deck to the skill's current editing tools, slide specifications, PDF exports of HTML decks (one page per slide, aesthetics preserved) — all on the bundled NBG-inspired presentation design system, templates, logos, photography, screenshots, and guardrails. Also ships the BikS2013 personal theme (ink and copper on warm paper, the BikS2013 wheel lockups) for presentations given in a personal capacity, selected per deck with the same templates, scripts and guardrails.
+description: Use when creating presentations in a design system inspired by the brand image of the National Bank of Greece (NBG), HTML slides (with a built-in right-click menu for in-place text editing with a formatting toolbar, shape resize/move, editing of the parts of inline SVGs, an AI assistant panel, "Export to PDF" and "Save edited copy", plus a per-deck rebuild script that re-embeds newer versions of those editing tools), updating an existing deck to the skill's current editing tools, slide specifications, PDF exports of HTML decks (one page per slide, aesthetics preserved) — all on the bundled NBG-inspired presentation design system, templates, logos, photography, screenshots, and guardrails. Also ships the BikS2013 personal theme (ink and copper on warm paper, the BikS2013 wheel lockups) for presentations given in a personal capacity, selected per deck with the same templates, scripts and guardrails, and the AIHub theme (navy, lagoon and sun yellow after the NBG Technology Hub developer portal, Oswald titles embedded, the Technology Hub lockups) for AI Hub and developer-facing material.
 ---
 
 # NBG Design
@@ -34,7 +34,7 @@ Approved defaults:
 - If no deck language is specified, use English (`en`). The design system supports `en` (English), `gr` (Greek) and `bi` (bilingual); any other value must come from the user.
 - If no final output format is specified, use HTML (`html`).
 - The NBG logo is shown (`show_logo: true`) unless the user asks to hide it.
-- The theme is `nbg` unless the user asks for a personal / BikS2013 presentation, or says the deck is not for the bank — then `biks2013` (see "Themes"). When it is unclear whether a deck is the bank's or personal, ask.
+- The theme is `nbg` unless the user asks for a personal / BikS2013 presentation, or says the deck is not for the bank — then `biks2013` — or unless the deck is for the AI Hub / NBG Technology Hub / a developer audience — then `aihub` (see "Themes"). When it is unclear which theme a deck belongs to, ask.
 
 Supported output formats: `html` (default) and `pdf` (always exported from the finished HTML deck — see "PDF output"). **PowerPoint (.pptx) is out of scope**: this skill produces HTML presentations and their PDF export only. If PowerPoint is requested, say so plainly and deliver the HTML deck (and its PDF) instead — never improvise a conversion. A request for "a PDF", "PDF version", "print version", or "send as PDF" selects `pdf`.
 
@@ -44,16 +44,17 @@ The skill holds no credentials. API keys for the in-deck assistant (`ANTHROPIC_A
 
 ## Themes
 
-The skill ships two themes. Both share the 1920×1080 geometry, the nine templates (same names, same props), every guardrail in this file, the scripts, the in-deck menu, the rebuild script and the PDF export. A theme decides the folder the design-system files and assets come from, the palette, the font stack and the logo lockups.
+The skill ships three themes. All share the 1920×1080 geometry, the nine templates (same names, same props), every guardrail in this file, the scripts, the in-deck menu, the rebuild script and the PDF export. A theme decides the folder the design-system files and assets come from, the palette, the font stack and the logo lockups.
 
 | Theme | Use | Folder | Palette | Type | Logo |
 | --- | --- | --- | --- | --- | --- |
 | `nbg` (default) | the bank's material: presentations for or about the National Bank of Greece | `NBG-Design/` | teal-led ("Design-system reference") | Aptos | the NBG lockups |
 | `biks2013` | presentations given in a personal capacity under the **BikS2013** label: talks, meetups, workshops, project write-ups, field notes | `BikS2013-Design/` | ink and copper on warm paper (below) | Avenir Next | the BikS2013 wheel lockups |
+| `aihub` | **AI Hub / NBG Technology Hub** and developer-facing material — API products, developer meetups, hackathons, the AI Hub programme — after the developer portal developer.nbg.gr | `AIHub-Design/` (photos shared from `NBG-Design/`) | navy and lagoon with a sun-yellow spark (below) | Oswald titles (embedded), Segoe UI body | the NBG Technology Hub lockups |
 
 Selecting the theme:
 
-- `nbg` unless the user asks for a personal / BikS2013 presentation, names the BikS2013 label, or says the deck is not for the bank — then `biks2013`. When it is unclear whether a deck is the bank's or personal, ask; never guess.
+- `nbg` unless the user asks for a personal / BikS2013 presentation, names the BikS2013 label, or says the deck is not for the bank — then `biks2013`; or unless the deck is for the AI Hub, the NBG Technology Hub, the developer portal or a developer audience, or the user names the AIHub theme — then `aihub`. When it is unclear which theme a deck belongs to, ask; never guess.
 - One theme per deck. Never put NBG teal or cyan, NBG photography or the NBG logo on a BikS2013 deck, and never put copper, the wheel lockups or BikS2013 copy on an NBG deck.
 - Every mention of "NBG" in the rules below (folder, palette, lockups, font stack) reads as the selected theme's folder, palette, lockups and font stack. Nothing else changes.
 
@@ -85,6 +86,33 @@ Style: the line-art bicycle mark sets the tone — thin hairline rules, a dotted
 Logo: the BikS2013 lockup is a copper **wheel emblem** (rim, dashed inner arc, six spokes, hub) beside the wordmark `BikS2013` ("BikS" in the text colour, "2013" in copper), in `BikS2013-Design/assets/`: `logo-primary` (ink wordmark, for light backgrounds), `logo-knockout` (white wordmark, for dark backgrounds), `logo-small` (the primary lockup at footer size) and `logo-mark` (the wheel alone, square, for tight spots — token `{{LOGO_MARK}}`); the SVG sources sit next to the PNGs. The rules of "Logo rendering (MANDATORY)" apply unchanged: always the bundled image through its data URI, never a text label, initials, a box or a CSS/SVG re-creation.
 
 Photography: none is bundled yet. A 21-image candidate set (seven subjects — the re-drawn logo mark, a workshop with a bicycle frame, a drivetrain macro, a dawn road, an ink-and-copper "agents" still-life, a home office, a city ride — each by OpenAI GPT Image 2.5 Flare, GPT Image 2.5 Sunburst and Google Gemini 3.1 Flash Image) awaits the user's review in the development workspace (`docs/nbg-design-docs/biks2013-theme/candidates/gallery.html`); the chosen photos enter `BikS2013-Design/assets/` as `photo-<subject>.jpeg` + `.datauri.txt` and a catalogue table is added here. Until then, build BikS2013 decks on the type-led templates (`Cover3`, `DividerDark`, `DividerBright`, `ContentTwoColumn`, `ContentStat`) or on a photo the user supplies (embedded as a data URI). Do not borrow the NBG technology set (it is teal-toned, off this palette); the five NBG lifestyle photos may serve only as a stopgap the user agrees to. Never approximate a photo with a gradient.
+
+Under `aihub` (the look of the NBG Technology Hub developer portal, developer.nbg.gr — for AI Hub, Technology Hub and developer-facing material):
+
+1. Read `AIHub-Design/AIHub Design System.html` and `AIHub-Design/slide-templates.jsx` instead of the NBG files (same template names; the page's photos come from `../NBG-Design/assets/`).
+2. Tokens: `{{LOGO_PRIMARY}}` (the lockup tinted navy, for light backgrounds), `{{LOGO_KNOCKOUT}}` (white, as published, for dark backgrounds), `{{LOGO_SMALL}}` (footer size), `{{LOGO_MARK}}` / `{{LOGO_MARK_NAVY}}` (the dashed building alone); the Oswald faces `{{FONT_OSWALD_300}}`, `{{FONT_OSWALD_400}}`, `{{FONT_OSWALD_500}}`, `{{FONT_OSWALD_700}}` (`data:font/woff2` URIs for `@font-face`); and the NBG **technology** photography `{{PHOTO_<SUBJECT>_<N>}}` ("Photography catalogue") — the theme's asset search path is `AIHub-Design/assets/`, then `NBG-Design/assets/`, so the 21 technology photos are shared. The five NBG lifestyle photos stay NBG-only: never place them on an AIHub deck.
+3. Embed with `node "<skill-root>/scripts/embed-assets.mjs" <deck>.html --theme aihub`; add the menu with `node "<skill-root>/scripts/add-deck-menu.mjs" <deck>.html --theme aihub` (the toolbars offer the AIHub palette, the assistant is briefed on it, the menu is titled "AIHub deck", the rebuild script keeps the theme). Everything else runs as for an NBG deck.
+4. Fonts (MANDATORY for this theme): declare the Oswald faces once in the deck's CSS through the tokens, e.g. `@font-face { font-family: "Oswald"; font-weight: 500; src: url("{{FONT_OSWALD_500}}") format("woff2"); }` (300 and 500 at least; 400 / 700 when used). Titles, eyebrows and numerals use `"Oswald", "Avenir Next Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif`, **uppercase**, weight 500 (numerals 300); body copy uses `"Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif`. Oswald (Open Font License) carries no Greek glyphs: Greek titles fall back to the condensed system face — keep them short and check the render.
+
+AIHub palette (the only colours an AIHub deck, and its toolbars, may use):
+
+| Token | Hex | Role |
+| --- | --- | --- |
+| navy | `#012A30` | primary text on light surfaces; the ground of covers and dividers, as the gradient `linear-gradient(160deg, #012A30 0%, #024A6C 100%)` |
+| deep blue | `#024A6C` | the gradient's end; buttons and cards on dark |
+| ocean | `#005782` | secondary dark surface |
+| lagoon | `#1C869D` | the accent on light surfaces: eyebrows, rules, numerals |
+| cyan | `#33B3BF` | secondary highlight, chart series |
+| sun | `#FFF77D` | the accent on dark surfaces: bracketed eyebrows, numerals, one line of a title, links — never on a light surface |
+| amber | `#FFDB7A` | second highlight, sparingly |
+| grey 1 | `#B1BACC` | rules, muted surfaces |
+| grey 2 | `#5C6B73` | secondary text (the toolbars' *Grey*) |
+| mist | `#F3F6F8` | light page background |
+| white | `#FFFFFF` | text on dark panels; cards on mist |
+
+Style: eyebrows are written in square brackets — `[ Getting started ]` — the portal's link style; the circuit-line pattern (thin lines joining small node dots, sun yellow at about 14 % opacity) is the texture of typographic covers and may sit behind a cover's copy, never in front of it; Oswald uppercase titles with slightly negative tracking; content pages on white or mist, mostly monochrome, one accent per slide.
+
+Logo: the **NBG Technology Hub** lockup of the developer portal (the dashed-line building over the spaced wordmark), in `AIHub-Design/assets/`: `logo-knockout` (white, as published, for dark backgrounds), `logo-primary` (tinted navy, for light backgrounds), `logo-small` (footer size), `logo-mark` and `logo-mark-navy` (the building alone, for tight spots). The corporate NBG lockup is never used on an AIHub deck. The rules of "Logo rendering (MANDATORY)" apply unchanged.
 
 ## Design-system reference
 
@@ -246,10 +274,10 @@ Hand-pasting large base64 blobs is the step that most often fails in non-interac
 
 1. **Author the deck with placeholder tokens, not inline data URIs.** Put a token wherever an image goes: `{{LOGO_PRIMARY}}`, `{{LOGO_KNOCKOUT}}`, `{{LOGO_SMALL}}`, and `{{PHOTO_FIELDS}}`, `{{PHOTO_HEART}}`, `{{PHOTO_PARTHENON}}`, `{{PHOTO_SKATE}}`, `{{PHOTO_STREET}}`, or any technology photo token from "Photography catalogue" (`{{PHOTO_DATACENTER_1}}`, `{{PHOTO_NETWORK_2}}`, `{{PHOTO_SECURITY_3}}`, …). Define each token **once** (e.g. a CSS `background-image: url("{{PHOTO_STREET}}")` class) and reuse the class.
 2. **Embed deterministically.** From any working directory:
-   `node "<skill-root>/scripts/embed-assets.mjs" <deck>.html` (a BikS2013 deck: add `--theme biks2013`)
+   `node "<skill-root>/scripts/embed-assets.mjs" <deck>.html` (a BikS2013 deck: add `--theme biks2013`; an AIHub deck: `--theme aihub`)
    The script resolves the bundled assets relative to itself (not the cwd), so it works on any machine. It replaces every token with the verbatim `data:` URI and fails loudly if an asset is missing.
 3. **Add the in-deck right-click menu (standard for every delivered deck).**
-   `node "<skill-root>/scripts/add-deck-menu.mjs" <deck>.html` (a BikS2013 deck: add `--theme biks2013`, so the toolbars offer that palette)
+   `node "<skill-root>/scripts/add-deck-menu.mjs" <deck>.html` (a BikS2013 deck: add `--theme biks2013`, an AIHub deck `--theme aihub`, so the toolbars offer that palette)
    Inlines one self-contained `<script id="nbg-deck-menu-script">` before the last `</body>` (idempotent; re-running upgrades an older menu, including the v1.4 PDF-only one). Viewers get *Edit text* (in-place editing, also by double-click), *Resize / move shape*, *Export to PDF*, *Save edited copy* and *Discard edits*. See "In-deck right-click menu". Skip only if the user explicitly declines the menu, and then verify with `--no-deck-menu`.
 4. **Verify before delivery (browser-free — works headless).**
    `node "<skill-root>/scripts/verify-deck.mjs" <deck>.html --strict`
@@ -426,6 +454,15 @@ BikS2013 theme (see "Themes"):
 - `BikS2013-Design/tweaks-panel.jsx` — the tweak helper (a copy of the NBG one).
 - `BikS2013-Design/assets/logo-primary.png`, `logo-knockout.png`, `logo-small.png`, `logo-mark.png` (+ `.datauri.txt` and `.svg` each) — the BikS2013 wheel lockups (primary / knockout / footer size / the emblem alone); no photography yet (candidates await review).
 
+AIHub theme (see "Themes"):
+
+- `AIHub-Design/AIHub Design System.html` — the theme's design-system reference (same structure as the NBG page).
+- `AIHub-Design/slide-templates.jsx` — the nine templates, re-themed after the developer portal, with developer-portal placeholder copy.
+- `AIHub-Design/tweaks-panel.jsx` — the tweak helper (a copy of the NBG one).
+- `AIHub-Design/assets/logo-knockout.png`, `logo-primary.png`, `logo-small.png`, `logo-mark.png`, `logo-mark-navy.png` (+ `.datauri.txt` each) — the NBG Technology Hub lockups (white as published / navy-tinted / footer size / the building alone).
+- `AIHub-Design/assets/font-oswald-300.woff2`, `-400`, `-500`, `-700` (+ `.datauri.txt` each) — the Oswald faces (Open Font License) the theme's titles embed through `{{FONT_OSWALD_<weight>}}`.
+- Photography: shared from `NBG-Design/assets/` (the technology set) through the theme's asset search path.
+
 Presentation screenshots:
 
 - `NBG-Design/screenshots/01-editorial.png`
@@ -460,7 +497,7 @@ Before delivering NBG slide work:
 - For HTML output, confirm the right-click deck menu was added with `scripts/add-deck-menu.mjs` (the strict gate checks for it and warns when the block is older than the skill's) and tell the user how to use it (double-click to edit text; right-click for Resize / move shape, Edit SVG, Export to PDF, Save edited copy), unless the user declined it.
 - For every deck with the menu, confirm `<deck>.rebuild.mjs` was written with `scripts/write-rebuild-script.mjs` after the menu (and after the PDF's name was settled: `--pdf` / `--no-pdf`), that `node <deck>.rebuild.mjs --check` reports `CURRENT`, and deliver it with the HTML and the PDF, telling the user it refreshes the deck's editing tools after a skill update.
 - Confirm every slide has a clear purpose.
-- Confirm colours match the deck's theme palette (NBG by default; BikS2013 under that theme) and that `embed-assets.mjs` and `add-deck-menu.mjs` were run with the matching `--theme`.
+- Confirm colours match the deck's theme palette (NBG by default; BikS2013 or AIHub under those themes) and that `embed-assets.mjs` and `add-deck-menu.mjs` were run with the matching `--theme`; on an AIHub deck confirm the Oswald faces are embedded through their tokens.
 - Confirm the language is consistent with the request or the approved English default.
 - Confirm the output format is consistent with the request or the approved HTML default.
 - Confirm logo visibility and placement (the theme's lockups) match the intended template.

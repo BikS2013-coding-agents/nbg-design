@@ -245,6 +245,23 @@ This project contains the assets of a presentation design system inspired by the
   image output refuses requests from Greece ("Image generation is not available in your country"), so
   the Gemini column comes from the dedicated image model.
 
+### AIHub theme (skill v1.21.0, block v15)
+
+- **Request (2026-09-15).** A third theme, "AIHub", inspired by the colours and the logo of the NBG Technology
+  Hub developer portal (developer.nbg.gr).
+- **Design.** The portal's identity, read from its markup, CSS and a rendered screenshot: `theme-color`
+  navy `#012a30`, grounds as navy-to-deep-blue gradients (`#024a6c`, `#005782`), lagoon `#1c869d` as the
+  interactive accent, sun yellow `#fff77d` for links and hover, Oswald uppercase headings, bracketed
+  "[ link ]" labels, circuit-line decorations, and the white "NBG Technology Hub" logo (a dashed-line
+  building over a spaced wordmark). The theme folder `AIHub-Design/` mirrors the other two; the lockups
+  are rendered from the portal's PNG (white as published for dark grounds, navy-tinted for light, footer
+  size, the building alone); the Oswald faces (OFL, latin subset, 300–700) are bundled as
+  `font-oswald-<weight>.woff2` + data URIs and embedded through `{{FONT_OSWALD_<weight>}}` tokens; the
+  NBG technology photography is shared through a per-theme **asset search path** in `embed-assets.mjs`
+  (`aihub: ['AIHub-Design', 'NBG-Design']`), which also accepts `data:font/` URIs. `deck-menu.js` (block
+  v15) now keeps the themes in one table (`THEMES`: name, accents, font, palette, briefing) instead of
+  per-theme ternaries. Greek titles fall back to a condensed system face (Oswald has no Greek glyphs).
+
 ## Configuration Policy
 - Secrets, API keys, tokens, and expiring credentials must not be stored in project YAML files.
 - Missing required presentation inputs must be surfaced to the user; they must not be replaced with undocumented fallback values.

@@ -23,7 +23,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const USAGE = `NBG deck — add the right-click menu (Edit text / Export to PDF / Save edited copy)
-Usage: node add-deck-menu.mjs <deck.html> [-o <out.html>] [--theme <nbg|biks2013>] [--remove]
+Usage: node add-deck-menu.mjs <deck.html> [-o <out.html>] [--theme <nbg|biks2013|aihub>] [--remove]
 
   -o, --out   Write to a new file (default: overwrite in place).
   --theme     The deck's theme (default nbg): the toolbars' swatches, the editor's accent colours, the
@@ -50,7 +50,7 @@ function parseArgs(argv) {
 }
 
 const CONFIG_KEYS = ['mode', 'root', 'unit', 'title', 'aiSystem', 'theme'];
-export const THEMES = ['nbg', 'biks2013'];
+export const THEMES = ['nbg', 'biks2013', 'aihub'];
 
 // The configuration prelude: only the known string keys, or nothing at all (a deck keeps the defaults).
 export function buildConfigPrelude(config) {

@@ -190,14 +190,14 @@
  *   - unit:  the label of one root in the UI ('Slide' by default, 'Section' in page mode);
  *   - title: the menu's header and the detached windows' title ('NBG deck' / 'Page editor');
  *   - aiSystem: replaces the assistant's system prompt.
- *   - theme: 'nbg' (default) or 'biks2013' (block v14) — the swatches of the formatting, shape and SVG
+ *   - theme: 'nbg' (default), 'biks2013' (block v14) or 'aihub' (block v15) — the swatches of the formatting, shape and SVG
  *            toolbars, the editor's own accent colours and font, the assistant's system prompt and built-in
  *            prompts, and the default title follow the theme (SKILL.md "Themes").
  * Nothing else changes: the same edits, records, storage keys, saved copy and API.
  */
 (function () {
   if (window.nbgDeck) return;
-  var VERSION = 14;
+  var VERSION = 15;
   // configuration hook (see the header): root selector, page mode, labels
   var CFG = (typeof window.nbgDeckMenuConfig === 'object' && window.nbgDeckMenuConfig) || {};
   function cfgStr(k) { return typeof CFG[k] === 'string' && CFG[k].trim() ? CFG[k].trim() : ''; }
@@ -205,8 +205,24 @@
   var ROOT_SEL = cfgStr('root') || '.slide';
   try { document.querySelector(ROOT_SEL); } catch (e) { throw new Error('nbg deck menu: invalid root selector "' + ROOT_SEL + '" in window.nbgDeckMenuConfig.root'); }
   var UNIT = cfgStr('unit') || (PAGE_MODE ? 'Section' : 'Slide');          // one root, in labels: "Slide 2", "Section 2"
-  var THEME = cfgStr('theme') === 'biks2013' ? 'biks2013' : 'nbg', BIKS = THEME === 'biks2013', THEME_NAME = BIKS ? 'BikS2013' : 'NBG';   // block v14: the theme
-  var TITLE = cfgStr('title') || (PAGE_MODE ? 'Page editor' : THEME_NAME + ' deck');  // menu header, detached windows
+  // block v15: the themes (SKILL.md "Themes") — name, the editor's own accent colours and font, the swatches of
+  // every toolbar (the theme's palette, the only colours a deck may use) and the assistant's briefing.
+  var THEMES = {
+    nbg: { name: 'NBG', accent: '#003841', cyan: '#00ADBF', ink: '#0A1416', cream: '#F5F8F6', muted: '#5B6B6D',
+      font: "'Aptos', 'Inter', Helvetica, Arial, sans-serif",
+      palette: [['#003841', 'Deep teal'], ['#007B85', 'Teal'], ['#00ADBF', 'Bright cyan'], ['#00CFE7', 'Electric cyan'], ['#0A1416', 'Black'], ['#5B6B6D', 'Grey'], ['#F5F8F6', 'Cream'], ['#FFFFFF', 'White']],
+      ai: 'You are assisting a viewer of an HTML slide deck built with the National Bank of Greece (NBG) presentation design system: 1920×1080 slides, the Aptos font stack (Aptos, Inter, Helvetica, Arial), and the NBG palette — deep teal #003841, teal #007B85, bright cyan #00ADBF, electric cyan #00CFE7, black #0A1416, grey #5B6B6D, cream #F5F8F6, white #FFFFFF. ' },
+    biks2013: { name: 'BikS2013', accent: '#1B1D21', cyan: '#C8623A', ink: '#111316', cream: '#F6F3EC', muted: '#6E7379',
+      font: "'Avenir Next', 'Inter', Helvetica, Arial, sans-serif",
+      palette: [['#1B1D21', 'Ink'], ['#C8623A', 'Copper'], ['#E08A5E', 'Copper light'], ['#E3A64A', 'Amber'], ['#111316', 'Black'], ['#6E7379', 'Grey'], ['#F6F3EC', 'Paper'], ['#FFFFFF', 'White']],
+      ai: 'You are assisting a viewer of an HTML slide deck built with the BikS2013 personal presentation design system (the personal theme of the nbg-design skill): 1920×1080 slides, the Avenir Next font stack (Avenir Next, Inter, Helvetica, Arial), and the BikS2013 palette — ink #1B1D21, copper #C8623A, copper light #E08A5E, amber #E3A64A, black #111316, grey #6E7379, paper #F6F3EC, white #FFFFFF. ' },
+    aihub: { name: 'AIHub', accent: '#012A30', cyan: '#1C869D', ink: '#0B1F26', cream: '#F3F6F8', muted: '#5C6B73',
+      font: "'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif",
+      palette: [['#012A30', 'Navy'], ['#024A6C', 'Deep blue'], ['#1C869D', 'Lagoon'], ['#33B3BF', 'Cyan'], ['#FFF77D', 'Sun'], ['#FFDB7A', 'Amber'], ['#B1BACC', 'Grey'], ['#F3F6F8', 'Mist'], ['#FFFFFF', 'White']],
+      ai: 'You are assisting a viewer of an HTML slide deck built with the AIHub presentation theme of the nbg-design skill, inspired by the NBG Technology Hub developer portal (developer.nbg.gr): 1920×1080 slides, Oswald (condensed, uppercase) for titles and numerals with the Segoe UI / Helvetica stack for body text, and the AIHub palette — navy #012A30, deep blue #024A6C, ocean #005782, lagoon #1C869D, cyan #33B3BF, sun yellow #FFF77D, amber #FFDB7A, grey #B1BACC, mist #F3F6F8, white #FFFFFF. ' }
+  };
+  var THEME = THEMES[cfgStr('theme')] ? cfgStr('theme') : 'nbg', THEME_DEF = THEMES[THEME], THEME_NAME = THEME_DEF.name;
+  var TITLE = cfgStr('title') || (PAGE_MODE ? 'Page editor' : THEME_NAME + ' deck');
   var AREA = PAGE_MODE ? 'page' : 'slide', AREA_CAP = PAGE_MODE ? 'Page' : 'Slide';   // generic wording ("on the page")
   var WHOLE = PAGE_MODE ? 'page' : 'deck';                                            // the document ("download the page")
   function rootOf(el) { return el && el.closest ? el.closest(ROOT_SEL) : null; }
@@ -218,12 +234,9 @@
   function unitLabel(root) { return PAGE_MODE && allRoots().length <= 1 ? 'Page' : UNIT + ' ' + (slideIndex(root) + 1); }   // "Slide 2" / "Section 2" / "Page"
   function unitOf(root) { var n = allRoots().length; return unitLabel(root) + (n > 1 ? ' of ' + n : ''); }                  // "Slide 2 of 12"
   function unitPhrase(root) { var l = unitLabel(root); return l === 'Page' ? 'the page' : l.charAt(0).toLowerCase() + l.slice(1); }   // "slide 2" / "the page"
-  var ACCENT = BIKS ? '#1B1D21' : '#003841', CYAN = BIKS ? '#C8623A' : '#00ADBF', INK = BIKS ? '#111316' : '#0A1416', CREAM = BIKS ? '#F6F3EC' : '#F5F8F6', MUTED = BIKS ? '#6E7379' : '#5B6B6D';
-  var FONT = BIKS ? "'Avenir Next', 'Inter', Helvetica, Arial, sans-serif" : "'Aptos', 'Inter', Helvetica, Arial, sans-serif";
-  // the swatches of every toolbar: the theme's palette (SKILL.md), the only colours a deck may use
-  var PALETTE = BIKS
-    ? [['#1B1D21', 'Ink'], ['#C8623A', 'Copper'], ['#E08A5E', 'Copper light'], ['#E3A64A', 'Amber'], ['#111316', 'Black'], ['#6E7379', 'Grey'], ['#F6F3EC', 'Paper'], ['#FFFFFF', 'White']]
-    : [['#003841', 'Deep teal'], ['#007B85', 'Teal'], ['#00ADBF', 'Bright cyan'], ['#00CFE7', 'Electric cyan'], ['#0A1416', 'Black'], ['#5B6B6D', 'Grey'], ['#F5F8F6', 'Cream'], ['#FFFFFF', 'White']];
+  var ACCENT = THEME_DEF.accent, CYAN = THEME_DEF.cyan, INK = THEME_DEF.ink, CREAM = THEME_DEF.cream, MUTED = THEME_DEF.muted;
+  var FONT = THEME_DEF.font;
+  var PALETTE = THEME_DEF.palette;
   var PALETTE_NAME = THEME_NAME + ' palette';
 
   // Pristine snapshot of the deck as loaded — BEFORE persisted edits are re-applied and before any
@@ -2453,9 +2466,7 @@
   var AI_SYSTEM_PAGE = 'You are assisting a viewer who edits an HTML web page in place in the browser. ' +
     'The viewer’s message may carry, as the viewer chose: a screenshot of the page (or of the current section), the page’s full HTML source with its stylesheet, the HTML source of the element(s) the viewer selected, and an image taken from the viewer’s clipboard. Work with what is attached and do not ask for what is missing. ' +
     'In the sources, embedded images appear as src="nbg-image:N" (or url(nbg-image:N)) placeholders standing for the original image data — keep such placeholders exactly as they are. Stay consistent with the page’s existing colours, fonts and layout when you propose visual changes.';
-  var AI_SYSTEM = cfgStr('aiSystem') ? cfgStr('aiSystem') : PAGE_MODE ? AI_SYSTEM_PAGE : (BIKS
-    ? 'You are assisting a viewer of an HTML slide deck built with the BikS2013 personal presentation design system (the personal theme of the nbg-design skill): 1920×1080 slides, the Avenir Next font stack (Avenir Next, Inter, Helvetica, Arial), and the BikS2013 palette — ink #1B1D21, copper #C8623A, copper light #E08A5E, amber #E3A64A, black #111316, grey #6E7379, paper #F6F3EC, white #FFFFFF. '
-    : 'You are assisting a viewer of an HTML slide deck built with the National Bank of Greece (NBG) presentation design system: 1920×1080 slides, the Aptos font stack (Aptos, Inter, Helvetica, Arial), and the NBG palette — deep teal #003841, teal #007B85, bright cyan #00ADBF, electric cyan #00CFE7, black #0A1416, grey #5B6B6D, cream #F5F8F6, white #FFFFFF. ') +
+  var AI_SYSTEM = cfgStr('aiSystem') ? cfgStr('aiSystem') : PAGE_MODE ? AI_SYSTEM_PAGE : THEME_DEF.ai +
     'The viewer’s message may carry, as the viewer chose: a screenshot of the current slide, the slide’s full HTML source with the deck’s stylesheet, the HTML source of the element(s) the viewer selected, and an image taken from the viewer’s clipboard. Work with what is attached and do not ask for what is missing. ' +
     'In the sources, embedded images appear as src="nbg-image:N" (or url(nbg-image:N)) placeholders standing for the original image data — keep such placeholders exactly as they are. Stay within the ' + THEME_NAME + ' palette and font stacks when you propose visual changes.';
   var AI_MODE_TEXT = {
