@@ -184,3 +184,53 @@ The AIHub theme's title face, Oswald (bundled, latin subset), has no Greek chara
 AIHub deck render in the condensed system fallback (`Avenir Next Condensed` / `Arial Narrow`). Documented in
 SKILL.md "Themes"; a Greek-capable condensed face would be a design-system decision. Sun yellow `#FFF77D`
 is illegible on light surfaces by design and is restricted to dark grounds.
+
+### 2026-09-19 — Fixed: `add-deck-menu.mjs` theme-validation message had lost its interpolations (skill v1.23.0)
+
+Introduced in v1.20.0 with the theme flag, the guard read
+`throw new Error(\`menu config theme must be one of , not ""\`)` — a template literal whose `${THEMES.join(', ')}`
+and `${clean.theme}` had been dropped, so an unknown `--theme` value produced an error naming neither the
+offending value nor the accepted ones. Restored; the guard now reports
+`menu config theme must be one of nbg, biks2013, aihub, instrument, not "<value>"`.
+
+### 2026-09-19 — Note: chart strokes must be in artboard units, never `non-scaling-stroke` (Instrument theme, skill v1.23.0)
+
+The first Instrument render drew every plot with `vector-effect="non-scaling-stroke"` over a `0 0 100 100`
+viewBox. Because that keeps the stroke in *screen* pixels, a 2px line is 2px whether the slide is rendered at
+1920 or at the design-system page's 0.375 preview scale — so the lines were all but invisible on the full
+artboard, and the grid did not show at all. Plots are now drawn in artboard pixel space
+(`viewBox="0 0 <w> <h>"` in 1920×1080 units, stroke widths in the same units: lead 4, second 3, third 2.5,
+small multiple 3.5, grid 1). Recorded as a rule in SKILL.md "Themes" → `instrument`.
+
+### 2026-09-19 — Fixed: the page footer's colour lockup was illegible on a dark ground (Instrument theme, skill v1.23.0)
+
+`PageFooter` passed `variant="small"` on both grounds — inherited from the AIHub templates, where the
+expression reads `variant={dark ? "small" : "small"}`. The colour lockup disappeared into the night ground
+on `ContentStat`. The Instrument footer now knocks out on dark (`dark ? "knockout" : "small"`). The same
+dead ternary is still present in `AIHub-Design/slide-templates.jsx` and was left alone, since AIHub's
+footers currently sit on light grounds — worth fixing when that theme is next touched.
+
+### 2026-09-19 — Done: Instrument theme photography (skill v1.23.0)
+
+Closed the same day it was opened. 24 photographs — eight subjects of present-day technical environments
+and workspaces × three takes — generated to an anti-futuristic brief and promoted into
+`Instrument-Design/assets/` as `photo-<subject>-{1,2,3}.jpeg` + `.datauri.txt`, with a catalogue table in
+SKILL.md ("Photography catalogue" → Instrument set) and placement rules in "Themes" → `instrument`.
+
+**Tuning finding.** The night scrim had been authored at
+`linear-gradient(180deg, rgba(14,23,38,0.45), rgba(14,23,38,0.88))` while no photography existed — sized to
+rescue a hypothetical off-palette image. Against photographs that are already dark and on-palette it
+crushed the `DividerImage` band to near-black. Lightened to **`0.28 → 0.70`**, which still pulls an
+off-palette image in but lets an on-palette one read. The `grayscale(0.35) contrast(1.05)` filter is
+unchanged.
+
+**Standing rule.** The Instrument set is Instrument-only, and the NBG technology set stays off Instrument
+decks: the two are graded for opposite grounds (teal-and-cream vs near-black blue-grey).
+
+### 2026-09-19 — Note: the design-system pages only render their templates over HTTP (all themes)
+
+`<script type="text/babel" src="slide-templates.jsx">` is fetched by Babel with XHR, which Chrome blocks on
+`file://`. Opening any `* Design System.html` straight off disk shows the documentation with nine empty
+slide frames — the same on the NBG, AIHub and Instrument pages, so it is not a defect in any one of them.
+Serve the skill folder over a local static server to review the templates.
+

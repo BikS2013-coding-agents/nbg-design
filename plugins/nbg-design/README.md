@@ -70,7 +70,7 @@ are picked per slide.
 
 ### Themes
 
-Since v1.20.0 the skill carries two themes on the same templates, scripts and guardrails. `nbg`
+Since v1.20.0 the skill carries several themes on the same templates, scripts and guardrails. `nbg`
 (the default) is the NBG-inspired system described above. `biks2013` is the **BikS2013 personal
 theme** for presentations given in a personal capacity — talks, meetups, workshops, project
 write-ups: ink and copper on warm paper, Avenir Next, and the BikS2013 wheel lockups
@@ -85,6 +85,20 @@ theme's asset search path (`AIHub-Design/`). v1.22.0 folds in the pilot findings
 500, the feather-and-scrim photo treatment, one lockup per slide, the "NBG AI Hub" name and lockup. `SKILL.md` → "Themes" holds the selection rule (the bank's material stays `nbg`;
 never mix themes on one deck), each palette, type stack and logo rules. The theme's photography is still under
 review, so BikS2013 decks currently use the type-led templates or a photo the user supplies.
+
+Since v1.23.0 a fourth theme, `instrument`, is a **register rather than a brand**: dark but precise rather
+than atmospheric — the look of a good terminal, or of a financial broadsheet at night — for talks whose
+argument is carried by measurement. Night navy `#0E1726` and paper `#F2F1EE` grounds, one accent per slide
+(lagoon, amber or rust), IBM Plex Sans and IBM Plex Mono both embedded and both subset with **Greek**, and
+the hairline plot in place of photography: thin-stroke charts, small multiples and monospaced figures, with
+glows, gradient washes, node graphics and brain motifs explicitly out (`Instrument-Design/`). It carries no
+lockup of its own — a deck is signed with either the NBG or the NBG AI Hub lockup through the new
+theme-prefixed tokens (`{{NBG_LOGO_KNOCKOUT}}`, `{{AIHUB_LOGO_KNOCKOUT}}`), so the identity is chosen per
+deck. It ships **24 photographs of its own** — eight subjects of present-day technical environments and
+workspaces (operations floor, terminal desk, rack aisle, fibre patch, review room, glass board, compute
+node, desk flat lay), three takes each — generated to a deliberately anti-futuristic brief and graded dark
+and cool so they hold inside the palette under the theme's night scrim. Every picture slot draws the plot
+underneath the photo, so a slide still works if an image is ever missing.
 
 ## Installation
 

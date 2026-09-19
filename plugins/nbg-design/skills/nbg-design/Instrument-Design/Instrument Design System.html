@@ -1,0 +1,1160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1280" />
+<title>Instrument Presentation Design System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&family=IBM+Plex+Sans:wght@200;300;400;500;600&family=IBM+Plex+Mono:wght@300;400;500&display=swap" />
+
+<style>
+  /* -------------------------------------------------------------------------
+     Instrument Design System — documentation host page (the Instrument theme of the nbg-design skill:
+     dark but precise rather than atmospheric, thin-line charts and monospaced figures; same page
+     structure and slide geometry as the NBG Design System, re-themed)
+     ------------------------------------------------------------------------- */
+  :root {
+    /* Instrument palette — the "Instrument" design direction: dark, but precise rather than
+       atmospheric. The register of a good terminal, or of a financial broadsheet at night. */
+    --night:      #0E1726;  /* the dark ground — covers, dividers, data panels */
+    --grid:       #24334A;  /* hairline rules on night */
+    --slate:      #3C4E6B;  /* the secondary plot line */
+    --steel:      #7D8CA3;  /* labels and secondary text on night */
+    --faint:      #55647C;  /* micro-labels on night (sources, units) */
+    --lagoon:     #2F7D6E;  /* the primary accent */
+    --amber:      #E0A32E;  /* the second accent / highlight series */
+    --rust:       #C4441C;  /* alert or negative series, sparingly */
+    --ink:        #1A1A18;  /* text on paper */
+    --muted:      #4B4943;  /* secondary text on paper */
+    --ink3:       #8A8474;  /* mono micro-labels on paper */
+    --rule:       #D9D6CE;  /* hairline rules on paper */
+    --light:      #E9EEF5;  /* text on night */
+    --cream:      #F2F1EE;  /* paper — the light ground */
+    --paper:      #FFFFFF;
+
+    /* Doc-only chrome (not part of the brand system) */
+    --doc-bg:     #FAFAF8;
+    --doc-fg:     #1A1A18;
+    --doc-muted:  rgba(26, 26, 24, 0.62);
+    --doc-line:   rgba(14, 23, 38, 0.12);
+    --doc-card:   #FFFFFF;
+    --doc-shadow: 0 1px 2px rgba(14,23,38,0.05), 0 12px 40px -16px rgba(14,23,38,0.14);
+
+    --doc-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    --doc-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    /* the theme's two stacks — the only two a deck uses */
+    --brand-sans: "IBM Plex Sans", "Segoe UI", Helvetica, Arial, sans-serif;
+    --brand-mono: "IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+    --brand-head: var(--brand-sans);
+
+    /* slide template scale: 1920×1080 ↘ 720×405  (×0.375) */
+    --slide-w: 720px;
+    --slide-h: 405px;
+    --slide-scale: 0.375;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    background: var(--doc-bg);
+    color: var(--doc-fg);
+    font-family: var(--doc-sans);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* ---------- Top nav ---------- */
+  header.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: rgba(250, 250, 248, 0.92);
+    backdrop-filter: saturate(140%) blur(16px);
+    -webkit-backdrop-filter: saturate(140%) blur(16px);
+    border-bottom: 1px solid var(--doc-line);
+  }
+  .topbar-inner {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 12px;
+    color: var(--ink); font-weight: 600; font-size: 14px;
+    letter-spacing: 0.2px;
+  }
+  .brand-mark {
+    width: 28px; height: 28px; border-radius: 3px;
+    background: var(--night);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--amber); font-weight: 700; font-size: 12px; letter-spacing: 0.5px;
+  }
+  nav.anchors {
+    display: flex; gap: 4px; flex-wrap: wrap;
+  }
+  nav.anchors a {
+    color: var(--doc-fg); text-decoration: none;
+    padding: 8px 12px; border-radius: 999px; font-size: 13px; font-weight: 500;
+    transition: background 0.12s ease;
+  }
+  nav.anchors a:hover { background: rgba(14, 23, 38, 0.07); }
+
+  /* ---------- Layout ---------- */
+  main { max-width: 1240px; margin: 0 auto; padding: 0 32px 160px; }
+
+  section.block { padding: 96px 0 32px; scroll-margin-top: 80px; }
+  section.block:first-of-type { padding-top: 64px; }
+
+  .eyebrow {
+    font-family: var(--doc-mono);
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 1.6px; text-transform: uppercase;
+    color: var(--lagoon);
+    margin-bottom: 16px;
+  }
+  h1.hero-title {
+    font-family: var(--brand-sans);
+    font-weight: 300; font-size: 84px; line-height: 1.02; letter-spacing: -0.025em;
+    color: var(--ink); margin: 0;
+  }
+  h1.hero-title em {
+    font-style: normal; font-weight: 500; color: var(--ink);
+  }
+  h2.section-title {
+    font-family: var(--brand-sans);
+    font-weight: 300; font-size: 42px; line-height: 1.08; letter-spacing: -0.022em;
+    color: var(--ink); margin: 0 0 16px;
+  }
+  h3.subhead {
+    font-family: var(--brand-sans);
+    font-weight: 600; font-size: 16px; letter-spacing: 0.2px;
+    color: var(--ink); margin: 0 0 12px;
+    text-transform: uppercase; letter-spacing: 1.4px; font-size: 11px;
+    font-family: var(--doc-mono); font-weight: 500;
+  }
+  p.lead {
+    font-size: 20px; line-height: 1.5; color: var(--doc-muted);
+    margin: 0; max-width: 64ch; text-wrap: pretty;
+  }
+  p.body { margin: 0; color: var(--doc-muted); max-width: 70ch; }
+
+  hr.rule {
+    border: 0; height: 1px; background: var(--doc-line);
+    margin: 96px 0 0;
+  }
+
+  /* ---------- Tokens grids ---------- */
+  .grid {
+    display: grid;
+    gap: 24px;
+    margin-top: 36px;
+  }
+  .grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .grid.cols-6 { grid-template-columns: repeat(6, 1fr); }
+
+  /* Color swatch */
+  .swatch {
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: var(--doc-shadow);
+    background: var(--doc-card);
+    display: flex; flex-direction: column;
+  }
+  .swatch .chip {
+    aspect-ratio: 16 / 9;
+    display: flex; align-items: flex-end; justify-content: space-between;
+    padding: 16px; color: white;
+    font-family: var(--doc-mono); font-size: 12px;
+  }
+  .swatch .chip.dark { color: rgba(255,255,255,0.85); }
+  .swatch .chip.light { color: rgba(14, 23, 38,0.7); }
+  .swatch .meta {
+    padding: 14px 16px;
+    display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+  }
+  .swatch .name { font-size: 13px; font-weight: 600; color: var(--ink); }
+  .swatch .role { font-size: 11px; color: var(--doc-muted); font-family: var(--doc-mono); text-transform: uppercase; letter-spacing: 1px; }
+
+  /* Token row (type scale) */
+  .type-row {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 32px;
+    align-items: baseline;
+    padding: 24px 0;
+    border-bottom: 1px dashed var(--doc-line);
+  }
+  .type-row:last-child { border-bottom: 0; }
+  .type-row .label {
+    font-family: var(--doc-mono); font-size: 11px;
+    color: var(--doc-muted); letter-spacing: 1px; text-transform: uppercase;
+    line-height: 1.5;
+  }
+  .type-row .label strong {
+    display: block;
+    font-family: var(--brand-sans); font-size: 13px;
+    color: var(--ink); text-transform: none; letter-spacing: 0;
+    margin-bottom: 2px;
+  }
+  .type-row .sample {
+    color: var(--ink); font-family: var(--brand-sans);
+    letter-spacing: -0.02em; line-height: 1.08;
+  }
+
+  /* Card */
+  .card {
+    background: var(--doc-card);
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: var(--doc-shadow);
+  }
+
+  /* ---------- Slide template gallery ---------- */
+  .template {
+    display: grid;
+    grid-template-columns: var(--slide-w) 1fr;
+    gap: 48px;
+    align-items: start;
+    margin-top: 40px;
+    padding-top: 40px;
+    border-top: 1px solid var(--doc-line);
+  }
+  .template:first-of-type { border-top: 0; padding-top: 0; }
+  .template .info h4 {
+    margin: 0;
+    font-family: var(--brand-sans); font-weight: 500; font-size: 22px; color: var(--ink);
+    letter-spacing: -0.3px;
+  }
+  .template .info .meta-tag {
+    display: inline-block; margin-bottom: 10px;
+    font-family: var(--doc-mono); font-size: 10px; font-weight: 500;
+    text-transform: uppercase; letter-spacing: 1.4px;
+    color: var(--lagoon); padding: 4px 8px; border-radius: 4px;
+    background: rgba(47, 125, 110, 0.12);
+  }
+  .template .info p {
+    color: var(--doc-muted); margin: 14px 0 18px;
+  }
+  .template .info ul {
+    margin: 18px 0 0; padding: 0; list-style: none;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .template .info li {
+    font-size: 13px; color: var(--doc-fg);
+    display: grid; grid-template-columns: 110px 1fr; gap: 14px;
+  }
+  .template .info li b {
+    font-family: var(--doc-mono); font-weight: 500; font-size: 11px;
+    color: var(--doc-muted); text-transform: uppercase; letter-spacing: 1px;
+    padding-top: 1px;
+  }
+
+  /* slide frame — render at 1920×1080 then scale down */
+  .frame {
+    width: var(--slide-w);
+    height: var(--slide-h);
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    background: white;
+    box-shadow: 0 1px 0 rgba(14, 23, 38,0.04), 0 24px 64px -28px rgba(14, 23, 38,0.30);
+    isolation: isolate;
+  }
+  .frame .stage {
+    position: absolute;
+    top: 0; left: 0;
+    width: 1920px;
+    height: 1080px;
+    transform: scale(var(--slide-scale));
+    transform-origin: 0 0;
+    font-family: var(--brand-sans);
+  }
+  /* faint dimensions tag below the frame */
+  .frame-tag {
+    margin-top: 10px;
+    font-family: var(--doc-mono); font-size: 11px;
+    color: var(--doc-muted); letter-spacing: 0.5px;
+    display: flex; justify-content: space-between;
+    width: var(--slide-w);
+  }
+
+  /* ---------- Logo demo plates ---------- */
+  .logo-plate {
+    border-radius: 14px;
+    padding: 48px;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 200px;
+    box-shadow: var(--doc-shadow);
+  }
+  .logo-plate img { max-width: 80%; height: auto; }
+  .plate-light { background: white; border: 1px solid var(--doc-line); }
+  .plate-cream { background: var(--cream); }
+  .plate-dark { background: var(--night); }
+  .plate-bright { background: var(--night); }
+  .plate-plot { background: var(--night); }
+
+  /* spacing scale visual */
+  .space-row {
+    display: grid;
+    grid-template-columns: 80px 1fr 80px;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 0;
+  }
+  .space-row .token {
+    font-family: var(--doc-mono); font-size: 12px; color: var(--ink); font-weight: 500;
+  }
+  .space-row .bar {
+    height: 14px; border-radius: 2px; background: var(--lagoon);
+  }
+  .space-row .px {
+    font-family: var(--doc-mono); font-size: 12px; color: var(--doc-muted);
+    text-align: right;
+  }
+
+  /* grid mockup */
+  .grid-mock {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: var(--doc-shadow);
+    padding: 4%;
+  }
+  .grid-mock .col {
+    background: rgba(47, 125, 110, 0.10);
+    border-left: 1px dashed rgba(47, 125, 110, 0.45);
+    border-right: 1px dashed rgba(47, 125, 110, 0.45);
+    height: 100%;
+  }
+  .grid-mock-inner {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 16px;
+    height: 100%;
+  }
+  .grid-mock .safe-area {
+    position: absolute;
+    inset: 4%;
+    border: 1px dashed rgba(14, 23, 38, 0.25);
+    pointer-events: none;
+  }
+
+  /* hero collage */
+  .hero {
+    padding-top: 96px; padding-bottom: 32px;
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 64px;
+    align-items: end;
+  }
+  .hero-aside {
+    display: flex; flex-direction: column; gap: 16px;
+    border-left: 1px solid var(--doc-line);
+    padding-left: 32px;
+  }
+  .hero-aside .row {
+    display: flex; justify-content: space-between;
+    font-family: var(--doc-mono); font-size: 11px; color: var(--doc-muted);
+    text-transform: uppercase; letter-spacing: 1.2px;
+  }
+  .hero-aside .row b { color: var(--ink); font-weight: 600; font-family: var(--doc-sans); text-transform: none; letter-spacing: 0; font-size: 13px; }
+
+  /* responsive tighten */
+  @media (max-width: 1180px) {
+    .template { grid-template-columns: 1fr; }
+    .grid.cols-4 { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+
+<!-- React + Babel for slide templates -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+
+<body>
+
+<!-- ============================== TOP NAV ============================== -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="brand-mark">01</span>
+      <span>Instrument Presentation Design System</span>
+      <span style="color: var(--doc-muted); font-weight: 400; margin-left: 8px;">v1.0</span>
+    </div>
+    <nav class="anchors">
+      <a href="#colors">Colors</a>
+      <a href="#type">Type</a>
+      <a href="#motif">Motif</a>
+      <a href="#photo">Photography</a>
+      <a href="#logo">Logo</a>
+      <a href="#grid">Grid</a>
+      <a href="#covers">Covers</a>
+      <a href="#dividers">Dividers</a>
+      <a href="#content">Content</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<!-- ============================== HERO ============================== -->
+<section class="block hero" style="padding-top: 96px;">
+  <div>
+    <div class="eyebrow">01 / Presentation theme · Instrument</div>
+    <h1 class="hero-title">
+      Dark, but<br />
+      <em>precise.</em>
+    </h1>
+    <p class="lead" style="margin-top: 28px;">
+      The register of a good terminal, or of a financial broadsheet at night. Thin-line charts, small
+      multiples, monospaced figures. Reach for this theme when the argument is carried by measurement —
+      adoption curves, unit economics, before-and-after.
+    </p>
+    <p class="body" style="margin-top: 20px;">
+      The discipline is what keeps it one degree away from the stock &ldquo;AI deck&rdquo;: no glows, no
+      gradient washes, no network or node graphics, no brain motifs. Charts only, and one accent per slide.
+    </p>
+  </div>
+  <aside class="hero-aside">
+    <div class="row"><span>Ground</span><b>Night #0E1726</b></div>
+    <div class="row"><span>Paper</span><b>#F2F1EE</b></div>
+    <div class="row"><span>Accent</span><b>Lagoon #2F7D6E</b></div>
+    <div class="row"><span>Text</span><b>IBM Plex Sans</b></div>
+    <div class="row"><span>Figures</span><b>IBM Plex Mono</b></div>
+    <div class="row"><span>Artboard</span><b>1920 × 1080</b></div>
+    <div class="row"><span>Greek</span><b>Both faces</b></div>
+    <div class="row"><span>Photography</span><b>8 subjects × 3</b></div>
+  </aside>
+</section>
+
+<hr class="rule" />
+
+<!-- ============================== COLORS ============================== -->
+<section class="block" id="colors">
+  <div class="eyebrow">02 / Colour</div>
+  <h2 class="section-title">Two grounds, three accents,<br />and nothing else.</h2>
+  <p class="lead">
+    A slide sits on one of two grounds: <strong>night</strong> for covers, dividers and data pages, or
+    <strong>paper</strong> for the pages that carry argument. Everything else is a hairline, a label or a
+    single accent.
+  </p>
+
+  <h3 class="subhead" style="margin-top: 56px;">Grounds and structure</h3>
+  <div class="grid cols-4">
+    <div class="swatch">
+      <div class="chip dark" style="background: #0E1726;"><span>Night</span><span>#0E1726</span></div>
+      <div class="meta"><span class="name">Night</span><span class="role">Dark ground</span></div>
+    </div>
+    <div class="swatch">
+      <div class="chip dark" style="background: #24334A;"><span>Grid</span><span>#24334A</span></div>
+      <div class="meta"><span class="name">Grid</span><span class="role">Rules on night</span></div>
+    </div>
+    <div class="swatch">
+      <div class="chip dark" style="background: #3C4E6B;"><span>Slate</span><span>#3C4E6B</span></div>
+      <div class="meta"><span class="name">Slate</span><span class="role">Second plot line</span></div>
+    </div>
+    <div class="swatch">
+      <div class="chip dark" style="background: #7D8CA3;"><span>Steel</span><span>#7D8CA3</span></div>
+      <div class="meta"><span class="name">Steel</span><span class="role">Labels on night</span></div>
+    </div>
+  </div>
+
+  <h3 class="subhead" style="margin-top: 56px;">Accents — one per slide</h3>
+  <div class="grid cols-3">
+    <div class="swatch">
+      <div class="chip dark" style="background: #2F7D6E;"><span>Lagoon</span><span>#2F7D6E</span></div>
+      <div class="meta"><span class="name">Lagoon</span><span class="role">Primary accent</span></div>
+    </div>
+    <div class="swatch">
+      <div class="chip light" style="background: #E0A32E;"><span>Amber</span><span>#E0A32E</span></div>
+      <div class="meta"><span class="name">Amber</span><span class="role">Highlight series</span></div>
+    </div>
+    <div class="swatch">
+      <div class="chip dark" style="background: #C4441C;"><span>Rust</span><span>#C4441C</span></div>
+      <div class="meta"><span class="name">Rust</span><span class="role">Alert / negative</span></div>
+    </div>
+  </div>
+
+  <h3 class="subhead" style="margin-top: 56px;">Paper side</h3>
+  <div class="grid cols-4">
+    <div class="swatch">
+      <div class="chip light" style="background: #F2F1EE;"><span>Paper</span><span>#F2F1EE</span></div>
+      <div class="meta"><span class="name">Paper</span><span class="role">Light ground</span></div>
+    </div>
+    <div class="swatch">
+      <div class="chip dark" style="background: #1A1A18;"><span>Ink</span><span>#1A1A18</span></div>
+      <div class="meta"><span class="name">Ink</span><span class="role">Text on paper</span></div>
+    </div>
+    <div class="swatch">
+      <div class="chip dark" style="background: #4B4943;"><span>Ink 2</span><span>#4B4943</span></div>
+      <div class="meta"><span class="name">Ink 2</span><span class="role">Secondary text</span></div>
+    </div>
+    <div class="swatch">
+      <div class="chip light" style="background: #E9EEF5;"><span>Light</span><span>#E9EEF5</span></div>
+      <div class="meta"><span class="name">Light</span><span class="role">Text on night</span></div>
+    </div>
+  </div>
+
+  <h3 class="subhead" style="margin-top: 56px;">Usage rules</h3>
+  <div class="grid cols-3">
+    <div class="card">
+      <h4 style="margin: 0 0 10px; font-size: 16px; font-weight: 500;">One accent per slide</h4>
+      <p class="body" style="font-size: 14px;">
+        Pick lagoon, amber or rust and hold it for the whole slide — the eyebrow, the one line of the title
+        that carries weight, and the series being argued about. A second accent on the same slide reads as
+        decoration and the theme loses its authority.
+      </p>
+    </div>
+    <div class="card">
+      <h4 style="margin: 0 0 10px; font-size: 16px; font-weight: 500;">Rust means something</h4>
+      <p class="body" style="font-size: 14px;">
+        Rust is reserved for the series or the figure the audience is meant to be uneasy about. Using it
+        for ordinary emphasis spends the only alarm the palette has.
+      </p>
+    </div>
+    <div class="card">
+      <h4 style="margin: 0 0 10px; font-size: 16px; font-weight: 500;">Never a gradient</h4>
+      <p class="body" style="font-size: 14px;">
+        Grounds are flat. Where a panel has to meet the ground, meet it with a hairline in
+        <em>grid</em>, not with a fade. The one exception is the scrim over a photograph, which exists to
+        pull it into the palette, not to soften an edge.
+      </p>
+    </div>
+  </div>
+</section>
+
+<hr class="rule" />
+
+<!-- ============================== TYPE ============================== -->
+<section class="block" id="type">
+  <div class="eyebrow">03 / Type</div>
+  <h2 class="section-title">IBM Plex Sans for text,<br />IBM Plex Mono for every figure.</h2>
+  <p class="lead">
+    Two faces, both bundled with the theme, both carrying Greek. Titles are set light and large with
+    negative tracking; a single word may step up to weight 500 to carry the emphasis. Every eyebrow, label,
+    unit and number is monospaced — that is what makes the deck read as measured rather than designed.
+  </p>
+
+  <div style="margin-top: 40px;">
+    <div class="type-row">
+      <div class="label"><strong>Cover title</strong>116–132pt · Plex Sans 300 · −0.022em</div>
+      <div class="sample" style="font-size: 52px; font-weight: 300;">From Automation to <span style="font-weight: 500;">Judgement</span></div>
+    </div>
+    <div class="type-row">
+      <div class="label"><strong>Divider title</strong>92–104pt · Plex Sans 300</div>
+      <div class="sample" style="font-size: 42px; font-weight: 300;">Where adoption actually happens</div>
+    </div>
+    <div class="type-row">
+      <div class="label"><strong>Content title</strong>68pt · Plex Sans 300 · −0.02em</div>
+      <div class="sample" style="font-size: 32px; font-weight: 300;">Adoption runs back to front</div>
+    </div>
+    <div class="type-row">
+      <div class="label"><strong>Body</strong>28–32pt · Plex Sans 400 · 1.5 line height</div>
+      <div class="sample" style="font-size: 20px; font-weight: 400; letter-spacing: 0; line-height: 1.5;">Four decades of banking technology — and what actually changes with AI.</div>
+    </div>
+    <div class="type-row">
+      <div class="label"><strong>Eyebrow</strong>18–20pt · Plex Mono 500 · 0.18em · uppercase</div>
+      <div class="sample" style="font-family: var(--brand-mono); font-size: 15px; font-weight: 500; letter-spacing: 0.18em; color: var(--lagoon);">01 / EVOLUTION</div>
+    </div>
+    <div class="type-row">
+      <div class="label"><strong>Display numeral</strong>300–420pt · Plex Mono 300 · −0.04em</div>
+      <div class="sample" style="font-family: var(--brand-mono); font-size: 76px; font-weight: 300; letter-spacing: -0.04em; color: var(--amber);">[00]%</div>
+    </div>
+    <div class="type-row">
+      <div class="label"><strong>Data numeral</strong>26–36pt · Plex Mono 500 · tabular · no tracking</div>
+      <div class="sample" style="font-family: var(--brand-mono); font-size: 26px; font-weight: 500; letter-spacing: 0; font-variant-numeric: tabular-nums;">1 284 · 37.5% · €12.4m</div>
+    </div>
+    <div class="type-row">
+      <div class="label"><strong>Micro-label</strong>17–18pt · Plex Mono 400 · 0.12em</div>
+      <div class="sample" style="font-family: var(--brand-mono); font-size: 13px; letter-spacing: 0.12em; color: var(--ink3);">SOURCE: [YOUR SOURCE] · [PERIOD]</div>
+    </div>
+  </div>
+
+  <h3 class="subhead" style="margin-top: 56px;">The two kinds of numeral</h3>
+  <div class="grid cols-2">
+    <div class="card">
+      <h4 style="margin: 0 0 10px; font-size: 16px; font-weight: 500;">Display numerals — 48pt and up</h4>
+      <p class="body" style="font-size: 14px;">
+        The one big figure on a slide, and the chapter numbers on dividers. Plex Mono <strong>300</strong>,
+        tracking −0.04em, in the slide's accent. Nothing else shares the line.
+      </p>
+    </div>
+    <div class="card">
+      <h4 style="margin: 0 0 10px; font-size: 16px; font-weight: 500;">Data numerals — 36pt and below</h4>
+      <p class="body" style="font-size: 14px;">
+        Currency, table values, comparison figures, axis labels. Plex Mono <strong>500</strong>,
+        <code>font-variant-numeric: tabular-nums</code>, no negative tracking, and never below
+        <strong>26pt</strong> on the artboard: a 1920-wide slide shown at 1366×768 is scaled to 71%, and a
+        Light figure at 26pt was found illegible in pilot use. Never set a data figure in weight 300.
+      </p>
+    </div>
+  </div>
+
+  <h3 class="subhead" style="margin-top: 56px;">Greek characterset</h3>
+  <div class="card">
+    <p class="body" style="margin-bottom: 16px;">
+      Both bundled faces are subset to latin, latin-ext <em>and</em> Greek, so Greek and bilingual decks set
+      natively in the theme's own type — titles and figures alike. This is the one place Instrument is less
+      constrained than the AIHub theme, whose Oswald titles have no Greek.
+    </p>
+    <div style="font-family: var(--brand-sans); font-size: 30px; font-weight: 300; letter-spacing: -0.02em; color: var(--ink);">
+      Από την αυτοματοποίηση στην κρίση
+    </div>
+    <div style="font-family: var(--brand-mono); font-size: 18px; font-weight: 500; letter-spacing: 0.14em; color: var(--lagoon); margin-top: 12px;">
+      ΥΙΟΘΕΤΗΣΗ ΑΝΑ ΛΕΙΤΟΥΡΓΙΑ
+    </div>
+  </div>
+</section>
+
+<hr class="rule" />
+
+<!-- ============================== MOTIF ============================== -->
+<section class="block" id="motif">
+  <div class="eyebrow">04 / Motif</div>
+  <h2 class="section-title">The hairline plot<br />is the only ornament.</h2>
+  <p class="lead">
+    Where the AIHub theme reaches for its circuit lines, Instrument reaches for a chart. A thin-stroke
+    polyline, a grid of small multiples, an index rule across the top of a cover — these are the theme's
+    graphics, and they are the same object the argument is about. Photography is the theme's second
+    register, never its first: it sets the scene, the plot carries the claim.
+  </p>
+
+  <div class="grid cols-2" style="margin-top: 36px;">
+    <div class="logo-plate plate-plot" style="min-height: 260px;">
+      <svg viewBox="0 0 100 60" preserveAspectRatio="none" aria-hidden="true" style="width: 100%; height: 200px; overflow: visible;">
+        <line x1="0" x2="100" y1="0"  y2="0"  stroke="#24334A" stroke-width="0.25" vector-effect="non-scaling-stroke" />
+        <line x1="0" x2="100" y1="15" y2="15" stroke="#24334A" stroke-width="0.25" vector-effect="non-scaling-stroke" />
+        <line x1="0" x2="100" y1="30" y2="30" stroke="#24334A" stroke-width="0.25" vector-effect="non-scaling-stroke" />
+        <line x1="0" x2="100" y1="45" y2="45" stroke="#24334A" stroke-width="0.25" vector-effect="non-scaling-stroke" />
+        <line x1="0" x2="100" y1="60" y2="60" stroke="#24334A" stroke-width="0.25" vector-effect="non-scaling-stroke" />
+        <polyline points="0,52 12,49 24,50 36,41 48,43 60,31 72,33 84,19 100,9" fill="none" stroke="#2F7D6E" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" />
+        <polyline points="0,56 12,55 24,56 36,52 48,53 60,48 72,49 84,44 100,40" fill="none" stroke="#3C4E6B" stroke-width="1.5" vector-effect="non-scaling-stroke" stroke-linejoin="round" />
+      </svg>
+    </div>
+    <div class="card">
+      <h4 style="margin: 0 0 10px; font-size: 16px; font-weight: 500;">How a plot is drawn</h4>
+      <ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px;">
+        <li class="body" style="font-size: 14px;"><strong>Stroke 1.25–2px</strong> at artboard scale, <code>vector-effect: non-scaling-stroke</code> so it survives the 0.375 preview scale and the PDF export.</li>
+        <li class="body" style="font-size: 14px;"><strong>No fills.</strong> No area gradient under a line, no drop shadow, no marker dots except on the single value being called out.</li>
+        <li class="body" style="font-size: 14px;"><strong>Grid in <em>grid</em> #24334A</strong> at 0.25px, four to six rows. On paper the grid is <em>rule</em> #D9D6CE.</li>
+        <li class="body" style="font-size: 14px;"><strong>Accent for the series being argued about</strong>, slate and steel for the comparators. Rust only when the point is that a line went the wrong way.</li>
+        <li class="body" style="font-size: 14px;"><strong>A source line underneath, always.</strong> A figure without a <code>SOURCE:</code> micro-label is off-theme.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 class="subhead" style="margin-top: 56px;">What the theme never draws</h3>
+  <div class="grid cols-4">
+    <div class="card"><p class="body" style="font-size: 14px; margin: 0;"><strong>No glow</strong> — no box-shadow spreads, no blurred accents behind text, no bloom on a line.</p></div>
+    <div class="card"><p class="body" style="font-size: 14px; margin: 0;"><strong>No gradient wash</strong> — grounds are flat; panels meet with a hairline.</p></div>
+    <div class="card"><p class="body" style="font-size: 14px; margin: 0;"><strong>No nodes</strong> — no network graphs, constellations, connected dots or mesh backgrounds.</p></div>
+    <div class="card"><p class="body" style="font-size: 14px; margin: 0;"><strong>No brains</strong> — and no robots, circuits, chips or abstract &ldquo;intelligence&rdquo; iconography.</p></div>
+  </div>
+</section>
+
+<hr class="rule" />
+
+<!-- ============================== PHOTOGRAPHY ============================== -->
+<section class="block" id="photo">
+  <div class="eyebrow">05 / Photography</div>
+  <h2 class="section-title">Present-day rooms,<br />pulled into the palette.</h2>
+  <p class="lead">
+    Twenty-four photographs — eight subjects of real technical environments and workspaces, three takes
+    each. The brief is deliberately anti-futuristic: only equipment that ships today, available light,
+    no holograms, no neon, no glowing circuit overlays, no robots. Cutting edge as it actually looks.
+  </p>
+
+  <div class="grid cols-4" style="margin-top: 36px;">
+    <figure class="swatch" style="margin:0;">
+      <img src="assets/photo-ops-floor-1.jpeg" alt="Operations floor" style="width:100%;height:auto;display:block;aspect-ratio:16/9;object-fit:cover;">
+      <div class="meta"><span class="name">ops-floor</span><span class="role">landscape ×3</span></div>
+    </figure>
+    <figure class="swatch" style="margin:0;">
+      <img src="assets/photo-terminal-desk-2.jpeg" alt="Terminal desk" style="width:100%;height:auto;display:block;aspect-ratio:16/9;object-fit:cover;">
+      <div class="meta"><span class="name">terminal-desk</span><span class="role">portrait ×3</span></div>
+    </figure>
+    <figure class="swatch" style="margin:0;">
+      <img src="assets/photo-rack-aisle-2.jpeg" alt="Rack aisle" style="width:100%;height:auto;display:block;aspect-ratio:16/9;object-fit:cover;">
+      <div class="meta"><span class="name">rack-aisle</span><span class="role">portrait ×3</span></div>
+    </figure>
+    <figure class="swatch" style="margin:0;">
+      <img src="assets/photo-fibre-patch-2.jpeg" alt="Fibre patch panel" style="width:100%;height:auto;display:block;aspect-ratio:16/9;object-fit:cover;">
+      <div class="meta"><span class="name">fibre-patch</span><span class="role">landscape ×3</span></div>
+    </figure>
+    <figure class="swatch" style="margin:0;">
+      <img src="assets/photo-war-room-1.jpeg" alt="Review room" style="width:100%;height:auto;display:block;aspect-ratio:16/9;object-fit:cover;">
+      <div class="meta"><span class="name">war-room</span><span class="role">landscape ×3</span></div>
+    </figure>
+    <figure class="swatch" style="margin:0;">
+      <img src="assets/photo-glass-board-2.jpeg" alt="Glass writing wall" style="width:100%;height:auto;display:block;aspect-ratio:16/9;object-fit:cover;">
+      <div class="meta"><span class="name">glass-board</span><span class="role">portrait ×3</span></div>
+    </figure>
+    <figure class="swatch" style="margin:0;">
+      <img src="assets/photo-compute-node-2.jpeg" alt="Open compute node" style="width:100%;height:auto;display:block;aspect-ratio:16/9;object-fit:cover;">
+      <div class="meta"><span class="name">compute-node</span><span class="role">landscape ×3</span></div>
+    </figure>
+    <figure class="swatch" style="margin:0;">
+      <img src="assets/photo-desk-flatlay-1.jpeg" alt="Desk flat lay" style="width:100%;height:auto;display:block;aspect-ratio:16/9;object-fit:cover;">
+      <div class="meta"><span class="name">desk-flatlay</span><span class="role">landscape ×3</span></div>
+    </figure>
+  </div>
+
+  <div class="grid cols-2" style="margin-top: 36px;">
+    <div class="card">
+      <h4 style="margin: 0 0 10px; font-size: 16px; font-weight: 500;">The treatment is not optional</h4>
+      <p class="body" style="font-size: 14px;">
+        A photograph is always placed through <code>PicturePanel</code>, which draws the plot underneath it,
+        then the photo, then the night scrim —
+        <code>linear-gradient(180deg, rgba(14,23,38,.28), rgba(14,23,38,.70))</code> over
+        <code>grayscale(0.35) contrast(1.05)</code>. That is what holds a photograph inside the palette.
+        A bare <code>&lt;img&gt;</code> on a slide is off-theme, and if a file is ever missing the photo
+        layer hides itself and the plot shows at full strength.
+      </p>
+    </div>
+    <div class="card">
+      <h4 style="margin: 0 0 10px; font-size: 16px; font-weight: 500;">Choosing one</h4>
+      <p class="body" style="font-size: 14px;">
+        Match the orientation — <em>rack-aisle</em>, <em>terminal-desk</em> and <em>glass-board</em> are
+        portrait and belong in the tall panels; the rest are landscape and belong in the divider band.
+        Use <strong>one variant of a subject per deck</strong>: <code>-1</code>, <code>-2</code> and
+        <code>-3</code> are three takes of the same brief. And never borrow the NBG technology photographs,
+        which are teal-and-cream and sit outside this palette.
+      </p>
+    </div>
+  </div>
+</section>
+
+<hr class="rule" />
+
+<!-- ============================== LOGO ============================== -->
+<section class="block" id="logo">
+  <div class="eyebrow">06 / Logo</div>
+  <h2 class="section-title">The theme carries no mark<br />of its own.</h2>
+  <p class="lead">
+    Instrument is a register, not a brand. A deck is signed with the identity it is actually presented
+    under — the NBG lockup or the NBG AI Hub lockup — and the theme carries both so the choice is made per
+    deck, not per theme.
+  </p>
+
+  <div class="grid cols-2" style="margin-top: 36px;">
+    <div>
+      <div class="logo-plate plate-dark"><img src="../NBG-Design/assets/logo-knockout.png" alt="NBG lockup, knockout" /></div>
+      <div class="frame-tag" style="width: auto;"><span>NBG · knockout on night</span><span>{{NBG_LOGO_KNOCKOUT}}</span></div>
+    </div>
+    <div>
+      <div class="logo-plate plate-dark"><img src="../AIHub-Design/assets/logo-knockout.png" alt="NBG AI Hub lockup, knockout" /></div>
+      <div class="frame-tag" style="width: auto;"><span>NBG AI Hub · knockout on night</span><span>{{AIHUB_LOGO_KNOCKOUT}}</span></div>
+    </div>
+    <div>
+      <div class="logo-plate plate-cream"><img src="../NBG-Design/assets/logo-primary.png" alt="NBG lockup, primary" /></div>
+      <div class="frame-tag" style="width: auto;"><span>NBG · primary on paper</span><span>{{NBG_LOGO_PRIMARY}}</span></div>
+    </div>
+    <div>
+      <div class="logo-plate plate-cream"><img src="../AIHub-Design/assets/logo-primary.png" alt="NBG AI Hub lockup, primary" /></div>
+      <div class="frame-tag" style="width: auto;"><span>NBG AI Hub · primary on paper</span><span>{{AIHUB_LOGO_PRIMARY}}</span></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top: 36px;">
+    <h4 style="margin: 0 0 10px; font-size: 16px; font-weight: 500;">Rules</h4>
+    <p class="body" style="font-size: 14px;">
+      One identity per deck — never both lockups in the same deck. The lockup is always the bundled image:
+      never a text label, initials, a coloured box or a CSS/SVG re-creation. On night use the knockout, on
+      paper use the primary, and in the footer use <code>logo-small</code> at 28px. The unprefixed
+      <code>{{LOGO_*}}</code> tokens resolve to the NBG lockups through the theme's asset search path; write
+      <code>{{AIHUB_LOGO_*}}</code> to sign the deck as NBG AI Hub instead.
+    </p>
+  </div>
+</section>
+
+<hr class="rule" />
+
+<!-- ============================== GRID ============================== -->
+<section class="block" id="grid">
+  <div class="eyebrow">07 / Grid</div>
+  <h2 class="section-title">A 12-column grid<br />with a 90px safe area.</h2>
+  <p class="lead">
+    Geometry is shared with every other theme in the skill: a 1920×1080 artboard, twelve columns, and a
+    90px margin that nothing but a full-bleed panel crosses.
+  </p>
+
+  <div class="grid cols-2" style="margin-top: 36px;">
+    <div>
+      <h3 class="subhead">12-column grid (1920×1080)</h3>
+      <div class="grid-mock">
+        <div class="grid-mock-inner">
+          <div class="col"></div><div class="col"></div><div class="col"></div><div class="col"></div>
+          <div class="col"></div><div class="col"></div><div class="col"></div><div class="col"></div>
+          <div class="col"></div><div class="col"></div><div class="col"></div><div class="col"></div>
+        </div>
+        <div class="safe-area"></div>
+      </div>
+    </div>
+    <div>
+      <h3 class="subhead">Spacing scale (8px base)</h3>
+      <div class="card">
+        <div class="space-row"><span class="token">xs</span><span class="bar" style="width: 8%;"></span><span class="px">8px</span></div>
+        <div class="space-row"><span class="token">s</span><span class="bar" style="width: 18%;"></span><span class="px">18px</span></div>
+        <div class="space-row"><span class="token">m</span><span class="bar" style="width: 30%;"></span><span class="px">30px</span></div>
+        <div class="space-row"><span class="token">l</span><span class="bar" style="width: 44%;"></span><span class="px">44px</span></div>
+        <div class="space-row"><span class="token">xl</span><span class="bar" style="width: 62%;"></span><span class="px">62px</span></div>
+        <div class="space-row"><span class="token">safe</span><span class="bar" style="width: 90%;"></span><span class="px">90px</span></div>
+      </div>
+      <div class="card" style="margin-top: 24px;">
+        <h4 style="margin: 0 0 10px; font-size: 16px; font-weight: 500;">Hairlines, not borders</h4>
+        <p class="body" style="font-size: 14px; margin: 0;">
+          Every separator in the theme is 1px: <em>grid</em> #24334A on night, <em>rule</em> #D9D6CE on
+          paper. The only thicker line in the system is the 3px accent rule under a picture panel and the
+          200×3px accent bar on the bright divider.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="rule" />
+
+<!-- ============================== COVERS ============================== -->
+<section class="block" id="covers">
+  <div class="eyebrow">08 / Covers</div>
+  <h2 class="section-title">Three openings,<br />one register.</h2>
+  <p class="lead">
+    Every deck starts on one of these. The names and props are the same as in every other theme
+    (<code>accent</code>, <code>lang</code>, <code>showLogo</code>), so a deck can be re-themed without
+    rewriting its slides.
+  </p>
+
+  <article class="template">
+    <div>
+      <div class="frame"><div class="stage" id="cover1-mount"></div></div>
+      <div class="frame-tag"><span>Cover1</span><span>1920 × 1080</span></div>
+    </div>
+    <div class="info">
+      <span class="meta-tag">Cover · evidence</span>
+      <h4>Hero plot</h4>
+      <p>Copy on the night ground at the left, the picture slot as a tall panel at the right. The panel
+        holds the hairline plot today and a photograph when one is bundled — the plot is the base layer, so
+        nothing breaks either way.</p>
+      <ul>
+        <li><b>Ground</b><span>Night · #0E1726</span></li>
+        <li><b>Title</b><span>116pt · Plex Sans 300 · one word at 500</span></li>
+        <li><b>Eyebrow</b><span>01 / EVOLUTION · Plex Mono 500 · accent</span></li>
+        <li><b>Panel</b><span>780px wide, hairline edge in grid, 3px accent rule at the foot</span></li>
+        <li><b>Lockup</b><span>Knockout, 44px, bottom left</span></li>
+      </ul>
+    </div>
+  </article>
+
+  <article class="template">
+    <div>
+      <div class="frame"><div class="stage" id="cover2-mount"></div></div>
+      <div class="frame-tag"><span>Cover2</span><span>1920 × 1080</span></div>
+    </div>
+    <div class="info">
+      <span class="meta-tag">Cover · ledger</span>
+      <h4>Paper and night</h4>
+      <p>The theme's signature contrast: the title in ink on paper, one night panel carrying four small
+        multiples. Open here when the talk rests on evidence the audience should see before the first
+        claim.</p>
+      <ul>
+        <li><b>Ground</b><span>Paper · #F2F1EE</span></li>
+        <li><b>Title</b><span>108pt · Plex Sans 300 · ink</span></li>
+        <li><b>Panel</b><span>640 × 520 night block, 2×2 small multiples</span></li>
+        <li><b>Micro</b><span>INDEXED · [PERIOD] · [SOURCE]</span></li>
+        <li><b>Lockup</b><span>Primary, 44px, bottom left</span></li>
+      </ul>
+    </div>
+  </article>
+
+  <article class="template">
+    <div>
+      <div class="frame"><div class="stage" id="cover3-mount"></div></div>
+      <div class="frame-tag"><span>Cover3</span><span>1920 × 1080</span></div>
+    </div>
+    <div class="info">
+      <span class="meta-tag">Cover · typographic</span>
+      <h4>Index rule</h4>
+      <p>No plot and no picture — an index rule across the top, the title, one hairline, the meta row. The
+        austere opening, for when the argument rather than the evidence is the hook.</p>
+      <ul>
+        <li><b>Ground</b><span>Night · #0E1726</span></li>
+        <li><b>Title</b><span>132pt · Plex Sans 300 · −0.025em</span></li>
+        <li><b>Ornament</b><span>41 ticks, every tenth full height and in the accent</span></li>
+        <li><b>Meta</b><span>Speaker left, event right, Plex Mono 0.16em</span></li>
+        <li><b>Lockup</b><span>Knockout, 44px, bottom left</span></li>
+      </ul>
+    </div>
+  </article>
+</section>
+
+<hr class="rule" />
+
+<!-- ============================== DIVIDERS ============================== -->
+<section class="block" id="dividers">
+  <div class="eyebrow">09 / Dividers</div>
+  <h2 class="section-title">Dividers signal<br />a shift in chapter.</h2>
+  <p class="lead">
+    Three of them, and the reason there are three is rhythm: two night chapters in a row need the bright
+    divider between them or the night grounds stop carrying weight.
+  </p>
+
+  <article class="template">
+    <div>
+      <div class="frame"><div class="stage" id="div-image-mount"></div></div>
+      <div class="frame-tag"><span>DividerImage</span><span>1920 × 1080</span></div>
+    </div>
+    <div class="info">
+      <span class="meta-tag">Divider · band</span>
+      <h4>Picture band</h4>
+      <p>A 560px full-bleed band carrying the plot — or a photograph, under the night scrim, once one is
+        bundled — with the chapter set underneath it.</p>
+      <ul>
+        <li><b>Band</b><span>560px, full bleed, 3px accent rule at the foot</span></li>
+        <li><b>Title</b><span>92pt · Plex Sans 300</span></li>
+        <li><b>Eyebrow</b><span>02 / CHAPTER</span></li>
+        <li><b>Photo</b><span>assets/photo-instrument-2.jpeg — hides itself until bundled</span></li>
+      </ul>
+    </div>
+  </article>
+
+  <article class="template">
+    <div>
+      <div class="frame"><div class="stage" id="div-dark-mount"></div></div>
+      <div class="frame-tag"><span>DividerDark</span><span>1920 × 1080</span></div>
+    </div>
+    <div class="info">
+      <span class="meta-tag">Divider · dark</span>
+      <h4>Chapter numeral</h4>
+      <p>The chapter number as a display numeral — 420pt of Plex Mono 300 in the accent — with the chapter
+        title alongside it. The clearest structural beat the theme has.</p>
+      <ul>
+        <li><b>Ground</b><span>Night · #0E1726</span></li>
+        <li><b>Numeral</b><span>420pt · Plex Mono 300 · −0.04em · accent</span></li>
+        <li><b>Title</b><span>96pt · Plex Sans 300</span></li>
+        <li><b>Foot</b><span>Hairline, then the source micro-label</span></li>
+      </ul>
+    </div>
+  </article>
+
+  <article class="template">
+    <div>
+      <div class="frame"><div class="stage" id="div-bright-mount"></div></div>
+      <div class="frame-tag"><span>DividerBright</span><span>1920 × 1080</span></div>
+    </div>
+    <div class="info">
+      <span class="meta-tag">Divider · bright</span>
+      <h4>Palette cleanse</h4>
+      <p>Paper ground, ink title, one 200×3px accent bar. Put it between two night chapters so the dark
+        grounds keep their force.</p>
+      <ul>
+        <li><b>Ground</b><span>Paper · #F2F1EE</span></li>
+        <li><b>Title</b><span>104pt · Plex Sans 300 · ink</span></li>
+        <li><b>Accent</b><span>200 × 3px bar under the title</span></li>
+        <li><b>Foot</b><span>Hairline, then the source micro-label</span></li>
+      </ul>
+    </div>
+  </article>
+</section>
+
+<hr class="rule" />
+
+<!-- ============================== CONTENT ============================== -->
+<section class="block" id="content">
+  <div class="eyebrow">10 / Content</div>
+  <h2 class="section-title">Content slides<br />do the heavy lifting.</h2>
+  <p class="lead">
+    Three layouts cover an entire talk: a claim beside its figure, two costs argued side by side, and the
+    one number the deck is really about.
+  </p>
+
+  <article class="template">
+    <div>
+      <div class="frame"><div class="stage" id="c-image-mount"></div></div>
+      <div class="frame-tag"><span>ContentImageRight</span><span>1920 × 1080</span></div>
+    </div>
+    <div class="info">
+      <span class="meta-tag">Content · claim + figure</span>
+      <h4>Claim beside its figure</h4>
+      <p>The everyday evidence page. State what the plot shows in words on the left before the audience has
+        to work it out from the lines on the right.</p>
+      <ul>
+        <li><b>Ground</b><span>Paper · #F2F1EE</span></li>
+        <li><b>Title</b><span>68pt · Plex Sans 300</span></li>
+        <li><b>Rows</b><span>Mono label 20pt · data numeral 34pt tabular · 1px divider</span></li>
+        <li><b>Panel</b><span>780px night block with a three-series plot</span></li>
+        <li><b>Source</b><span>SOURCE: [YOUR SOURCE] · [PERIOD]</span></li>
+      </ul>
+    </div>
+  </article>
+
+  <article class="template">
+    <div>
+      <div class="frame"><div class="stage" id="c-cols-mount"></div></div>
+      <div class="frame-tag"><span>ContentTwoColumn</span><span>1920 × 1080</span></div>
+    </div>
+    <div class="info">
+      <span class="meta-tag">Content · two columns</span>
+      <h4>Two costs, side by side</h4>
+      <p>One idea per column, each headed by a mono kicker and closed by its own small plot and source
+        line. A hairline down the middle, never a card or a box.</p>
+      <ul>
+        <li><b>Ground</b><span>Paper · #F2F1EE</span></li>
+        <li><b>Kicker</b><span>01 / WHAT CHANGED · accent, then ink 3</span></li>
+        <li><b>Column head</b><span>44pt · Plex Sans 300</span></li>
+        <li><b>Divider</b><span>1px column in rule #D9D6CE</span></li>
+      </ul>
+    </div>
+  </article>
+
+  <article class="template">
+    <div>
+      <div class="frame"><div class="stage" id="c-stat-mount"></div></div>
+      <div class="frame-tag"><span>ContentStat</span><span>1920 × 1080</span></div>
+    </div>
+    <div class="info">
+      <span class="meta-tag">Content · the figure</span>
+      <h4>The one number</h4>
+      <p>The theme's signature page: a 300pt display numeral on the night ground, the caption that reads as
+        a sentence with it, and — to the right — the small multiples and sample that earn it.</p>
+      <ul>
+        <li><b>Ground</b><span>Night · #0E1726</span></li>
+        <li><b>Numeral</b><span>300pt · Plex Mono 300 · accent</span></li>
+        <li><b>Caption</b><span>46pt · Plex Sans 300, max 1080px</span></li>
+        <li><b>Evidence</b><span>2×2 small multiples, sample and period as data numerals</span></li>
+        <li><b>Source</b><span>Always present — a figure without one is off-theme</span></li>
+      </ul>
+    </div>
+  </article>
+</section>
+
+</main>
+
+<!-- ============================== SCRIPTS ============================== -->
+
+<!-- Tweakable defaults — host parses & rewrites this block when user toggles -->
+<script>
+  window.TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+    "accent": "#2F7D6E",
+    "lang": "en",
+    "showLogo": true
+  }/*EDITMODE-END*/;
+</script>
+
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="slide-templates.jsx"></script>
+
+<script type="text/babel">
+  const { useState, useEffect } = React;
+
+  // ------------ Tweaks state, applied across every slide template ------------
+  function App() {
+    const [t, setTweak] = useTweaks(window.TWEAK_DEFAULTS);
+
+    return (
+      <TweaksPanel title="Tweaks">
+        <TweakSection label="Look">
+          <TweakColor
+            label="Accent"
+            value={t.accent}
+            onChange={v => setTweak("accent", v)}
+            options={["#2F7D6E", "#E0A32E", "#3C4E6B", "#C4441C"]}
+          />
+          <TweakRadio
+            label="Language"
+            value={t.lang}
+            onChange={v => setTweak("lang", v)}
+            options={[
+              { value: "en", label: "EN" },
+              { value: "gr", label: "GR" },
+              { value: "bi", label: "Both" },
+            ]}
+          />
+          <TweakToggle
+            label="Show logo"
+            value={t.showLogo}
+            onChange={v => setTweak("showLogo", v)}
+          />
+        </TweakSection>
+        <div style={{
+          fontSize: 11,
+          color: "rgba(255,255,255,0.55)",
+          padding: "8px 14px 4px",
+          lineHeight: 1.5,
+          fontFamily: "ui-monospace, SF Mono, monospace",
+        }}>
+          Changes apply live to every template on the page.
+        </div>
+      </TweaksPanel>
+    );
+  }
+
+  // ------------ Mount the tweaks panel ------------
+  ReactDOM.createRoot(document.body.appendChild(document.createElement("div"))).render(<App />);
+
+  // ------------ Mount each slide template into its slot ------------
+  // We re-render slides whenever tweaks change by listening to the same
+  // edit-mode messages the panel uses.
+  const slides = [
+    ["cover1-mount",   () => window.Cover1],
+    ["cover2-mount",   () => window.Cover2],
+    ["cover3-mount",   () => window.Cover3],
+    ["div-image-mount",  () => window.DividerImage],
+    ["div-dark-mount",   () => window.DividerDark],
+    ["div-bright-mount", () => window.DividerBright],
+    ["c-image-mount",   () => window.ContentImageRight],
+    ["c-cols-mount",    () => window.ContentTwoColumn],
+    ["c-stat-mount",    () => window.ContentStat],
+  ];
+
+  const roots = new Map();
+  function renderAllSlides() {
+    const t = {
+      ...window.TWEAK_DEFAULTS,
+      ...(window.__edits || {}),
+    };
+    for (const [id, getC] of slides) {
+      const el = document.getElementById(id);
+      if (!el) continue;
+      const C = getC();
+      if (!C) continue;
+      let root = roots.get(id);
+      if (!root) {
+        root = ReactDOM.createRoot(el);
+        roots.set(id, root);
+      }
+      root.render(<C accent={t.accent} lang={t.lang} showLogo={t.showLogo} />);
+    }
+  }
+
+  // listen for tweak edits — useTweaks dispatches a 'tweakchange' CustomEvent
+  // on the same window AND posts to parent. Listen to both to be safe.
+  window.addEventListener("tweakchange", (e) => {
+    window.__edits = { ...(window.__edits || {}), ...e.detail };
+    renderAllSlides();
+  });
+  window.addEventListener("message", (e) => {
+    if (e.data && e.data.type === "__edit_mode_set_keys") {
+      window.__edits = { ...(window.__edits || {}), ...e.data.edits };
+      renderAllSlides();
+    }
+  });
+
+  // initial render — give Babel a tick to define window.Cover1 etc.
+  requestAnimationFrame(() => requestAnimationFrame(renderAllSlides));
+</script>
+
+</body>
+</html>

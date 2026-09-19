@@ -23,24 +23,40 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const SKILL_ROOT = resolve(__dirname, '..');                       // scripts/ -> skill root
 // theme -> the folders its tokens resolve from, in order (SKILL.md "Themes"). A theme that declares a second
 // folder shares that folder's photography (aihub shares the NBG technology set); its own folder always wins.
-const THEMES = { nbg: ['NBG-Design'], biks2013: ['BikS2013-Design'], aihub: ['AIHub-Design', 'NBG-Design'] };
+const THEMES = {
+  nbg: ['NBG-Design'],
+  biks2013: ['BikS2013-Design'],
+  aihub: ['AIHub-Design', 'NBG-Design'],
+  instrument: ['Instrument-Design', 'NBG-Design', 'AIHub-Design'],
+};
+// A token may name the theme it comes from as its first segment ({{AIHUB_LOGO_KNOCKOUT}}): that token
+// resolves from THAT theme's OWN folder only, never through a search path. The Instrument theme uses this
+// to carry both the NBG and the NBG AI Hub lockups so a deck picks the identity it is presented under.
+const THEME_TOKEN_RE = new RegExp(`^(${Object.keys(THEMES).map((t) => t.toUpperCase()).join('|')})_(.+)$`);
 const DEFAULT_ASSETS = resolve(SKILL_ROOT, THEMES.nbg[0], 'assets');
 
 const USAGE = `NBG asset embedder
-Usage: node embed-assets.mjs <deck.html> [-o <out.html>] [--theme <nbg|biks2013>] [--assets <dir>]
+Usage: node embed-assets.mjs <deck.html> [-o <out.html>] [--theme <nbg|biks2013|aihub|instrument>] [--assets <dir>]
 
   <deck.html>     HTML deck containing {{TOKEN}} placeholders
                   (e.g. {{LOGO_KNOCKOUT}}, {{LOGO_PRIMARY}}, {{LOGO_SMALL}}, {{PHOTO_STREET}}).
   -o, --out       Output path (default: overwrite the input file in place).
-  --theme <name>  Take the assets of that theme: nbg (default, NBG-Design/assets), biks2013
-                  (BikS2013-Design/assets) or aihub (AIHub-Design/assets, then NBG-Design/assets for the
-                  shared technology photography). The tokens are the same in every theme; font tokens
-                  ({{FONT_OSWALD}} -> font-oswald.datauri.txt, a data:font/ URI) work the same way.
+  --theme <name>  Take the assets of that theme, along its search path (its own folder first):
+                    nbg        (default)  NBG-Design/assets
+                    biks2013               BikS2013-Design/assets
+                    aihub                  AIHub-Design/assets, then NBG-Design/assets (shared photography)
+                    instrument             Instrument-Design/assets, then NBG-Design/, then AIHub-Design/
+                  The tokens are the same in every theme; font tokens ({{FONT_OSWALD}} ->
+                  font-oswald.datauri.txt, a data:font/ URI) work the same way. A token prefixed with a
+                  theme name ({{NBG_LOGO_PRIMARY}}, {{AIHUB_LOGO_KNOCKOUT}}) is taken from that theme's
+                  own folder, bypassing the search path.
   --assets <dir>  Override the assets directory (default: the theme's assets).
 
 Tokens map to files by lower-casing and turning '_' into '-', then adding '.datauri.txt':
   {{PHOTO_STREET}}  -> photo-street.datauri.txt
-  {{LOGO_KNOCKOUT}} -> logo-knockout.datauri.txt`;
+  {{LOGO_KNOCKOUT}} -> logo-knockout.datauri.txt
+A theme-prefixed token drops the prefix before the mapping and reads the named theme's own folder:
+  {{AIHUB_LOGO_KNOCKOUT}} -> AIHub-Design/assets/logo-knockout.datauri.txt`;
 
 function fail(msg) { console.error('embed-assets ERROR: ' + msg); process.exit(1); }
 
@@ -88,21 +104,25 @@ function main() {
 
   const report = [];
   for (const tok of tokens) {
-    // first folder of the theme's search path that has the asset wins (the theme's own folder comes first)
-    const dir = assetsDirs.find((d) => existsSync(resolve(d, tokenToFile(tok))));
+    // A theme-prefixed token ({{AIHUB_LOGO_KNOCKOUT}}) names its own folder; everything else walks the
+    // theme's search path, and the first folder that has the asset wins (its own folder comes first).
+    const scoped = args.assets ? null : THEME_TOKEN_RE.exec(tok);
+    const stem = scoped ? scoped[2] : tok;
+    const dirs = scoped ? [resolve(SKILL_ROOT, THEMES[scoped[1].toLowerCase()][0], 'assets')] : assetsDirs;
+    const dir = dirs.find((d) => existsSync(resolve(d, tokenToFile(stem))));
     if (!dir) {
-      fail(`no asset for token {{${tok}}} (looked for ${tokenToFile(tok)} in ${assetsDirs.join(', ')}).\n` +
-           `  Valid asset stems: ${[...new Set(assetsDirs.flatMap((d) => existsSync(d) ? availableStems(d) : []))].join(', ') || '(none found)'}`);
+      fail(`no asset for token {{${tok}}} (looked for ${tokenToFile(stem)} in ${dirs.join(', ')}).\n` +
+           `  Valid asset stems: ${[...new Set(dirs.flatMap((d) => existsSync(d) ? availableStems(d) : []))].join(', ') || '(none found)'}`);
     }
-    const file = resolve(dir, tokenToFile(tok));
+    const file = resolve(dir, tokenToFile(stem));
     const uri = readFileSync(file, 'utf8').trim();
     if (!uri.startsWith('data:image/') && !uri.startsWith('data:font/')) {
-      fail(`${tokenToFile(tok)} does not start with "data:image/" or "data:font/" (got ${JSON.stringify(uri.slice(0, 24))}).`);
+      fail(`${tokenToFile(stem)} does not start with "data:image/" or "data:font/" (got ${JSON.stringify(uri.slice(0, 24))}).`);
     }
     const re = new RegExp(`\\{\\{${tok}\\}\\}`, 'g');
     const count = (html.match(re) || []).length;
     html = html.replace(re, uri);
-    report.push(`  {{${tok}}} -> ${tokenToFile(tok)}  (${count}x, ${uri.length.toLocaleString()} chars)`);
+    report.push(`  {{${tok}}} -> ${tokenToFile(stem)}  (${count}x, ${uri.length.toLocaleString()} chars)`);
   }
 
   const leftover = [...new Set([...html.matchAll(TOKEN_RE)].map((m) => m[0]))];

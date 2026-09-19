@@ -40,10 +40,17 @@ node "<skill-root>/scripts/embed-assets.mjs" my-deck.html
 - Fails loudly if a token has no matching asset or the asset isn't a `data:image/` URI.
 - `--theme <name>` takes the assets of a theme instead of the NBG ones (`--theme nbg`, the default): `biks2013`
   resolves from `BikS2013-Design/assets/`; `aihub` from `AIHub-Design/assets/` and then, for the shared technology
-  photography, from `NBG-Design/assets/` (each theme declares its search path; its own folder always wins). The
+  photography, from `NBG-Design/assets/`; `instrument` from `Instrument-Design/assets/`, then `NBG-Design/`, then
+  `AIHub-Design/` (each theme declares its search path; its own folder always wins). The
   tokens are the same in every theme, and font tokens work the same way (`{{FONT_OSWALD}}` →
   `font-oswald.datauri.txt`, a `data:font/woff2` URI for `@font-face`). `--assets <dir>` still overrides the
   directory outright. Unknown theme names fail.
+- **Theme-prefixed tokens** (v1.23.0): a token whose first segment names a theme — `{{NBG_LOGO_PRIMARY}}`,
+  `{{AIHUB_LOGO_KNOCKOUT}}` — is read from THAT theme's own folder and bypasses the search path entirely.
+  The Instrument theme uses this to carry both the NBG and the NBG AI Hub lockups, so a deck picks the
+  identity it is presented under. The prefix is dropped before the file mapping
+  (`{{AIHUB_LOGO_KNOCKOUT}}` → `AIHub-Design/assets/logo-knockout.datauri.txt`), and a missing file still
+  fails loudly. `--assets <dir>` disables the prefix handling, since it overrides the folder outright.
 - `-o out.html` writes to a new file; default overwrites in place.
 
 ## 2. Verify the deck — `verify-deck.mjs`
@@ -579,7 +586,7 @@ node "<skill-root>/scripts/add-deck-menu.mjs" my-deck.html [-o <out.html>] [--re
 - The CLI exporter prints the file on disk, not a viewer's unsaved edits: to get a PDF of an
   edited deck, export the saved `-edited.html` copy.
 
-### The theme (block v14, v1.20.0; block v15 adds `aihub`, v1.21.0)
+### The theme (block v14, v1.20.0; block v15 adds `aihub`, v1.21.0; block v17 adds `instrument`, v1.23.0)
 
 `add-deck-menu.mjs <deck> --theme biks2013` records `{"theme":"biks2013"}` in the block's configuration
 (`window.nbgDeckMenuConfig`), and the editor then serves the BikS2013 personal theme: the swatches of the
@@ -589,11 +596,17 @@ editor's own accent colours and font follow the theme, the assistant's system pr
 prompts speak of the BikS2013 system, and the menu is titled "BikS2013 deck". `--theme aihub` (block v15) serves the AIHub theme the same way: the AIHub palette (navy `#012A30`, deep blue
 `#024A6C`, lagoon `#1C869D`, cyan `#33B3BF`, sun `#FFF77D`, amber `#FFDB7A`, grey `#B1BACC`, mist `#F3F6F8`,
 white), the Segoe UI editor font, an assistant briefed on the developer-portal look, the title "AIHub deck".
-The themes are one table in `lib/deck-menu.js` (`THEMES`: name, accents, font, palette, briefing). `--theme nbg` (the
-default) is the NBG editor as before. Re-running the CLI without `--theme` keeps the theme the block
+`--theme instrument` (block v17) serves the Instrument theme: the Instrument palette (night `#0E1726`, grid
+`#24334A`, slate `#3C4E6B`, steel `#7D8CA3`, lagoon `#2F7D6E`, amber `#E0A32E`, rust `#C4441C`, ink `#1A1A18`,
+light `#E9EEF5`, paper `#F2F1EE`, white), the IBM Plex Sans editor font, an assistant briefed on the theme
+and on its chart discipline, the title "Instrument deck".
+The themes are one table in `lib/deck-menu.js` (`THEMES`: name, accents, font, palette, font-picker head,
+briefing). Block v17 also makes the **font picker** theme-aware: the two or three faces the theme itself uses
+head the list (it named "Default (Aptos)" on every theme before), followed by the faces every machine has.
+`--theme nbg` (the default) is the NBG editor as before. Re-running the CLI without `--theme` keeps the theme the block
 carries, as it keeps every other configuration key, and the rebuild script carries it over on every
 rebuild. `theme` is the sixth configuration key next to `mode`, `root`, `unit`, `title` and `aiSystem`;
-only `nbg`, `biks2013` and `aihub` are accepted (block v16 names the AIHub brand "NBG AI Hub" in the assistant's briefing).
+only `nbg`, `biks2013`, `aihub` and `instrument` are accepted (block v16 names the AIHub brand "NBG AI Hub" in the assistant's briefing). v1.23.0 also repairs the validation error message itself, which had lost its template interpolations and read `menu config theme must be one of , not ""`.
 
 ## 6. Rebuild script — `write-rebuild-script.mjs`
 
@@ -648,7 +661,9 @@ node my-deck.rebuild.mjs --scripts <dir>    # the skill's scripts/ directory, ex
 ```
 # 1. author my-deck.html using {{TOKEN}} placeholders for every image
 #    (a BikS2013 personal deck: add --theme biks2013 to embed-assets.mjs and add-deck-menu.mjs below;
-#     an AIHub deck: --theme aihub, and declare the Oswald @font-face rule through the {{FONT_OSWALD}} token)
+#     an AIHub deck: --theme aihub, and declare the Oswald @font-face rule through the {{FONT_OSWALD}} token;
+#     an Instrument deck: --theme instrument, declare the @font-face rules through {{FONT_PLEX_SANS}} and
+#     {{FONT_PLEX_MONO_*}}, and sign it with either the {{NBG_LOGO_*}} or the {{AIHUB_LOGO_*}} lockups)
 node "<skill-root>/scripts/embed-assets.mjs"    my-deck.html
 node "<skill-root>/scripts/add-deck-menu.mjs"   my-deck.html            # standard: right-click menu (edit text / export PDF)
 node "<skill-root>/scripts/verify-deck.mjs"     my-deck.html --strict   # mandatory, headless-safe

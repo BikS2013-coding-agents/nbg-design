@@ -1,6 +1,6 @@
 ---
 name: nbg-design
-description: Use when creating presentations in a design system inspired by the brand image of the National Bank of Greece (NBG), HTML slides (with a built-in right-click menu for in-place text editing with a formatting toolbar, shape resize/move, editing of the parts of inline SVGs, an AI assistant panel, "Export to PDF" and "Save edited copy", plus a per-deck rebuild script that re-embeds newer versions of those editing tools), updating an existing deck to the skill's current editing tools, slide specifications, PDF exports of HTML decks (one page per slide, aesthetics preserved) — all on the bundled NBG-inspired presentation design system, templates, logos, photography, screenshots, and guardrails. Also ships the BikS2013 personal theme (ink and copper on warm paper, the BikS2013 wheel lockups) for presentations given in a personal capacity, selected per deck with the same templates, scripts and guardrails, and the AIHub theme (navy, lagoon and sun yellow after the NBG developer portal, Oswald titles embedded, the NBG AI Hub lockups) for NBG AI Hub and developer-facing material.
+description: Use when creating presentations in a design system inspired by the brand image of the National Bank of Greece (NBG), HTML slides (with a built-in right-click menu for in-place text editing with a formatting toolbar, shape resize/move, editing of the parts of inline SVGs, an AI assistant panel, "Export to PDF" and "Save edited copy", plus a per-deck rebuild script that re-embeds newer versions of those editing tools), updating an existing deck to the skill's current editing tools, slide specifications, PDF exports of HTML decks (one page per slide, aesthetics preserved) — all on the bundled NBG-inspired presentation design system, templates, logos, photography, screenshots, and guardrails. Also ships the BikS2013 personal theme (ink and copper on warm paper, the BikS2013 wheel lockups) for presentations given in a personal capacity, selected per deck with the same templates, scripts and guardrails, the AIHub theme (navy, lagoon and sun yellow after the NBG developer portal, Oswald titles embedded, the NBG AI Hub lockups) for NBG AI Hub and developer-facing material, and the Instrument theme (a dark, chart-led register in IBM Plex with Greek) for talks carried by data.
 ---
 
 # NBG Design
@@ -34,7 +34,7 @@ Approved defaults:
 - If no deck language is specified, use English (`en`). The design system supports `en` (English), `gr` (Greek) and `bi` (bilingual); any other value must come from the user.
 - If no final output format is specified, use HTML (`html`).
 - The NBG logo is shown (`show_logo: true`) unless the user asks to hide it.
-- The theme is `nbg` unless the user asks for a personal / BikS2013 presentation, or says the deck is not for the bank — then `biks2013` — or unless the deck is for the NBG AI Hub / a developer audience — then `aihub` (see "Themes"). When it is unclear which theme a deck belongs to, ask.
+- The theme is `nbg` unless the user asks for a personal / BikS2013 presentation, or says the deck is not for the bank — then `biks2013` — or unless the deck is for the NBG AI Hub / a developer audience — then `aihub` — or unless the user asks for the Instrument theme, or for a dark, chart-led, data-driven talk — then `instrument` (see "Themes"). When it is unclear which theme a deck belongs to, ask.
 
 Supported output formats: `html` (default) and `pdf` (always exported from the finished HTML deck — see "PDF output"). **PowerPoint (.pptx) is out of scope**: this skill produces HTML presentations and their PDF export only. If PowerPoint is requested, say so plainly and deliver the HTML deck (and its PDF) instead — never improvise a conversion. A request for "a PDF", "PDF version", "print version", or "send as PDF" selects `pdf`.
 
@@ -44,18 +44,20 @@ The skill holds no credentials. API keys for the in-deck assistant (`ANTHROPIC_A
 
 ## Themes
 
-The skill ships three themes. All share the 1920×1080 geometry, the nine templates (same names, same props), every guardrail in this file, the scripts, the in-deck menu, the rebuild script and the PDF export. A theme decides the folder the design-system files and assets come from, the palette, the font stack and the logo lockups.
+The skill ships four themes. All share the 1920×1080 geometry, the nine templates (same names, same props), every guardrail in this file, the scripts, the in-deck menu, the rebuild script and the PDF export. A theme decides the folder the design-system files and assets come from, the palette, the font stack and the logo lockups.
 
 | Theme | Use | Folder | Palette | Type | Logo |
 | --- | --- | --- | --- | --- | --- |
 | `nbg` (default) | the bank's material: presentations for or about the National Bank of Greece | `NBG-Design/` | teal-led ("Design-system reference") | Aptos | the NBG lockups |
 | `biks2013` | presentations given in a personal capacity under the **BikS2013** label: talks, meetups, workshops, project write-ups, field notes | `BikS2013-Design/` | ink and copper on warm paper (below) | Avenir Next | the BikS2013 wheel lockups |
 | `aihub` | **NBG AI Hub** and developer-facing material — the AI Hub programme, API products, developer meetups, hackathons — after the developer portal developer.nbg.gr | `AIHub-Design/` (photos shared from `NBG-Design/`) | navy and lagoon with a sun-yellow spark (below) | Oswald titles (embedded), Segoe UI body | the NBG AI Hub lockups |
+| `instrument` | talks whose argument is carried by **measurement** — adoption curves, unit economics, before-and-after — in a dark, precise register rather than an atmospheric one | `Instrument-Design/` (own photography; lockups shared from `NBG-Design/` and `AIHub-Design/`) | night and lagoon, one accent per slide (below) | IBM Plex Sans + IBM Plex Mono, both embedded, both with Greek | either the NBG or the NBG AI Hub lockups — the deck picks |
 
 Selecting the theme:
 
-- `nbg` unless the user asks for a personal / BikS2013 presentation, names the BikS2013 label, or says the deck is not for the bank — then `biks2013`; or unless the deck is for the NBG AI Hub, the developer portal or a developer audience, or the user names the AIHub theme — then `aihub`. When it is unclear which theme a deck belongs to, ask; never guess.
-- One theme per deck. Never put NBG teal or cyan, NBG photography or the NBG logo on a BikS2013 deck, and never put copper, the wheel lockups or BikS2013 copy on an NBG deck.
+- `nbg` unless the user asks for a personal / BikS2013 presentation, names the BikS2013 label, or says the deck is not for the bank — then `biks2013`; or unless the deck is for the NBG AI Hub, the developer portal or a developer audience, or the user names the AIHub theme — then `aihub`; or unless the user names the Instrument theme or asks for a dark, chart-led, data-driven deck — then `instrument`. When it is unclear which theme a deck belongs to, ask; never guess.
+- `instrument` is a **register, not a brand**: it is the one theme that carries no lockup of its own, and it is chosen for how the argument is made, not for whose material it is. An Instrument deck is still signed with a real identity — the NBG lockup or the NBG AI Hub lockup — so the `nbg` / `aihub` question still has to be answered for it, and only the look changes.
+- One theme per deck. Never put NBG teal or cyan, NBG photography or the NBG logo on a BikS2013 deck, and never put copper, the wheel lockups or BikS2013 copy on an NBG deck. One identity per deck too: never both the NBG and the NBG AI Hub lockup on the same Instrument deck.
 - Every mention of "NBG" in the rules below (folder, palette, lockups, font stack) reads as the selected theme's folder, palette, lockups and font stack. Nothing else changes.
 
 Under `biks2013`:
@@ -116,6 +118,43 @@ Style: eyebrows are written in square brackets — `[ Getting started ]` — the
 
 Logo: the **NBG AI Hub** lockup — the dashed-line building of the developer portal's logo over the wordmark "NBG AI — HUB", composed in the portal's manner (the portal's own lockup reads "NBG Technology Hub" and is not used) — in `AIHub-Design/assets/`: `logo-knockout` (white, for dark backgrounds), `logo-primary` (navy, for light backgrounds), `logo-small` (footer size), `logo-mark` and `logo-mark-navy` (the building alone, for tight spots). The corporate NBG lockup is never used on an AIHub deck. Write the brand as "NBG AI Hub" in copy, `alt` and `aria-label` text. The rules of "Logo rendering (MANDATORY)" apply unchanged.
 
+Under `instrument` (a dark, measurement-led register — for talks whose argument is carried by data):
+
+1. Read `Instrument-Design/Instrument Design System.html` and `Instrument-Design/slide-templates.jsx` instead of the NBG files (same nine template names, same props).
+2. Tokens: the two bundled faces `{{FONT_PLEX_SANS}}` (IBM Plex Sans, a **variable** face, weights 100–700) and `{{FONT_PLEX_MONO_300}}` / `{{FONT_PLEX_MONO_400}}` / `{{FONT_PLEX_MONO_500}}` (`data:font/woff2` URIs for `@font-face`); and the lockups, which this theme takes from the other two through **theme-prefixed tokens** — `{{NBG_LOGO_KNOCKOUT}}`, `{{NBG_LOGO_PRIMARY}}`, `{{NBG_LOGO_SMALL}}`, and `{{AIHUB_LOGO_KNOCKOUT}}`, `{{AIHUB_LOGO_PRIMARY}}`, `{{AIHUB_LOGO_SMALL}}`, `{{AIHUB_LOGO_MARK}}`. A theme-prefixed token reads that theme's own folder and bypasses the search path; the unprefixed `{{LOGO_*}}` tokens resolve to the **NBG** lockups. Pick one identity and use it throughout the deck.
+3. Embed with `node "<skill-root>/scripts/embed-assets.mjs" <deck>.html --theme instrument`; add the menu with `node "<skill-root>/scripts/add-deck-menu.mjs" <deck>.html --theme instrument` (the toolbars offer the Instrument palette, the font picker heads with the two Plex faces, the assistant is briefed on the theme and its discipline, the menu is titled "Instrument deck", and the rebuild script keeps the theme). Everything else runs as for an NBG deck.
+4. Fonts (MANDATORY for this theme): declare the faces once in the deck's CSS through the tokens — `@font-face { font-family: "IBM Plex Sans"; font-weight: 100 700; src: url("{{FONT_PLEX_SANS}}") format("woff2"); }` (one declaration covers every weight) and one `@font-face` per Plex Mono weight used. Text uses `"IBM Plex Sans", "Segoe UI", Helvetica, Arial, sans-serif`; **every** eyebrow, label, unit and figure uses `"IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace`. Both faces are subset to latin, latin-ext **and Greek** (IBM Plex is under the Open Font License), so Greek and bilingual decks set natively — unlike the AIHub theme, whose Oswald titles have no Greek.
+5. Numerals come in two kinds, the same distinction the AIHub pilot established. **Display numerals** — the one big figure, chapter numbers, 48 px and above — are Plex Mono **300** with `letter-spacing: -0.04em`, in the slide's accent, alone on their line. **Data numerals** — currency, table values, comparison figures, anything 36 px and below — are Plex Mono **500**, `font-variant-numeric: tabular-nums`, no negative tracking, and no smaller than **26 px** on the artboard (a 1920×1080 artboard shown at 1366×768 scales text to 71 %). Never set a data figure in weight 300.
+6. Charts (the theme's motif, and the reason to choose it): draw plots in **artboard pixel space** — a `viewBox="0 0 <w> <h>"` in 1920×1080 units with the stroke widths in the same units (lead 4, second 3, third 2.5, small multiple 3.5, grid 1). Never use `vector-effect="non-scaling-stroke"` in a deck: a screen-space stroke is the same 2 px whether the slide is rendered at 1920 or at the 0.375 preview scale, which makes the lines vanish at full size. No fills, no area gradients under a line, no markers except on the single value being called out, and a `SOURCE:` micro-label under every figure.
+
+Instrument palette (the only colours an Instrument deck, and its toolbars, may use):
+
+| Token | Hex | Role |
+| --- | --- | --- |
+| night | `#0E1726` | the dark ground: covers, dividers, data panels. Flat — never a gradient |
+| grid | `#24334A` | hairline rules and chart grids on night |
+| slate | `#3C4E6B` | the secondary plot line |
+| steel | `#7D8CA3` | labels and secondary text on night |
+| lagoon | `#2F7D6E` | the primary accent |
+| amber | `#E0A32E` | the second accent / highlight series |
+| rust | `#C4441C` | alert or negative series only — never ordinary emphasis |
+| ink | `#1A1A18` | text on paper |
+| ink 2 | `#4B4943` | secondary text on paper (the toolbars' *Ink*/*Grey* pair) |
+| light | `#E9EEF5` | text on night |
+| paper | `#F2F1EE` | the light ground |
+| white | `#FFFFFF` | cards on paper |
+
+Style: eyebrows are a zero-padded index, a slash and one uppercase mono word — `01 / EVOLUTION` — never a bracket or a pill (that is the AIHub theme's device); titles are Plex Sans 300 set large with negative tracking, with at most one word stepped up to 500; every separator is a 1px hairline (`grid` on night, `#D9D6CE` on paper); **one accent per slide**. The discipline is what keeps the theme one degree away from the stock "AI deck" and it is absolute: no glows, no gradient washes, no network or node graphics, no brain, robot or circuit iconography. Charts only.
+
+Photography: the theme's own set of **24 photographs** — eight subjects of present-day technical environments and workspaces, three takes each — lives in `Instrument-Design/assets/` and is catalogued under "Photography catalogue" → Instrument set. It is a *different* set from the NBG technology photography, which is teal-and-cream and off this palette: never place an NBG photo on an Instrument deck. Rules for placing one:
+
+- **Always through `PicturePanel`, never as a bare `<img>`.** The panel draws the hairline plot as its base layer, lays the photo over it, and lays the night scrim over the photo: `linear-gradient(180deg, rgba(14,23,38,0.28), rgba(14,23,38,0.70))` over `filter: grayscale(0.35) contrast(1.05)`. That treatment is what holds a photograph inside the palette, and it is not optional. If a photo is ever missing the layer hides itself (`onError`) and the plot shows at full strength, so a slide never breaks.
+- **Match the orientation.** Portrait subjects (`rack-aisle`, `terminal-desk`, `glass-board`) go in the tall panels of `Cover1` and `ContentImageRight`; landscape subjects go in the `DividerImage` band and full-bleed grounds. Crop with `object-fit: cover`, never stretch.
+- **One variant of a subject per deck.** `-1`, `-2` and `-3` are three takes of the same brief, so using two of them reads as a mistake unless the repetition is deliberate.
+- A photograph never replaces the argument: a slide that carries a figure still carries its plot and its source line. Never approximate a photo with a gradient.
+
+Logo: the theme carries **no lockup of its own** — see step 2. On night use the knockout, on paper use the primary, and in the footer use `logo-small` at 28px (the footer knocks out automatically on a night ground). The rules of "Logo rendering (MANDATORY)" apply unchanged.
+
 ## Design-system reference
 
 Facts about the bundled system (source: `NBG-Design/NBG Design System.html`):
@@ -163,7 +202,7 @@ Slide templates (`NBG-Design/slide-templates.jsx`, exposed as `window.<Name>`):
 
 ## Photography catalogue
 
-Every photo lives in `NBG-Design/assets/` as `<stem>.jpeg` with a ready-to-embed `<stem>.datauri.txt`, and is placed with the token `{{<STEM in upper case, '-' → '_'>}}` (e.g. `photo-network-2` → `{{PHOTO_NETWORK_2}}`). Pick by subject and orientation: landscape photos fit the divider image card, the content image-right column and full-bleed backgrounds; portrait photos fit the cover photo card (720 × 880 / 820 × 960). Never stretch a photo to the other orientation — crop with `object-fit: cover` / `background-size: cover` instead.
+Every photo lives in its theme's assets folder (`NBG-Design/assets/`, and for the Instrument set `Instrument-Design/assets/`) as `<stem>.jpeg` with a ready-to-embed `<stem>.datauri.txt`, and is placed with the token `{{<STEM in upper case, '-' → '_'>}}` (e.g. `photo-network-2` → `{{PHOTO_NETWORK_2}}`). Pick by subject and orientation: landscape photos fit the divider image card, the content image-right column and full-bleed backgrounds; portrait photos fit the cover photo card (720 × 880 / 820 × 960). Never stretch a photo to the other orientation — crop with `object-fit: cover` / `background-size: cover` instead.
 
 Lifestyle set (original, Greek everyday life, warm light):
 
@@ -201,12 +240,41 @@ Technology set (generated 2026-09, teal-and-cream palette, no text or logos; thr
 | `photo-developer-2` | landscape | engineer seated at a desk by a window, teal wall | engineering, focus |
 | `photo-developer-3` | landscape | engineer at a standing desk, two monitors, warm wood and plant | engineering, modern workplace |
 
+Instrument set (`Instrument-Design/assets/`, generated 2026-09, present-day technical environments and workspaces; dark, cool and low-saturation so they survive the theme's night scrim — see "Themes" → `instrument`. Three variants per subject: `-1` OpenAI GPT Image 2, `-2` Nano Banana Pro, `-3` Nano Banana 2, alternative takes of the same brief, so use only one variant of a subject per deck). **These are Instrument-only: never place them on an NBG, BikS2013 or AIHub deck, and never place those themes' photos here.**
+
+| Stem | Orientation | Subject | Typical use |
+| --- | --- | --- | --- |
+| `photo-ops-floor-1` | landscape | dim operations floor, desks of dashboards receding right, large empty dark wall on the left | cover/divider ground with the headline on the left |
+| `photo-ops-floor-2` | landscape | operations desks seen along the row, screens as the only light, empty wall left | divider band, "where the work happens" |
+| `photo-ops-floor-3` | landscape | brighter operations room, two rows of analysts at multi-monitor desks | teams, scale, monitoring |
+| `photo-terminal-desk-1` | portrait | one desk at night, keyboard and notebook foreground, terminals right, dark top-left | cover photo panel, headline over the dark corner |
+| `photo-terminal-desk-2` | portrait | desk with lamp, two terminals and a hand-drawn notebook, warm amber key light | cover panel, engineering, craft |
+| `photo-terminal-desk-3` | portrait | desk from the front, terminals and open notebook, lamp at the left | content panel, focus, working session |
+| `photo-rack-aisle-1` | portrait | rack corridor, amber status LEDs down the right, flat dark door on the left | infrastructure with copy over the dark side |
+| `photo-rack-aisle-2` | portrait | cold aisle in one-point perspective, cable trays overhead, green and amber LEDs | infrastructure, scale, resilience |
+| `photo-rack-aisle-3` | portrait | brighter aisle, dense amber indicator panels both sides | capacity, estate, operations |
+| `photo-fibre-patch-1` | landscape | fibre jumpers into LC ports, right half falling into dark bokeh | detail shot with copy on the right |
+| `photo-fibre-patch-2` | landscape | patch panel straight on, aqua and yellow jumpers in velcro bundles | connectivity, networks, discipline |
+| `photo-fibre-patch-3` | landscape | fibre bundles along a rack rail, shallow focus | integration, plumbing, detail |
+| `photo-war-room-1` | landscape | lit glass meeting room seen from the dark office, two people at a chart wall, empty left | decisions, review, headline on the left |
+| `photo-war-room-2` | landscape | glass room at night over a city skyline, chart wall, colleagues mid-discussion | governance, evidence, escalation |
+| `photo-war-room-3` | landscape | two colleagues at a lit chart wall behind glass, dark desks foreground | analysis, collaboration |
+| `photo-glass-board-1` | portrait | two engineers at a glass wall of diagrams in a dim room, rack lights left | architecture, design work |
+| `photo-glass-board-2` | portrait | glass writing wall of boxes and arrows seen through glazing, engineer mid-diagram | content panel, systems thinking |
+| `photo-glass-board-3` | portrait | engineer writing on a lit glass board, colleague watching, dark office behind | explaining, review, teaching |
+| `photo-compute-node-1` | landscape | open 1U node from above on a dark bench, heatsink and DIMMs, tools beside it | hardware, compute, engineering |
+| `photo-compute-node-2` | landscape | open node on a workbench under one lamp, twin heatsinks, empty bench on the left | compute with copy on the left |
+| `photo-compute-node-3` | landscape | open node filling the frame, dense DIMM banks and cabling | capacity, density, infrastructure |
+| `photo-desk-flatlay-1` | landscape | overhead desk, laptop terminal and squared notebook left, large empty desk right | cover/content ground with copy on the right |
+| `photo-desk-flatlay-2` | landscape | overhead desk, amber-lit terminal, notebook chart, ruler and coffee | analysis, working method |
+| `photo-desk-flatlay-3` | landscape | overhead desk, laptop and open notebook of hand-drawn charts, warm lamp corner | measurement, craft, notes |
+
 ## Design-system rules
 
-- Use the bundled NBG-inspired presentation design system; do not invent a parallel brand or visual system. The BikS2013 theme is the one sanctioned alternative, and only for personal material (see "Themes").
+- Use the bundled NBG-inspired presentation design system; do not invent a parallel brand or visual system. The BikS2013, AIHub and Instrument themes are the sanctioned alternatives, each for the material named in "Themes".
 - Preserve the NBG 16:9 / 1920×1080 internal slide composition.
 - Use the NBG teal-led palette, quiet neutrals, generous whitespace, clear hierarchy, and restrained emphasis.
-- Use NBG logos and bundled photography from `NBG-Design/assets/` (under the BikS2013 theme: the BikS2013 lockups from `BikS2013-Design/assets/`). The logo must always be the bundled lockup image — never a text label, initials, a colored square/box, or any CSS/SVG re-creation. See "Logo rendering (MANDATORY)".
+- Use NBG logos and bundled photography from `NBG-Design/assets/` (under the BikS2013 theme: the BikS2013 lockups from `BikS2013-Design/assets/`; under AIHub: the NBG AI Hub lockups from `AIHub-Design/assets/`; under Instrument: whichever of those two the deck is signed with, through the theme-prefixed tokens). The logo must always be the bundled lockup image — never a text label, initials, a colored square/box, or any CSS/SVG re-creation. See "Logo rendering (MANDATORY)".
 - Treat bundled screenshots as visual references, not as source code.
 - Start decks with a cover slide in one of the theme's cover templates.
 - A slide renders the lockup **once**. A hero lockup (covers, back covers) and the footer lockup are mutually exclusive on the same slide: cover and back-cover slides carry the hero lockup and no footer (no footer logo, no page number); dividers and content slides carry the footer lockup and no hero lockup. Every theme.
@@ -277,10 +345,10 @@ Hand-pasting large base64 blobs is the step that most often fails in non-interac
 
 1. **Author the deck with placeholder tokens, not inline data URIs.** Put a token wherever an image goes: `{{LOGO_PRIMARY}}`, `{{LOGO_KNOCKOUT}}`, `{{LOGO_SMALL}}`, and `{{PHOTO_FIELDS}}`, `{{PHOTO_HEART}}`, `{{PHOTO_PARTHENON}}`, `{{PHOTO_SKATE}}`, `{{PHOTO_STREET}}`, or any technology photo token from "Photography catalogue" (`{{PHOTO_DATACENTER_1}}`, `{{PHOTO_NETWORK_2}}`, `{{PHOTO_SECURITY_3}}`, …). Define each token **once** (e.g. a CSS `background-image: url("{{PHOTO_STREET}}")` class) and reuse the class.
 2. **Embed deterministically.** From any working directory:
-   `node "<skill-root>/scripts/embed-assets.mjs" <deck>.html` (a BikS2013 deck: add `--theme biks2013`; an AIHub deck: `--theme aihub`)
+   `node "<skill-root>/scripts/embed-assets.mjs" <deck>.html` (a BikS2013 deck: add `--theme biks2013`; an AIHub deck: `--theme aihub`; an Instrument deck: `--theme instrument`)
    The script resolves the bundled assets relative to itself (not the cwd), so it works on any machine. It replaces every token with the verbatim `data:` URI and fails loudly if an asset is missing.
 3. **Add the in-deck right-click menu (standard for every delivered deck).**
-   `node "<skill-root>/scripts/add-deck-menu.mjs" <deck>.html` (a BikS2013 deck: add `--theme biks2013`, an AIHub deck `--theme aihub`, so the toolbars offer that palette)
+   `node "<skill-root>/scripts/add-deck-menu.mjs" <deck>.html` (a BikS2013 deck: add `--theme biks2013`, an AIHub deck `--theme aihub`, an Instrument deck `--theme instrument`, so the toolbars offer that palette)
    Inlines one self-contained `<script id="nbg-deck-menu-script">` before the last `</body>` (idempotent; re-running upgrades an older menu, including the v1.4 PDF-only one). Viewers get *Edit text* (in-place editing, also by double-click), *Resize / move shape*, *Export to PDF*, *Save edited copy* and *Discard edits*. See "In-deck right-click menu". Skip only if the user explicitly declines the menu, and then verify with `--no-deck-menu`.
 4. **Verify before delivery (browser-free — works headless).**
    `node "<skill-root>/scripts/verify-deck.mjs" <deck>.html --strict`
@@ -466,6 +534,17 @@ AIHub theme (see "Themes"):
 - `AIHub-Design/assets/font-oswald.woff2` (+ `.datauri.txt`) — the Oswald variable font (Open Font License, weights 200–700, latin) the theme's titles embed through `{{FONT_OSWALD}}`.
 - Photography: shared from `NBG-Design/assets/` (the technology set) through the theme's asset search path.
 
+Instrument theme (see "Themes"):
+
+- `Instrument-Design/Instrument Design System.html` — the theme's design-system reference (same structure as the NBG page, plus a "Motif" section for the hairline plot).
+- `Instrument-Design/slide-templates.jsx` — the nine templates, re-themed, with the `Plot`, `SmallMultiple`, `Data` and `PicturePanel` helpers the theme's charts are built from.
+- `Instrument-Design/tweaks-panel.jsx` — the tweak helper (a copy of the NBG one).
+- `Instrument-Design/assets/font-plex-sans.woff2` (+ `.datauri.txt`) — IBM Plex Sans, a variable face (weights 100–700), embedded through `{{FONT_PLEX_SANS}}`.
+- `Instrument-Design/assets/font-plex-mono-300.woff2`, `-400`, `-500` (+ `.datauri.txt` each) — IBM Plex Mono, embedded through `{{FONT_PLEX_MONO_<weight>}}`.
+- `Instrument-Design/assets/OFL-IBMPlex.txt` — the Open Font License both faces ship under. Both are subset to latin, latin-ext and Greek.
+- `Instrument-Design/assets/photo-<subject>-{1,2,3}.jpeg` (+ `.datauri.txt` each) — the theme's 24 photographs, eight subjects of present-day technical environments and workspaces ("Photography catalogue" → Instrument set).
+- Lockups: none of its own — taken from `NBG-Design/assets/` and `AIHub-Design/assets/` through the theme-prefixed tokens.
+
 Presentation screenshots:
 
 - `NBG-Design/screenshots/01-editorial.png`
@@ -500,7 +579,7 @@ Before delivering NBG slide work:
 - For HTML output, confirm the right-click deck menu was added with `scripts/add-deck-menu.mjs` (the strict gate checks for it and warns when the block is older than the skill's) and tell the user how to use it (double-click to edit text; right-click for Resize / move shape, Edit SVG, Export to PDF, Save edited copy), unless the user declined it.
 - For every deck with the menu, confirm `<deck>.rebuild.mjs` was written with `scripts/write-rebuild-script.mjs` after the menu (and after the PDF's name was settled: `--pdf` / `--no-pdf`), that `node <deck>.rebuild.mjs --check` reports `CURRENT`, and deliver it with the HTML and the PDF, telling the user it refreshes the deck's editing tools after a skill update.
 - Confirm every slide has a clear purpose.
-- Confirm colours match the deck's theme palette (NBG by default; BikS2013 or AIHub under those themes) and that `embed-assets.mjs` and `add-deck-menu.mjs` were run with the matching `--theme`; on an AIHub deck confirm Oswald is embedded through `{{FONT_OSWALD}}`.
+- Confirm colours match the deck's theme palette (NBG by default; BikS2013, AIHub or Instrument under those themes) and that `embed-assets.mjs` and `add-deck-menu.mjs` were run with the matching `--theme`; on an AIHub deck confirm Oswald is embedded through `{{FONT_OSWALD}}`, and on an Instrument deck that both Plex faces are embedded through their tokens, that one identity's lockups are used throughout, that no chart uses `vector-effect="non-scaling-stroke"`, that every figure carries a source line, and that every photograph is an Instrument-set photo placed through `PicturePanel` with the scrim (never an NBG/AIHub photo, never a bare `<img>`).
 - Confirm the language is consistent with the request or the approved English default.
 - Confirm the output format is consistent with the request or the approved HTML default.
 - Confirm logo visibility and placement (the theme's lockups) match the intended template, and that no slide renders the lockup twice (hero lockup on covers without a footer; footer lockup elsewhere).

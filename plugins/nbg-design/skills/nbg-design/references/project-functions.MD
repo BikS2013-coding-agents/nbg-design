@@ -315,3 +315,34 @@ A third theme — the AIHub theme of the NBG AI Hub, after the NBG developer por
 ### How to Use
 
 Author with tokens (logos, photos, `{{FONT_OSWALD}}` in `@font-face`), then the standard pipeline with `--theme aihub` on the embedder and the menu script — see SKILL.md "Themes".
+
+## Instrument Theme (skill v1.23.0)
+
+### Function
+
+A fourth theme — Instrument, a dark and measurement-led register built from the "Instrument" design
+direction — selectable per deck for talks whose argument is carried by data rather than by narrative or
+brand. It is the only theme with no lockup of its own: a deck signs itself with either the NBG or the
+NBG AI Hub lockup.
+
+### Files
+
+- `Instrument-Design/Instrument Design System.html`, `Instrument-Design/slide-templates.jsx`,
+  `Instrument-Design/tweaks-panel.jsx`, `Instrument-Design/assets/font-plex-sans.woff2`,
+  `font-plex-mono-{300,400,500}.woff2` (+ `.datauri.txt` each), `assets/OFL-IBMPlex.txt`.
+- `Instrument-Design/assets/photo-<subject>-{1,2,3}.jpeg` (+ `.datauri.txt` each) — the theme's 24
+  photographs: `ops-floor`, `terminal-desk`, `rack-aisle`, `fibre-patch`, `war-room`, `glass-board`,
+  `compute-node`, `desk-flatlay`. Instrument-only; placed through `PicturePanel` under the night scrim.
+- `scripts/embed-assets.mjs` (the `instrument` search path and theme-prefixed tokens),
+  `scripts/add-deck-menu.mjs --theme instrument`, `scripts/lib/deck-menu.js` (block v17: the theme entry
+  and the theme-aware font picker), `scripts/verify-deck.mjs`.
+
+### How to Use
+
+Author with tokens, then `embed-assets.mjs <deck> --theme instrument`,
+`add-deck-menu.mjs <deck> --theme instrument`, `verify-deck.mjs <deck> --strict`,
+`write-rebuild-script.mjs`, `export-pdf.mjs` — see SKILL.md "Themes". Declare the faces through
+`{{FONT_PLEX_SANS}}` and `{{FONT_PLEX_MONO_*}}`, place photography with `{{PHOTO_<SUBJECT>_<N>}}` through
+the `PicturePanel` treatment, and sign the deck with one identity's `{{NBG_LOGO_*}}` or `{{AIHUB_LOGO_*}}`
+lockups.
+

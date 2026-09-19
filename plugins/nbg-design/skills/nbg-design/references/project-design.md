@@ -278,6 +278,55 @@ This project contains the assets of a presentation design system inspired by the
   portal's manner replaces the Technology Hub lockups (kept in the development docs); templates, page,
   SKILL.md, the assistant's briefing (block v16) and the verifier's bare-text check use the new name.
 
+### Instrument theme (skill v1.23.0, block v17)
+
+- **Request (2026-09-19).** Build a fourth theme from the "Instrument" direction of a four-direction design
+  collection the user had explored on a Design canvas (Direction C of "From Automation to Judgement").
+- **The direction, as given.** "Dark, but precise rather than atmospheric — the register of a good terminal
+  or a financial broadsheet at night. Thin-line charts, small multiples, monospaced figures. No glow, no
+  nodes, no brains." Palette Night `#0E1726` · Light `#E9EEF5` · Lagoon `#2F7D6E` · Amber `#E0A32E` · Grid
+  `#24334A`, accent options `#2F7D6E` / `#E0A32E` / `#4A7FB5` / `#C4441C`, type IBM Plex Sans with IBM Plex
+  Mono for all figures. Its own "watch for" note — "dark navy is one degree away from the stock AI deck; the
+  discipline is absolute" — is carried into the skill as an explicit ban list rather than left as advice.
+- **Design.** `Instrument-Design/` mirrors the other three theme folders. The palette adds the values the
+  direction implied but did not name (slate `#3C4E6B` for the second plot line, steel `#7D8CA3` for labels on
+  night, ink `#1A1A18` / ink2 `#4B4943` / rule `#D9D6CE` for the paper side, rust `#C4441C` promoted from an
+  accent option to the reserved alert colour). Two grounds, night and paper, and **one accent per slide**.
+- **Type.** IBM Plex Sans (variable, weights 100–700) and IBM Plex Mono 300/400/500, taken from the
+  `google/fonts` OFL sources and subset with `pyftsubset` to latin + latin-ext + **Greek** — so this theme,
+  unlike AIHub's Oswald, sets Greek and bilingual decks natively. Bundled as
+  `font-plex-sans.woff2` / `font-plex-mono-<weight>.woff2` with data URIs, embedded through
+  `{{FONT_PLEX_SANS}}` and `{{FONT_PLEX_MONO_<weight>}}`. The two-kinds-of-numeral rule established by the
+  AIHub pilot (display 300 at 48px+, data 500 tabular at 26–36px) carries over unchanged.
+- **Motif.** The hairline plot replaces photography as the theme's graphic: a `Plot` helper drawing polylines
+  in **artboard pixel space** (`viewBox="0 0 w h"` in 1920×1080 units, stroke widths in the same units),
+  plus `SmallMultiple`, `Data` and `PicturePanel`. Pilot renders established why the plot must not use
+  `vector-effect="non-scaling-stroke"`: a screen-space stroke is the same 2px at 1920 and at the 0.375
+  preview scale, so the lines vanish at full size. Recorded in SKILL.md as a rule, not a preference.
+- **Photography (2026-09-19).** The theme shipped chart-led, with every picture slot drawing the plot as its
+  base layer and an optional photo over it under a night scrim; the scrim belongs to the *photo layer*, so a
+  missing file hides the layer (`onError`) and the plot shows at full strength. Its own set of **24
+  photographs** (eight subjects of present-day technical environments and workspaces × three takes) was then
+  generated to a deliberately anti-futuristic brief — only equipment that ships today, available light, no
+  holograms/neon/circuit overlays/robots — and, critically, to a dark, cool, low-saturation palette, because
+  the photographs are laid *under* the scrim over `grayscale(0.35) contrast(1.05)` and a bright source turns
+  to mud. Placement is always through `PicturePanel`, never a bare `<img>`. The scrim was tuned from
+  `0.45 → 0.88` down to `0.28 → 0.70` once real on-palette photographs replaced the hypothetical off-palette
+  one it had been authored against. The set is Instrument-only: the NBG technology photography is
+  teal-and-cream and off this palette.
+- **Tooling.** `docs/nbg-design-docs/photo-candidates/gen.py` was generalised rather than copied: named
+  `SETS` (one `STYLE` + concept list per theme), `--root` to write anywhere, its own `gallery.html`, and a
+  `--promote <assets dir>` mode that re-encodes candidates to the assets convention (long edge ≤ 2000px,
+  JPEG q86) and writes both the `.jpeg` and the `.datauri.txt`. `--set nbg` keeps the original behaviour.
+- **Lockups.** The theme deliberately carries none of its own — it is a register, not a brand. `embed-assets.mjs`
+  gains **theme-prefixed tokens**: a token whose first segment names a theme (`{{NBG_LOGO_PRIMARY}}`,
+  `{{AIHUB_LOGO_KNOCKOUT}}`) resolves from that theme's own folder and bypasses the search path, so an
+  Instrument deck picks the identity it is presented under. Search path
+  `instrument: ['Instrument-Design', 'NBG-Design', 'AIHub-Design']`; unprefixed `{{LOGO_*}}` resolve to NBG.
+- **Editor.** `deck-menu.js` block v17 adds the `instrument` entry to the theme table and makes the **font
+  picker** theme-aware — each theme's own faces head the list, where it had read "Default (Aptos)" on every
+  theme since block v14.
+
 ## Configuration Policy
 - Secrets, API keys, tokens, and expiring credentials must not be stored in project YAML files.
 - Missing required presentation inputs must be surfaced to the user; they must not be replaced with undocumented fallback values.

@@ -197,7 +197,7 @@
  */
 (function () {
   if (window.nbgDeck) return;
-  var VERSION = 16;
+  var VERSION = 17;
   // configuration hook (see the header): root selector, page mode, labels
   var CFG = (typeof window.nbgDeckMenuConfig === 'object' && window.nbgDeckMenuConfig) || {};
   function cfgStr(k) { return typeof CFG[k] === 'string' && CFG[k].trim() ? CFG[k].trim() : ''; }
@@ -206,20 +206,29 @@
   try { document.querySelector(ROOT_SEL); } catch (e) { throw new Error('nbg deck menu: invalid root selector "' + ROOT_SEL + '" in window.nbgDeckMenuConfig.root'); }
   var UNIT = cfgStr('unit') || (PAGE_MODE ? 'Section' : 'Slide');          // one root, in labels: "Slide 2", "Section 2"
   // block v15: the themes (SKILL.md "Themes") — name, the editor's own accent colours and font, the swatches of
-  // every toolbar (the theme's palette, the only colours a deck may use) and the assistant's briefing.
+  // every toolbar (the theme's palette, the only colours a deck may use), the theme's own faces at the head of
+  // the font picker (block v17) and the assistant's briefing.
   var THEMES = {
     nbg: { name: 'NBG', accent: '#003841', cyan: '#00ADBF', ink: '#0A1416', cream: '#F5F8F6', muted: '#5B6B6D',
       font: "'Aptos', 'Inter', Helvetica, Arial, sans-serif",
       palette: [['#003841', 'Deep teal'], ['#007B85', 'Teal'], ['#00ADBF', 'Bright cyan'], ['#00CFE7', 'Electric cyan'], ['#0A1416', 'Black'], ['#5B6B6D', 'Grey'], ['#F5F8F6', 'Cream'], ['#FFFFFF', 'White']],
+      fonts: [['', 'Default (Aptos)'], ["'Aptos', 'Inter', Helvetica, Arial, sans-serif", 'Aptos'], ["'Inter', Helvetica, Arial, sans-serif", 'Inter']],
       ai: 'You are assisting a viewer of an HTML slide deck built with the National Bank of Greece (NBG) presentation design system: 1920×1080 slides, the Aptos font stack (Aptos, Inter, Helvetica, Arial), and the NBG palette — deep teal #003841, teal #007B85, bright cyan #00ADBF, electric cyan #00CFE7, black #0A1416, grey #5B6B6D, cream #F5F8F6, white #FFFFFF. ' },
     biks2013: { name: 'BikS2013', accent: '#1B1D21', cyan: '#C8623A', ink: '#111316', cream: '#F6F3EC', muted: '#6E7379',
       font: "'Avenir Next', 'Inter', Helvetica, Arial, sans-serif",
       palette: [['#1B1D21', 'Ink'], ['#C8623A', 'Copper'], ['#E08A5E', 'Copper light'], ['#E3A64A', 'Amber'], ['#111316', 'Black'], ['#6E7379', 'Grey'], ['#F6F3EC', 'Paper'], ['#FFFFFF', 'White']],
+      fonts: [['', 'Default (Avenir Next)'], ["'Avenir Next', 'Inter', Helvetica, Arial, sans-serif", 'Avenir Next'], ["'Inter', Helvetica, Arial, sans-serif", 'Inter']],
       ai: 'You are assisting a viewer of an HTML slide deck built with the BikS2013 personal presentation design system (the personal theme of the nbg-design skill): 1920×1080 slides, the Avenir Next font stack (Avenir Next, Inter, Helvetica, Arial), and the BikS2013 palette — ink #1B1D21, copper #C8623A, copper light #E08A5E, amber #E3A64A, black #111316, grey #6E7379, paper #F6F3EC, white #FFFFFF. ' },
     aihub: { name: 'AIHub', accent: '#012A30', cyan: '#1C869D', ink: '#0B1F26', cream: '#F3F6F8', muted: '#5C6B73',
       font: "'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif",
       palette: [['#012A30', 'Navy'], ['#024A6C', 'Deep blue'], ['#1C869D', 'Lagoon'], ['#33B3BF', 'Cyan'], ['#FFF77D', 'Sun'], ['#FFDB7A', 'Amber'], ['#B1BACC', 'Grey'], ['#F3F6F8', 'Mist'], ['#FFFFFF', 'White']],
-      ai: 'You are assisting a viewer of an HTML slide deck built with the AIHub presentation theme of the nbg-design skill — the theme of the NBG AI Hub (write the brand as "NBG AI Hub"), after the NBG developer portal developer.nbg.gr: 1920×1080 slides, Oswald (condensed, uppercase) for titles and numerals with the Segoe UI / Helvetica stack for body text, and the AIHub palette — navy #012A30, deep blue #024A6C, ocean #005782, lagoon #1C869D, cyan #33B3BF, sun yellow #FFF77D, amber #FFDB7A, grey #B1BACC, mist #F3F6F8, white #FFFFFF. ' }
+      fonts: [['', 'Default (Segoe UI)'], ["'Oswald', 'Avenir Next Condensed', 'Arial Narrow', Helvetica, Arial, sans-serif", 'Oswald'], ["'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif", 'Segoe UI']],
+      ai: 'You are assisting a viewer of an HTML slide deck built with the AIHub presentation theme of the nbg-design skill — the theme of the NBG AI Hub (write the brand as "NBG AI Hub"), after the NBG developer portal developer.nbg.gr: 1920×1080 slides, Oswald (condensed, uppercase) for titles and numerals with the Segoe UI / Helvetica stack for body text, and the AIHub palette — navy #012A30, deep blue #024A6C, ocean #005782, lagoon #1C869D, cyan #33B3BF, sun yellow #FFF77D, amber #FFDB7A, grey #B1BACC, mist #F3F6F8, white #FFFFFF. ' },
+    instrument: { name: 'Instrument', accent: '#0E1726', cyan: '#2F7D6E', ink: '#1A1A18', cream: '#F2F1EE', muted: '#4B4943',
+      font: "'IBM Plex Sans', 'Segoe UI', Helvetica, Arial, sans-serif",
+      palette: [['#0E1726', 'Night'], ['#24334A', 'Grid'], ['#3C4E6B', 'Slate'], ['#7D8CA3', 'Steel'], ['#2F7D6E', 'Lagoon'], ['#E0A32E', 'Amber'], ['#C4441C', 'Rust'], ['#1A1A18', 'Ink'], ['#E9EEF5', 'Light'], ['#F2F1EE', 'Paper'], ['#FFFFFF', 'White']],
+      fonts: [['', 'Default (IBM Plex Sans)'], ["'IBM Plex Sans', 'Segoe UI', Helvetica, Arial, sans-serif", 'IBM Plex Sans'], ["'IBM Plex Mono', 'SFMono-Regular', Menlo, Consolas, monospace", 'IBM Plex Mono']],
+      ai: 'You are assisting a viewer of an HTML slide deck built with the Instrument presentation theme of the nbg-design skill — a dark, measurement-led theme in the register of a good terminal or a financial broadsheet at night: 1920×1080 slides, IBM Plex Sans for text and IBM Plex Mono for every figure, eyebrow and label, and the Instrument palette — night #0E1726, grid #24334A, slate #3C4E6B, steel #7D8CA3, lagoon #2F7D6E, amber #E0A32E, rust #C4441C, ink #1A1A18, light #E9EEF5, paper #F2F1EE, white #FFFFFF. The theme\u2019s discipline is absolute: thin-line charts, small multiples and monospaced figures only — never a glow, a gradient wash, a network/node graphic or a brain motif, and never more than one accent on a slide. ' }
   };
   var THEME = THEMES[cfgStr('theme')] ? cfgStr('theme') : 'nbg', THEME_DEF = THEMES[THEME], THEME_NAME = THEME_DEF.name;
   var TITLE = cfgStr('title') || (PAGE_MODE ? 'Page editor' : THEME_NAME + ' deck');
@@ -651,11 +660,11 @@
   function normColor(v) { if (!v) return ''; var d = document.createElement('i'); d.style.color = v; return d.style.color || v; }
 
   /* ---------- text formatting toolbar (shown while editing) ---------- */
-  var FONTS = [
-    ['', 'Default (Aptos)'], ["'Aptos', 'Inter', Helvetica, Arial, sans-serif", 'Aptos'], ["'Inter', Helvetica, Arial, sans-serif", 'Inter'],
+  // block v17: the theme's own faces head the picker, then the faces every machine has.
+  var FONTS = THEME_DEF.fonts.concat([
     ['Helvetica, Arial, sans-serif', 'Helvetica'], ['Arial, sans-serif', 'Arial'], ['Georgia, serif', 'Georgia'],
     ["'Times New Roman', Times, serif", 'Times New Roman'], ["'Courier New', Courier, monospace", 'Courier New'],
-  ];
+  ]);
   var COLORS = [['', 'Default']].concat(PALETTE);
   var tools = null, toolsSel = null;
   function selectionInEditing() {
