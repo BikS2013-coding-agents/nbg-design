@@ -6,7 +6,7 @@
 Pi Agent skill packaging, configuration portability, and reusable presentation design-system enablement.
 
 ## Objective
-Create a reusable user-level Pi skill named **"NBG Design"** from the existing project-level NBG presentation configuration and design-system content so it can be invoked from any working directory, not only from `/Users/giorgosmarinos/contentwork/nbg-theme-agent`.
+Create a reusable user-level Pi skill named **"NBG Design"** from the existing project-level NBG presentation configuration and design-system content so it can be invoked from any working directory, not only from `<original project root>`.
 
 The downstream work should package the project’s NBG presentation context, rules, templates, and required assets into the appropriate user-level Pi skill location while preserving the project’s current NBG presentation-generation behavior and avoiding machine/project-root coupling in the skill’s runtime instructions.
 
@@ -22,7 +22,7 @@ The downstream work should package the project’s NBG presentation context, rul
   - relevant screenshots under `NBG-Design/screenshots/` that are needed as visual references
   - relevant project documentation that explains expected usage and guardrails, especially `docs/design/project-design.md`, `docs/design/project-functions.MD`, and `docs/design/configuration-guide.md`
 - Determine the correct user-level Pi skill destination for the local environment. Based on current local evidence, the likely user-level skill root is:
-  - `/Users/giorgosmarinos/.pi/agent/skills/nbg-design/`
+  - `~/.pi/agent/skills/nbg-design/`
 - Create or update a Pi skill whose human-facing name is **"NBG Design"** and whose filesystem/metadata slug is likely `nbg-design`.
 - Copy all files, data, and content required for the skill to work independently from the project folder into the user-level skill folder or its subfolders.
 - Include a `SKILL.md` file in the user-level skill folder with valid Pi skill frontmatter and clear instructions for using the NBG-inspired design system.
@@ -66,21 +66,21 @@ The downstream work should package the project’s NBG presentation context, rul
 
 2. **User-Level Skill Location**
    - Use the Pi user-level skills directory for this machine.
-   - The likely target directory is `/Users/giorgosmarinos/.pi/agent/skills/nbg-design/`, based on the existing user-level skill example at `/Users/giorgosmarinos/.pi/agent/skills/deep-dive-creator/SKILL.md`.
+   - The likely target directory is `~/.pi/agent/skills/nbg-design/`, based on the existing user-level skill example at `~/.pi/agent/skills/deep-dive-creator/SKILL.md`.
    - If Pi’s current configured skill directory differs, downstream work must detect and use the actual configured user-level skills directory.
 
 3. **Skill Metadata and Name**
-   - Create a valid Pi skill file at the target location, likely `/Users/giorgosmarinos/.pi/agent/skills/nbg-design/SKILL.md`.
+   - Create a valid Pi skill file at the target location, likely `~/.pi/agent/skills/nbg-design/SKILL.md`.
    - The skill must be discoverable as **NBG Design** to users.
    - The frontmatter `name` should use a Pi-compatible slug, likely `nbg-design`, unless Pi requires another naming format.
 
 4. **Self-Contained Skill Content**
    - Copy required design-system files, assets, templates, and configuration content into the skill folder in a clear internal structure, for example:
-     - `/Users/giorgosmarinos/.pi/agent/skills/nbg-design/SKILL.md`
-     - `/Users/giorgosmarinos/.pi/agent/skills/nbg-design/config/pi-agent-nbg-design.yaml`
-     - `/Users/giorgosmarinos/.pi/agent/skills/nbg-design/NBG-Design/...`
+     - `~/.pi/agent/skills/nbg-design/SKILL.md`
+     - `~/.pi/agent/skills/nbg-design/config/pi-agent-nbg-design.yaml`
+     - `~/.pi/agent/skills/nbg-design/NBG-Design/...`
    - The exact internal layout may differ if Pi skill conventions recommend another structure, but it must be documented and easy to inspect.
-   - The installed skill must not depend on the original project directory remaining at `/Users/giorgosmarinos/contentwork/nbg-theme-agent`.
+   - The installed skill must not depend on the original project directory remaining at `<original project root>`.
 
 5. **Path Portability Inside the Skill**
    - Rewrite or adapt any copied configuration/instructions so file references are skill-relative or otherwise resolvable from the skill package.
@@ -120,20 +120,20 @@ The downstream work should package the project’s NBG presentation context, rul
 ## Acceptance Criteria
 - A refined specification exists at `docs/reference/refined-request-user-level-nbg-design-skill.md`.
 - Downstream implementation creates or updates a user-level Pi skill named **NBG Design** with a Pi-compatible slug, likely `nbg-design`.
-- The user-level skill is installed in the correct Pi user-level skills directory, likely `/Users/giorgosmarinos/.pi/agent/skills/nbg-design/`.
+- The user-level skill is installed in the correct Pi user-level skills directory, likely `~/.pi/agent/skills/nbg-design/`.
 - The installed skill contains a valid `SKILL.md` with appropriate frontmatter and clear usage instructions.
 - All required NBG design-system configuration, templates, assets, data, and content needed for the skill are copied into the user-level skill package.
-- The skill can be used from arbitrary working directories without requiring the original project path `/Users/giorgosmarinos/contentwork/nbg-theme-agent`.
+- The skill can be used from arbitrary working directories without requiring the original project path `<original project root>`.
 - Skill references to bundled resources resolve correctly from the skill folder.
 - The package excludes secrets, credentials, `.git/`, `.venv/`, caches, generated bytecode, and unrelated generated outputs.
 - Validation evidence confirms the skill folder contents, path portability, required asset existence, absence of disallowed files, and Pi discoverability/invocation behavior.
 - Any unresolved location, naming, or content-selection questions are documented before or during downstream implementation.
 
 ## Assumptions
-- The active project root is `/Users/giorgosmarinos/contentwork/nbg-theme-agent`.
+- The active project root is `<original project root>`.
 - The relevant project-level configuration source is `config/pi-agent-nbg-design.yaml`.
 - The relevant project-level design-system source folder is `NBG-Design/`.
-- The intended user-level Pi skills directory on this machine is `/Users/giorgosmarinos/.pi/agent/skills/`, based on the existing installed skill `deep-dive-creator`.
+- The intended user-level Pi skills directory on this machine is `~/.pi/agent/skills/`, based on the existing installed skill `deep-dive-creator`.
 - The skill filesystem slug should be `nbg-design`, while the user-facing display name should be **NBG Design**.
 - The phrase “user level skill” means a Pi skill installed under the user’s home directory and available across projects/shell working directories.
 - The skill should be self-contained by copying required resources, not by symlinking to the active project folder, unless the user explicitly approves symlinks.
@@ -141,7 +141,7 @@ The downstream work should package the project’s NBG presentation context, rul
 - The already documented project defaults are still valid: unspecified deck language defaults to English and unspecified final output format defaults to HTML.
 
 ## Open Questions
-1. Is `/Users/giorgosmarinos/.pi/agent/skills/nbg-design/` the confirmed target directory for user-level Pi skills, or does the current Pi installation use another skill root?
+1. Is `~/.pi/agent/skills/nbg-design/` the confirmed target directory for user-level Pi skills, or does the current Pi installation use another skill root?
 2. Should the skill include all files under `NBG-Design/`, or only the minimal subset required for presentation generation (`NBG Design System.html`, templates, assets, and selected screenshots)?
 3. Should generated presentation examples under `presentations/` be copied into the skill as examples, or should they remain project-only artifacts?
 4. Should documentation files such as `docs/design/configuration-guide.md`, `project-design.md`, and `project-functions.MD` be copied into the skill package, summarized inside `SKILL.md`, or referenced only as project provenance?
@@ -156,6 +156,6 @@ The downstream work should package the project’s NBG presentation context, rul
 > to make the skill easily accessible from everywhere
 
 ## Additional Context Provided With Request
-- Active project root: `/Users/giorgosmarinos/contentwork/nbg-theme-agent`
+- Active project root: `<original project root>`
 - The intended outcome appears to be a reusable user-level Pi skill named `NBG Design` derived from this project's project-level configuration/content.
 - Please identify assumptions, acceptance criteria, likely source and target locations, and open questions if any.

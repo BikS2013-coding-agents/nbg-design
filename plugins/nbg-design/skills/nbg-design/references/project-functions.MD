@@ -119,7 +119,7 @@ Define reusable configuration rules that prevent generated HTML presentation pag
 - Prevent unintended horizontal or vertical overflow caused by the slide artboard itself.
 - Verify future HTML outputs against common viewport sizes, including 1366×768 and 1440×900.
 - Render screenshots for generated HTML slides at the required viewport sizes and visually inspect the actual screenshots before delivery.
-- Store visual verification screenshots under `test_scripts/screenshots/` with filenames that include the slide name and viewport size.
+- Store visual verification screenshots next to the deck in `<deck-name>-screenshots/` (the default of `scripts/screenshot-deck.mjs`), with filenames that include the deck, the slide number and the viewport size.
 - Repeat revisions and screenshot checks if any clipping, hidden bottom content, overflow, broken assets, or readability/design issues are visible.
 
 ## HTML Deck PDF Export
@@ -204,7 +204,7 @@ Deliver, with every deck's HTML and PDF, a `<deck>.rebuild.mjs` script that re-e
 - Generated after `add-deck-menu.mjs` (a deck without the editor block, the old PDF-only block and page-mode blocks are refused with a message; `--size` must be `WxH`).
 - Record in the generated script, as plain JSON: the deck and PDF file names relative to the script (`--pdf <file>` for another PDF, `--no-pdf` when none was delivered), the skill's `scripts/` directory, the embedded block version, the plugin version when the skill sits in its plugin checkout, the block's configuration and the exporter options (`--selector` — the block's `root` when it is not `.slide` — and `--size`). Warn when the PDF does not exist yet. `-o` names the script.
 - The generated script: `--check` reports `RESULT: CURRENT` (exit 0) or `REBUILD NEEDED` (exit 1) without writing; otherwise back the deck up to `<name>.backup-<stamp>.html` (unless `--no-backup`), replace the editor block with the skill's current one keeping the recorded configuration (status added / refreshed / upgraded from vN / already current; the slides are untouched), run `verify-deck.mjs --strict` (stop with exit 1 on failure), export the PDF with `export-pdf.mjs` and the recorded options (exit 3 when no browser exists; `--no-pdf` skips, `--pdf <file>` redirects); a deck given as argument is rebuilt instead (its PDF lands next to it).
-- Resolve the skill's scripts through `--scripts <dir>`, then `NBG_DESIGN_SCRIPTS`, then the recorded directory; require `add-deck-menu.mjs`, `verify-deck.mjs`, `export-pdf.mjs`, `lib/deck-menu.js`, `lib/print-layout.js` there and exit 1 naming the source and the path otherwise; never try another location.
+- Resolve the skill's scripts through `--scripts <dir>`, then `NBG_DESIGN_SCRIPTS`, then the current install in Claude Code's plugin registry (v1.24.0), then the recorded directory; after a rebuild, rewrite the script's own record and logic from the directory used; require `add-deck-menu.mjs`, `verify-deck.mjs`, `export-pdf.mjs`, `lib/deck-menu.js`, `lib/print-layout.js` there and exit 1 naming the source and the path otherwise; never try another location.
 - Exit codes: 0 rebuilt / current, 1 error / gate failed / not current, 2 usage, 3 HTML rebuilt but no browser for the PDF.
 - The agent delivers the three files together and tells the recipient that `node <deck>.rebuild.mjs` refreshes the editing tools and the PDF after a skill update (`NBG_DESIGN_SCRIPTS` or `--scripts` when the skill lives elsewhere).
 

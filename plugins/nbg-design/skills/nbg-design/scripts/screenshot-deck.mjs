@@ -16,7 +16,7 @@
 // this script only produces the images.
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync, unlinkSync } from 'node:fs';
-import { resolve, join, basename } from 'node:path';
+import { resolve, join, basename, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { findBrowser, NO_BROWSER_EXIT_CODE } from './lib/find-browser.mjs';
@@ -24,7 +24,7 @@ import { findBrowser, NO_BROWSER_EXIT_CODE } from './lib/find-browser.mjs';
 const USAGE = `NBG deck screenshot helper (optional, needs a browser)
 Usage: node screenshot-deck.mjs <deck.html> [-o <dir>] [--viewports WxH,WxH] [--slides 1,2,5] [--browser <path>]
 
-  -o, --out         Output directory (default: test_scripts/screenshots in the cwd).
+  -o, --out         Output directory (default: <deck-name>-screenshots/ next to the deck, like the PDF).
   --viewports       Comma list of WxH (default: 1366x768,1440x900 — the skill's required sizes).
   --slides          Comma list of 1-based slide numbers (default: all detected slides).
   --browser <path>  Explicit browser binary (else auto-detect; or set env NBG_BROWSER / CHROME_BIN).
@@ -103,7 +103,10 @@ function main() {
     process.exit(NO_BROWSER_EXIT_CODE);
   }
 
-  const outDir = resolve(process.cwd(), args.out || join('test_scripts', 'screenshots'));
+  // next to the deck, as export-pdf.mjs does — never a folder of the caller's project (v1.24.0: it wrote
+  // test_scripts/screenshots/ into whatever directory the command was run from)
+  const outDir = args.out ? resolve(process.cwd(), args.out)
+    : join(dirname(deck), basename(deck).replace(/\.html?$/i, '') + '-screenshots');
   mkdirSync(outDir, { recursive: true });
 
   const viewports = (args.viewports || '1366x768,1440x900').split(',').map((s) => {

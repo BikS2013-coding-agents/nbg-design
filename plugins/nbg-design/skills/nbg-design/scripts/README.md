@@ -83,14 +83,20 @@ required viewports so they can be read and inspected:
 node "<skill-root>/scripts/screenshot-deck.mjs" my-deck.html [-o <dir>] [--viewports WxH,WxH] [--slides 1,2,5]
 ```
 
-- Auto-detects a browser (override with `--browser <path>` or env `NBG_BROWSER` / `CHROME_BIN`).
+- Auto-detects a browser (override with `--browser <path>` or env `NBG_BROWSER` / `CHROME_BIN`): the
+  install folders of the platform it runs on — macOS `/Applications`, the Linux `/usr/bin` and `/snap`
+  paths, and on Windows (v1.24.0) Chrome, Edge, Brave and Chromium under `%PROGRAMFILES%`,
+  `%PROGRAMFILES(X86)%` and `%LOCALAPPDATA%` — then the `PATH` (`where` answers with CRLF line ends,
+  which the lookup now strips).
 - Navigates slides generically: injects a shim (before the **last** `</body>`) that calls the
   deck's `window.showSlide` / `window.gotoSlide` if present, then forces the Nth top-level
   `.slide` to be the only visible one **in place** — so `.active` toggles, `.hidden` toggles,
   inline `display` toggles and stacked scrolling decks all work, and the deck's own
   viewport-fit scaling still applies to the capture.
 - Counts slides by the exact class token `slide` (`slide-title` / `slide-footer` do not count).
-- Default viewports `1366x768,1440x900`; default output `test_scripts/screenshots/`.
+- Default viewports `1366x768,1440x900`; default output `<deck-name>-screenshots/` next to the deck, as the PDF
+  goes next to it (v1.24.0; before that it was `test_scripts/screenshots/` in whatever folder the command was
+  run from — the development workspace's layout leaking into users' projects). `-o <dir>` still overrides it.
 - **Exit codes:** 0 = screenshots written, 1 = error, **3 = no browser found** (a soft signal — fall
   back to `verify-deck.mjs --strict`, which is the mandatory gate on headless hosts).
 
@@ -650,9 +656,21 @@ node my-deck.rebuild.mjs --scripts <dir>    # the skill's scripts/ directory, ex
   already rebuilt; the backup holds the previous file), 2 = usage, 3 = HTML rebuilt but no browser
   for the PDF.
 - **Scripts directory resolution** (highest priority first): `--scripts <dir>`, `NBG_DESIGN_SCRIPTS`,
-  the recorded directory. It must hold `add-deck-menu.mjs`, `verify-deck.mjs`, `export-pdf.mjs`,
-  `lib/deck-menu.js`, `lib/print-layout.js`; otherwise the script exits 1 naming the source and the
-  path. No other location is ever tried.
+  the **current install** in Claude Code's plugin registry, the recorded directory. It must hold
+  `add-deck-menu.mjs`, `verify-deck.mjs`, `export-pdf.mjs`, `lib/deck-menu.js`, `lib/print-layout.js`;
+  otherwise the script exits 1 naming the source and the path. The output line says which source won.
+- **The plugin registry step** (v1.24.0). The generator records the plugin's registry key
+  (`nbg-design@nbg-design`) and the scripts' path inside it (`skills/nbg-design/scripts`) when it runs
+  from an installed plugin; the generated script reads `plugins/installed_plugins.json` under
+  `CLAUDE_CONFIG_DIR` (else `~/.claude`) and uses that key's current `installPath` (the newest editor
+  if several scopes carry it). Why it outranks the recorded directory: that directory is a *versioned*
+  cache folder, and Claude Code keeps old version folders after an update — so a script trusting it ran
+  the old tools and `--check` reported a stale deck as CURRENT. A deck built from a development checkout
+  or a copied folder records no key and skips this step.
+- **Self-refresh** (v1.24.0). After a rebuild, the script re-renders itself with the skill's current
+  generator and a record pointing at the directory it just used, so both its folder and its own logic
+  stay current. A script written before v1.24.0 lacks the registry step: run it once with
+  `--scripts <skill>/scripts` and it rewrites itself with the new lookup.
 - Windows: the script only uses `node:path`, `node:fs`, `node:child_process` and `process.execPath`;
   it has not been run on Windows yet (see the issue register).
 

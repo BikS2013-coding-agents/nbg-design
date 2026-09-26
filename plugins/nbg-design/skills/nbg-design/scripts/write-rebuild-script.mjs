@@ -9,17 +9,22 @@
 // content is untouched), runs the strict verification gate and exports the PDF again.
 //
 // Recorded in the generated script: the deck and PDF file names (relative to the script, so the
-// folder can move as a whole), the directory of the nbg-design scripts at delivery time, the editor
-// block version and the plugin version that were embedded, the block's configuration (if any) and
-// the exporter options used. The generated script looks the scripts up through --scripts, then
-// NBG_DESIGN_SCRIPTS, then the recorded directory, and errors otherwise — never a silent substitute.
+// folder can move as a whole), the directory of the nbg-design scripts at delivery time, the plugin's
+// registry key and the scripts' path inside the plugin (when the skill runs from an installed plugin),
+// the editor block version and the plugin version that were embedded, the block's configuration (if
+// any) and the exporter options used. The generated script looks the scripts up through --scripts,
+// then NBG_DESIGN_SCRIPTS, then Claude Code's plugin registry (the CURRENT install — v1.24.0: the
+// recorded directory names a versioned cache folder that stays on disk after an update, so trusting it
+// reported stale decks as current), then the recorded directory, and errors otherwise. After every
+// rebuild it rewrites its own record from the directory it used, so it never drifts behind again.
 //
 // Usage: node write-rebuild-script.mjs <deck.html> [-o <script.mjs>] [--pdf <deck.pdf>] [--no-pdf]
 //                                      [--selector <css>] [--size WxH]
 // Exit: 0 = written, 1 = error, 2 = usage. Zero dependencies, Node >= 18.
 
 import { readFileSync, writeFileSync, existsSync, realpathSync } from 'node:fs';
-import { resolve, dirname, basename, relative, join } from 'node:path';
+import { resolve, dirname, basename, relative, join, sep } from 'node:path';
+import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { readMenuConfig, BLOCK_RE } from './add-deck-menu.mjs';
 
@@ -57,6 +62,33 @@ function parseArgs(argv) {
 }
 
 /** The plugin version, when the skill still sits inside its plugin checkout (null when it travelled alone). */
+/** Claude Code's plugin registry: CLAUDE_CONFIG_DIR (else ~/.claude) / plugins/installed_plugins.json. */
+export function pluginRegistryPath(env = process.env) {
+  return join(env.CLAUDE_CONFIG_DIR || join(homedir(), '.claude'), 'plugins', 'installed_plugins.json');
+}
+
+/** Which installed plugin this scripts directory belongs to: { pluginKey, pluginSubpath }, or nulls when the
+ *  skill does not run from an installed plugin (a development checkout, a copied folder). */
+export function findPluginInstall(scriptsDir = HERE, env = process.env) {
+  const none = { pluginKey: null, pluginSubpath: null };
+  const reg = pluginRegistryPath(env);
+  if (!existsSync(reg)) return none;
+  let data;
+  try { data = JSON.parse(readFileSync(reg, 'utf8')); } catch { return none; }   // unreadable registry: record no key
+  const plugins = (data && typeof data.plugins === 'object' && data.plugins) || data || {};
+  let real;
+  try { real = realpathSync(scriptsDir); } catch { real = scriptsDir; }
+  for (const [key, entries] of Object.entries(plugins)) {
+    for (const e of [].concat(entries || [])) {
+      if (!e || typeof e.installPath !== 'string') continue;
+      let root;
+      try { root = realpathSync(e.installPath); } catch { continue; }
+      if (real === root || real.startsWith(root + sep)) return { pluginKey: key, pluginSubpath: toPosix(relative(root, real)) };
+    }
+  }
+  return none;
+}
+
 export function readPluginVersion(scriptsDir = HERE) {
   const manifest = resolve(scriptsDir, '../../../.claude-plugin/plugin.json');
   if (!existsSync(manifest)) return null;
@@ -104,6 +136,7 @@ export function buildRecord(deckPath, opts = {}) {
       deck: toPosix(relative(scriptDir, deck)),
       pdf: pdfPath ? toPosix(relative(scriptDir, pdfPath)) : null,
       scriptsDir: HERE,
+      ...findPluginInstall(HERE),
       blockVersion: embedded,
       shippedVersion: shipped,
       pluginVersion: readPluginVersion(),
@@ -141,16 +174,20 @@ export function renderRebuildScript(record) {
 // Where the nbg-design scripts are looked up (highest priority first):
 //   --scripts <dir>             explicit;
 //   NBG_DESIGN_SCRIPTS=<dir>    environment;
+//   the plugin registry         the CURRENT install of ${record.pluginKey || '(not recorded: the deck was built outside an installed plugin)'}
+//                               in Claude Code's plugins/installed_plugins.json;
 //   the recorded directory      ${record.scriptsDir}
-//                               (where the skill was when the deck was delivered).
+//                               (where the skill was when this script was last written).
 // The directory must hold add-deck-menu.mjs, verify-deck.mjs, export-pdf.mjs and lib/ (the skill's
-// scripts/ folder). Anything else is an error: the script never substitutes another location.
+// scripts/ folder). Anything else is an error. After a rebuild this script rewrites its own record from
+// the directory it used, so the next run starts from there.
 //
 // Exit: 0 = rebuilt (or --check: current), 1 = error / gate failed (or --check: not current),
 //       2 = usage, 3 = HTML rebuilt but no Chrome/Chromium/Edge on this host for the PDF.
 
 import { readFileSync, writeFileSync, copyFileSync, existsSync } from 'node:fs';
-import { resolve, dirname, basename } from 'node:path';
+import { resolve, dirname, basename, join } from 'node:path';
+import { homedir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
@@ -163,7 +200,8 @@ Usage: node \${basename(fileURLToPath(import.meta.url))} [<deck.html>] [--script
 
   <deck.html>       Another copy of the deck to rebuild (default: \${RECORD.deck} next to this script).
   --scripts <dir>   The nbg-design skill's scripts/ directory (default: NBG_DESIGN_SCRIPTS, else the
-                    recorded \${RECORD.scriptsDir}).
+                    current install in Claude Code's plugin registry, else the recorded
+                    \${RECORD.scriptsDir}).
   --pdf <file>      Export the PDF to this path (default: \${RECORD.pdf || 'none — the deck was delivered without a PDF'}).
   --no-pdf          Skip the PDF export.
   --no-backup       Do not copy the deck to <name>.backup-<stamp>.html before rebuilding.
@@ -190,10 +228,34 @@ function parseArgs(argv) {
   return a;
 }
 
-/** Resolve and validate the nbg-design scripts directory — explicit flag, environment, recorded path; nothing else. */
+const blockVersionIn = (dir) => Number((readFileSync(join(dir, 'lib', 'deck-menu.js'), 'utf8').match(/var VERSION = (\\d+);/) || [])[1]) || 0;
+
+/** The scripts directory of the CURRENT install of this plugin, from Claude Code's plugin registry — null when the
+ *  deck was built outside an installed plugin, or the plugin is not installed on this machine. The recorded
+ *  directory names a versioned cache folder that outlives updates, so the registry is asked first. */
+function installedScriptsDir() {
+  if (!RECORD.pluginKey || !RECORD.pluginSubpath) return null;
+  const reg = join(process.env.CLAUDE_CONFIG_DIR || join(homedir(), '.claude'), 'plugins', 'installed_plugins.json');
+  if (!existsSync(reg)) return null;
+  let data;
+  try { data = JSON.parse(readFileSync(reg, 'utf8')); }
+  catch (e) { throw new Error('cannot read the plugin registry ' + reg + ': ' + e.message); }
+  const plugins = (data && typeof data.plugins === 'object' && data.plugins) || data || {};
+  const found = [].concat(plugins[RECORD.pluginKey] || [])
+    .filter((e) => e && typeof e.installPath === 'string')
+    .map((e) => join(e.installPath, RECORD.pluginSubpath))
+    .filter((d) => existsSync(join(d, 'lib', 'deck-menu.js')));
+  if (!found.length) return null;
+  // several scopes may carry the plugin (user / project): the newest editor wins
+  return found.map((d) => ({ d, v: blockVersionIn(d) })).sort((a, b) => b.v - a.v)[0].d;
+}
+
+/** Resolve and validate the nbg-design scripts directory — explicit flag, environment, plugin registry,
+ *  recorded path; nothing else. */
 function resolveScriptsDir(explicit) {
-  const source = explicit ? '--scripts' : process.env.NBG_DESIGN_SCRIPTS ? 'NBG_DESIGN_SCRIPTS' : 'the recorded directory';
-  const dir = resolve(process.cwd(), explicit || process.env.NBG_DESIGN_SCRIPTS || RECORD.scriptsDir);
+  const installed = explicit || process.env.NBG_DESIGN_SCRIPTS ? null : installedScriptsDir();
+  const source = explicit ? '--scripts' : process.env.NBG_DESIGN_SCRIPTS ? 'NBG_DESIGN_SCRIPTS' : installed ? 'the plugin registry' : 'the recorded directory';
+  const dir = resolve(process.cwd(), explicit || process.env.NBG_DESIGN_SCRIPTS || installed || RECORD.scriptsDir);
   const need = ['add-deck-menu.mjs', 'verify-deck.mjs', 'export-pdf.mjs', 'lib/deck-menu.js', 'lib/print-layout.js'];
   for (const f of need) {
     if (!existsSync(resolve(dir, f))) {
@@ -261,6 +323,20 @@ async function main() {
     const r = addMenu(html, RECORD.config || undefined);
     writeFileSync(deck, r.html, 'utf8');
     console.log(\`\\n▶ editor block: v\${r.version} \${r.status}\`);
+
+    // 2b — this script's own record: the directory just used and the versions it produced, rendered by the
+    //      skill's CURRENT generator, so the next run neither starts from a stale folder nor stale logic
+    const self = fileURLToPath(import.meta.url);
+    if (existsSync(resolve(dir, 'write-rebuild-script.mjs'))) {
+      const gen = await import(pathToFileURL(resolve(dir, 'write-rebuild-script.mjs')).href);
+      if (typeof gen.renderRebuildScript === 'function') {
+        const record = { ...RECORD, generated: new Date().toISOString(), scriptsDir: dir, blockVersion: Number(r.version), shippedVersion: Number(r.version) };
+        if (typeof gen.findPluginInstall === 'function') Object.assign(record, gen.findPluginInstall(dir));
+        if (typeof gen.readPluginVersion === 'function') record.pluginVersion = gen.readPluginVersion(dir);
+        writeFileSync(self, gen.renderRebuildScript(record), 'utf8');
+        console.log(\`\\n▶ rebuild script: \${basename(self)} now records \${dir}\`);
+      }
+    }
 
     // 3 — the strict gate
     if (run('verify', dir, 'verify-deck.mjs', [deck, '--strict']) !== 0) {

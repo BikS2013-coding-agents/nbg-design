@@ -147,7 +147,7 @@
 
 ### 2026-06-05 — Added overlap-protection guardrails for generated NBG HTML presentations
 - Detected: `agentic-engineering-nbg-executive-presentation.html` slides 2 and 3 contained unintended content collisions visible in screenshots at 1366×768 and 1440×900.
-- Affected files: `/Users/giorgosmarinos/.pi/agent/skills/nbg-design/SKILL.md`, `/Users/giorgosmarinos/.pi/agent/skills/nbg-design/config/pi-agent-nbg-design.yaml`, `/Users/giorgosmarinos/contentwork/temp/docs/reference/nbg-design-overlap-protection-issue-solution.md`, `/Users/giorgosmarinos/contentwork/temp/docs/design/project-design.md`, and `/Users/giorgosmarinos/contentwork/temp/docs/design/project-functions.MD`.
+- Affected files: `~/.pi/agent/skills/nbg-design/SKILL.md`, `~/.pi/agent/skills/nbg-design/config/pi-agent-nbg-design.yaml`, `<original working folder>/docs/reference/nbg-design-overlap-protection-issue-solution.md`, `<original working folder>/docs/design/project-design.md`, and `<original working folder>/docs/design/project-functions.MD`.
 - Cause: Existing skill guidance required viewport fit and screenshot inspection for clipping/overflow/readability, but it did not explicitly require internal slide-collision checks between independently positioned cards, callouts, shapes, logos, and footer/page-number areas.
 - Solution: Added anti-overlap authoring rules, layout-zone spacing guidance, regression examples, and screenshot-verification checks requiring revision/re-validation when overlaps are detected.
 - Verification: Existing slide 2/3 screenshots were inspected as defect evidence, and `config/pi-agent-nbg-design.yaml` parsed successfully with Ruby Psych (`YAML OK`).
@@ -233,4 +233,66 @@ decks: the two are graded for opposite grounds (teal-and-cream vs near-black blu
 `file://`. Opening any `* Design System.html` straight off disk shows the documentation with nine empty
 slide frames — the same on the NBG, AIHub and Instrument pages, so it is not a defect in any one of them.
 Serve the skill folder over a local static server to review the templates.
+
+### 2026-09-26 — Fixed: delivered rebuild scripts ran stale tools after a plugin update (skill v1.24.0)
+
+**Issue.** `write-rebuild-script.mjs` recorded the skill's scripts folder as an absolute path, and for an
+installed plugin that path is a *versioned* cache folder (`~/.claude/plugins/cache/nbg-design/nbg-design/1.21.0/…`).
+Claude Code leaves old version folders on disk after an update (1.19.0, 1.20.0 and 1.21.0 were all present
+next to 1.23.0), so the delivered `<deck>.rebuild.mjs` kept finding and running the old tools. Reproduced:
+a deck built with 1.21.0 (block v15), `--check` run with 1.23.0 (block v17) installed →
+`RESULT: CURRENT — the deck carries editor block v15; nothing to rebuild.` The one check that exists to catch
+an outdated deck reported it as current. The script also never updated its own record, so it could not recover.
+
+**Fix.** The generator now also records the plugin's registry key and the scripts' path inside the plugin;
+the generated script resolves `--scripts` → `NBG_DESIGN_SCRIPTS` → **the current install in Claude Code's
+plugin registry** (`plugins/installed_plugins.json` under `CLAUDE_CONFIG_DIR`, else `~/.claude`) → the recorded
+folder, prints which one won, and after every rebuild **rewrites itself** with the skill's current generator
+and a record pointing at the folder it used. A deck built outside an installed plugin records no key and skips
+the registry step. Scripts written before v1.24.0 have the old logic baked in; one run with
+`--scripts <skill>/scripts` migrates them (documented in SKILL.md "Updating an existing deck").
+
+**Verification.** `test_scripts/rebuild-script-registry.mjs` (development workspace) builds two throwaway
+installs and a throwaway registry via `CLAUDE_CONFIG_DIR` and passes 19 checks: the key is recorded; after an
+"update" `--check` says REBUILD NEEDED via the registry; the rebuild embeds the new block and re-records the new
+folder; `--check` is then CURRENT; `--scripts` and `NBG_DESIGN_SCRIPTS` still win; a plugin missing from the
+registry falls through to the recorded folder; the legacy logic is reproduced calling a stale deck CURRENT and
+is migrated by one `--scripts` run. The test also caught the rewritten record storing the block version as a
+string (`"901"`) — `addMenu` returns it as one — now coerced to a number.
+
+### 2026-09-26 — Fixed: no Windows browser discovery; `where` output kept its CR (skill v1.24.0)
+
+`scripts/lib/find-browser.mjs` listed only macOS and Linux install paths, and tried *all* of them on every
+platform. On Windows it fell back to `where`, split its output on `\n` — `where` answers with CRLF, so the
+path kept a trailing `\r` and was not found — and looked for names (`google-chrome`, `chromium`) that Windows
+installs do not use. Now: candidates are per platform; on Windows, Chrome, Edge, Brave and Chromium under
+`%PROGRAMFILES%`, `%PROGRAMFILES(X86)%` and `%LOCALAPPDATA%` (built from the environment, never a guessed drive
+letter; Chrome wins over Edge as the tested browser), then `where` for `chrome.exe` / `msedge.exe` / `brave.exe`
+/ `chromium.exe`, split on `\r?\n`. Verified by simulating `process.platform = 'win32'` with fake install
+folders (found the per-user Chrome ahead of a per-machine Edge) and on the real Mac (unchanged). **Not yet run
+on a real Windows host.**
+
+### 2026-09-26 — Fixed: screenshot-deck.mjs wrote into the caller's folder (skill v1.24.0)
+
+The default output was `test_scripts/screenshots/` resolved against the current directory — this development
+workspace's layout, shipped to users, creating a `test_scripts/` folder in whatever project the command ran
+from. Default is now `<deck-name>-screenshots/` next to the deck, as the PDF goes next to it; `-o` still
+overrides. SKILL.md also described the file names wrongly (`<slide-name>-WxH.png`); they are
+`<deck-name>-s<N>-WxH.png`, and the text now says so.
+
+### 2026-09-26 — Fixed: this machine's paths published in the reference documents (skill v1.24.0)
+
+Four files under `references/` carried 34 absolute paths into the author's home folder (`~/.pi/agent/…`, two
+`~/contentwork/…` project folders) with the username — historical records of the skill's origins, published
+to the public mirror. Replaced with `~/.pi/…`, `<original project root>` and `<original working folder>`; a
+repository-wide search now finds no occurrence of the username. The earlier commits in the public mirror's
+history still contain them; `scripts/squash-working.sh` (workspace) would collapse that history, but only on
+the author's explicit request.
+
+### 2026-09-26 — Checked, no change: the assistant's provider presets
+
+`deck-menu.js` pre-sets `claude-opus-5` (Anthropic) and `deepseek-v4-flash-vision-exp` (DeepSeek). Reviewed as a
+possible fallback: it is not one — the values are filled in only when the viewer presses "Standard values",
+and an empty model is an error ("Enter the model…"). `claude-opus-5` is the current default Opus ID (Opus 5.5
+is launching and used only when named). The DeepSeek ID was not re-verified against DeepSeek's current list.
 

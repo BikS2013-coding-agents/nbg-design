@@ -17,9 +17,9 @@ entry_points:
   - NBG-Design/NBG Design System.html
   - NBG-Design/slide-templates.jsx
   - NBG-Design/tweaks-panel.jsx
-  - /Users/giorgosmarinos/.pi/agent/skills/<skill-slug>/SKILL.md
+  - ~/.pi/agent/skills/<skill-slug>/SKILL.md
 last_scanned_commit: "unavailable: repository has no resolved HEAD commit; branch main has uncommitted/untracked project files"
-scanned_for_request: /Users/giorgosmarinos/contentwork/nbg-theme-agent/docs/reference/refined-request-user-level-nbg-design-skill.md
+scanned_for_request: <original project root>/docs/reference/refined-request-user-level-nbg-design-skill.md
 scanned_at: "2026-06-05T05:12:09Z"
 ---
 
@@ -27,7 +27,7 @@ scanned_at: "2026-06-05T05:12:09Z"
 
 ## Summary
 
-The requested user-level skill is not currently installed: `/Users/giorgosmarinos/.pi/agent/skills/nbg-design/` does not exist. The project already contains the source material needed to package it: a Pi context YAML, an NBG design-system folder, guardrail documentation, and project convention files.
+The requested user-level skill is not currently installed: `~/.pi/agent/skills/nbg-design/` does not exist. The project already contains the source material needed to package it: a Pi context YAML, an NBG design-system folder, guardrail documentation, and project convention files.
 
 This is a lightweight design/configuration repository rather than a packaged application. No `package.json`, `pyproject.toml`, `requirements.txt`, `go.mod`, or `Cargo.toml` was detected at depth 3, so build/lint/test commands are not centrally configured.
 
@@ -42,7 +42,7 @@ This is a lightweight design/configuration repository rather than a packaged app
 | Visual references | `NBG-Design/screenshots/` | Presentation screenshots and newsletter/email screenshots; only presentation screenshots are in scope by default. |
 | Project documentation | `docs/design/project-design.md`, `docs/design/project-functions.MD`, `docs/design/configuration-guide.md`, `Issues - Pending Items.md` | Current design decisions, functional requirements, setup/path semantics, and approved defaults/exceptions. |
 | Generated outputs | `presentations/`, `test_scripts/screenshots/` | Prior generated decks and verification artifacts; useful provenance/examples, but not required for the skill unless explicitly selected. |
-| Local user skill example | `/Users/giorgosmarinos/.pi/agent/skills/deep-dive-creator/SKILL.md` | Confirms the user-level skill root and frontmatter shape used locally. |
+| Local user skill example | `~/.pi/agent/skills/deep-dive-creator/SKILL.md` | Confirms the user-level skill root and frontmatter shape used locally. |
 
 ## Conventions and Evidence
 
@@ -54,7 +54,7 @@ This is a lightweight design/configuration repository rather than a packaged app
 - `config/pi-agent-nbg-design.yaml:268-276` records the missing-information policy and the only approved defaults (`en`, `html`).
 - `docs/design/project-design.md:8-25` documents that the YAML is context text, not native Pi settings, and that Pi does not automatically read nested references.
 - `docs/design/configuration-guide.md:79-84` documents current path-resolution limitations that the user-level skill should remove or rewrite for skill portability.
-- `/Users/giorgosmarinos/.pi/agent/skills/deep-dive-creator/SKILL.md:1-5` shows local Pi skill frontmatter format with `name` and `description`.
+- `~/.pi/agent/skills/deep-dive-creator/SKILL.md:1-5` shows local Pi skill frontmatter format with `name` and `description`.
 
 ## Integration Points
 
@@ -75,7 +75,7 @@ This is a lightweight design/configuration repository rather than a packaged app
 | `docs/design/project-functions.MD` | Reference/summarize | Functional requirements define current behavior; useful for validating skill instructions. |
 | `docs/design/configuration-guide.md` | Reference/adapt | Documents current repository-root path semantics; downstream skill should adapt away from original repository-root coupling. |
 | `Issues - Pending Items.md` | Reference | Contains approved defaults/exceptions and open questions; do not copy wholesale into skill unless provenance is desired. |
-| `/Users/giorgosmarinos/.pi/agent/skills/deep-dive-creator/SKILL.md` | Reference only | Local example confirming user-level skill root and valid frontmatter style. Do not modify. |
+| `~/.pi/agent/skills/deep-dive-creator/SKILL.md` | Reference only | Local example confirming user-level skill root and valid frontmatter style. Do not modify. |
 
 ### Out-of-Scope
 
@@ -93,17 +93,17 @@ This is a lightweight design/configuration repository rather than a packaged app
 
 | Target | Needed action |
 |---|---|
-| `/Users/giorgosmarinos/.pi/agent/skills/nbg-design/` | Create/update the user-level Pi skill folder. It does not currently exist. |
-| `/Users/giorgosmarinos/.pi/agent/skills/nbg-design/SKILL.md` | Create valid Pi skill frontmatter (`name: nbg-design`, user-facing title in body/description) and instructions preserving current NBG behavior. |
-| `/Users/giorgosmarinos/.pi/agent/skills/nbg-design/config/pi-agent-nbg-design.yaml` | Optional copied/adapted config. If included, rewrite repository-root-only wording and resource references so they are skill-internal. |
-| `/Users/giorgosmarinos/.pi/agent/skills/nbg-design/NBG-Design/` | Recommended bundled resource layout if preserving existing relative references like `assets/logo-primary.png` inside templates. |
+| `~/.pi/agent/skills/nbg-design/` | Create/update the user-level Pi skill folder. It does not currently exist. |
+| `~/.pi/agent/skills/nbg-design/SKILL.md` | Create valid Pi skill frontmatter (`name: nbg-design`, user-facing title in body/description) and instructions preserving current NBG behavior. |
+| `~/.pi/agent/skills/nbg-design/config/pi-agent-nbg-design.yaml` | Optional copied/adapted config. If included, rewrite repository-root-only wording and resource references so they are skill-internal. |
+| `~/.pi/agent/skills/nbg-design/NBG-Design/` | Recommended bundled resource layout if preserving existing relative references like `assets/logo-primary.png` inside templates. |
 | Skill validation documentation under project docs | If implementation proceeds, document included/excluded files, path-portability checks, and validation results per project conventions. |
 | Dedicated skill-development docs folder | Project instructions require a `[skill-name]-docs` folder when creating/changing a skill in project context; likely `nbg-design-docs/` if downstream implementation documents skill development artifacts. |
 
 ## Duplication Check
 
 - Existing project-level NBG presentation context is partially implemented in `config/pi-agent-nbg-design.yaml` and `NBG-Design/**`.
-- No existing user-level `nbg-design` skill package was found under `/Users/giorgosmarinos/.pi/agent/skills/`.
+- No existing user-level `nbg-design` skill package was found under `~/.pi/agent/skills/`.
 - Downstream work should package/adapt the existing implementation, not create a parallel design system or new visual language.
 
 ## Recommended Packaging Boundary

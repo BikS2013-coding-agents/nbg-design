@@ -27,11 +27,12 @@ This YAML file is a Pi `@file` context bundle. It is not Pi native settings, and
    - Provider credentials must be supplied through Pi login or external environment/configuration mechanisms.
    - Do not store credentials in this repository's shared config or documentation.
 5. **Local browser executable for screenshot automation and PDF export**
-   - `scripts/screenshot-deck.mjs` and `scripts/export-pdf.mjs` look for Chrome/Chromium/Edge in this order: `--browser <path>` flag (authoritative; a non-executable path is an error), `NBG_BROWSER`, `CHROME_BIN`, `CHROME_PATH`, `BROWSER` environment variables, the standard macOS/Linux install locations, then `PATH`.
+   - `scripts/screenshot-deck.mjs` and `scripts/export-pdf.mjs` look for Chrome/Chromium/Edge in this order: `--browser <path>` flag (authoritative; a non-executable path is an error), `NBG_BROWSER`, `CHROME_BIN`, `CHROME_PATH`, `BROWSER` environment variables, the standard install locations of the running platform (macOS, Linux, and — since v1.24.0 — Windows: Chrome, Edge, Brave and Chromium under `%PROGRAMFILES%`, `%PROGRAMFILES(X86)%` and `%LOCALAPPDATA%`), then `PATH`.
    - The project does not define a committed fallback browser path. With no browser found the scripts exit with code 3: screenshots are skipped in favour of `verify-deck.mjs --strict`; a PDF cannot be produced on that host and must be exported where a browser exists.
 6. **Location of the skill's scripts for a delivered deck's rebuild script (`<deck>.rebuild.mjs`)**
-   - The generated rebuild script looks the nbg-design `scripts/` directory up in this order: `--scripts <dir>` flag (authoritative), the `NBG_DESIGN_SCRIPTS` environment variable, then the directory recorded in the script when it was written (where the skill was at delivery time). The directory must hold `add-deck-menu.mjs`, `verify-deck.mjs`, `export-pdf.mjs` and `lib/`; otherwise the script exits 1 naming the source and the path. No other location is tried.
-   - A recipient whose plugin is installed elsewhere sets `NBG_DESIGN_SCRIPTS` (or passes `--scripts`) to `<plugin>/skills/nbg-design/scripts`. The same variable is used by the development workspace's `html-editor` skill.
+   - The generated rebuild script looks the nbg-design `scripts/` directory up in this order: `--scripts <dir>` flag (authoritative), the `NBG_DESIGN_SCRIPTS` environment variable, the current install of the plugin in Claude Code's plugin registry (`plugins/installed_plugins.json` under `CLAUDE_CONFIG_DIR`, else `~/.claude`; since v1.24.0), then the directory recorded in the script when it was last written. After a rebuild the script rewrites its own record from the directory it used. The directory must hold `add-deck-menu.mjs`, `verify-deck.mjs`, `export-pdf.mjs` and `lib/`; otherwise the script exits 1 naming the source and the path. No other location is tried.
+   - `CLAUDE_CONFIG_DIR` is read, never set, by the skill: it is Claude Code's own variable for a non-default configuration folder, and the rebuild script honours it to find the plugin registry.
+   - A recipient whose skill is not an installed plugin (a copied folder, a development checkout) sets `NBG_DESIGN_SCRIPTS` (or passes `--scripts`) to `<plugin>/skills/nbg-design/scripts`. The same variable is used by the development workspace's `html-editor` skill.
 
 ## Required Configuration Values
 
@@ -45,7 +46,7 @@ This YAML file is a Pi `@file` context bundle. It is not Pi native settings, and
 | Preferred language | Optional | Provide in the Pi prompt (`en`, `gr`, or `bi`). | `en` |
 | Output format / delivery target | Optional | Provide in the Pi prompt: `html`, `pdf` (exported from the HTML deck by `scripts/export-pdf.mjs`). PowerPoint is out of scope. | `html` |
 | Browser executable path | Required only for automated screenshot capture and PDF export | `scripts/screenshot-deck.mjs` and `scripts/export-pdf.mjs` auto-detect Chrome/Chromium/Edge at the usual macOS/Linux locations and on `PATH`; override with `--browser <path>` or the `NBG_BROWSER` / `CHROME_BIN` environment variables. No committed fallback path. | None (auto-detect) |
-| `NBG_DESIGN_SCRIPTS` (skill scripts directory) | Only when a delivered deck's `<deck>.rebuild.mjs` runs where the skill is not at the directory recorded in it | Set it (or pass `--scripts <dir>`) to the installed skill's `scripts/` directory — the one holding `add-deck-menu.mjs`, `verify-deck.mjs`, `export-pdf.mjs`. A directory without them is an error. | The directory recorded when the script was written |
+| `NBG_DESIGN_SCRIPTS` (skill scripts directory) | Only when a delivered deck's `<deck>.rebuild.mjs` runs where the skill is neither an installed plugin (found through the plugin registry) nor at the directory recorded in it | Set it (or pass `--scripts <dir>`) to the installed skill's `scripts/` directory — the one holding `add-deck-menu.mjs`, `verify-deck.mjs`, `export-pdf.mjs`. A directory without them is an error. | The plugin registry's current install, then the directory recorded when the script was last written |
 
 ## Deterministic Setup Process
 
@@ -109,7 +110,7 @@ Confirm these paths exist:
 - `NBG-Design/assets/*.datauri.txt` (one per logo and photo)
 - `scripts/embed-assets.mjs`, `scripts/verify-deck.mjs`, `scripts/screenshot-deck.mjs`, `scripts/export-pdf.mjs`, `scripts/add-deck-menu.mjs`
 - `scripts/lib/find-browser.mjs`, `scripts/lib/cdp.mjs`, `scripts/lib/print-layout.js`, `scripts/lib/deck-menu.js`
-- `test_scripts/screenshots/`
+- `<deck-name>-screenshots/` next to each deck
 
 ### Machine-specific path scan
 
@@ -131,7 +132,7 @@ Historical reference artifacts under `docs/reference/`, `docs/research/`, and pl
 - `config/pi-agent-nbg-design.yaml` does not contain the old local checkout path or any other committed project-root absolute path.
 - Pi can include the context file when run from the repository root.
 - The agent can inspect repository-relative NBG design-system files when generating a presentation.
-- Screenshot outputs, when used, are saved under `test_scripts/screenshots/`.
+- Screenshot outputs, when used, are saved next to the deck in `<deck-name>-screenshots/`.
 - `node scripts/export-pdf.mjs <deck>.html` on a deck that passed `verify-deck.mjs --strict` prints `RESULT: PASS` with pages = slides and page box `1920x1080 px (20.00 x 11.25 in)`; `pdfinfo` reports `1440 x 810 pts` pages.
 
 ### Expected failure signals

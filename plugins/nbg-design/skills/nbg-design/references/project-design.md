@@ -51,9 +51,9 @@ This project contains the assets of a presentation design system inspired by the
 - Remediation pattern: If content cannot fit safely, reduce copy, simplify or resize components, change the grid structure, or split content across slides. Do not hide overflow or layer opaque elements over content to mask a collision.
 - Quality checks: Future HTML outputs must inspect screenshots at 1366×768 and 1440×900 for card-to-card, callout-to-card, shape-to-content, logo/footer-to-content, and page-number collisions; any overlap requires layout revision and repeated screenshot validation before delivery.
 - Source evidence:
-  - Refined request: `/Users/giorgosmarinos/contentwork/temp/docs/reference/refined-request-nbg-design-overlap-protection.md`
-  - Codebase scan: `/Users/giorgosmarinos/contentwork/temp/docs/reference/codebase-scan-nbg-design-overlap-protection.md`
-  - Issue/solution record: `/Users/giorgosmarinos/contentwork/temp/docs/reference/nbg-design-overlap-protection-issue-solution.md`
+  - Refined request: `<original working folder>/docs/reference/refined-request-nbg-design-overlap-protection.md`
+  - Codebase scan: `<original working folder>/docs/reference/codebase-scan-nbg-design-overlap-protection.md`
+  - Issue/solution record: `<original working folder>/docs/reference/nbg-design-overlap-protection-issue-solution.md`
 
 ### HTML presentation viewport-fit guardrail
 - Decision: `config/pi-agent-nbg-design.yaml` now includes `presentation_generation_rules.html_output_layout` guidance for HTML outputs.
@@ -326,6 +326,21 @@ This project contains the assets of a presentation design system inspired by the
 - **Editor.** `deck-menu.js` block v17 adds the `instrument` entry to the theme table and makes the **font
   picker** theme-aware — each theme's own faces head the list, where it had read "Default (Aptos)" on every
   theme since block v14.
+
+### Portability fixes (skill v1.24.0, 2026-09-26)
+
+- **Request.** Audit the skill for hard-coded files and paths, then fix everything found.
+- **Rebuild script lookup.** Delivered `<deck>.rebuild.mjs` scripts now resolve the skill through Claude
+  Code's plugin registry before their recorded folder, because the recorded folder is a versioned cache
+  directory that outlives updates; they also re-render themselves after each rebuild. Design choices: the
+  registry key is recorded at generation time rather than guessed from a name at run time; an unreadable
+  registry at run time is an error, while at generation time it just records no key; several scopes carrying
+  the plugin resolve to the newest editor. `CLAUDE_CONFIG_DIR` is honoured, which also lets the regression
+  test run against a throwaway registry.
+- **Browser discovery** is per platform, with Windows install folders built from the environment.
+- **Screenshots** default to `<deck-name>-screenshots/` next to the deck.
+- **References** no longer carry the author's absolute paths.
+- The editor block is unchanged (still v17), so no delivered deck is flagged as outdated by this release.
 
 ## Configuration Policy
 - Secrets, API keys, tokens, and expiring credentials must not be stored in project YAML files.
