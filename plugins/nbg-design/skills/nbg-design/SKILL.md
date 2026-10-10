@@ -1,6 +1,6 @@
 ---
 name: nbg-design
-description: Use when creating presentations in a design system inspired by the brand image of the National Bank of Greece (NBG), HTML slides (with a built-in right-click menu for in-place text editing with a formatting toolbar, shape resize/move, editing of the parts of inline SVGs, an AI assistant panel, "Export to PDF" and "Save edited copy", plus a per-deck rebuild script that re-embeds newer versions of those editing tools), updating an existing deck to the skill's current editing tools, slide specifications, PDF exports of HTML decks (one page per slide, aesthetics preserved), editable PowerPoint (.pptx) exports of HTML decks (native text boxes, shapes and pictures, checked against the deck slide by slide) — all on the bundled NBG-inspired presentation design system, templates, logos, photography, screenshots, and guardrails. Also ships the BikS2013 personal theme (ink and copper on warm paper, the BikS2013 wheel lockups) for presentations given in a personal capacity, selected per deck with the same templates, scripts and guardrails, the AIHub theme (navy, lagoon and sun yellow after the NBG developer portal, Oswald titles embedded, the NBG AI Hub lockups) for NBG AI Hub and developer-facing material, and the Instrument theme (a dark, chart-led register in IBM Plex with Greek) for talks carried by data.
+description: Use when creating presentations in a design system inspired by the brand image of the National Bank of Greece (NBG), HTML slides (with a built-in right-click menu for in-place text editing with a formatting toolbar, shape resize/move, editing of the parts of inline SVGs, an AI assistant panel, "Export to PDF" and "Save edited copy", plus a per-deck rebuild script that re-embeds newer versions of those editing tools), updating an existing deck to the skill's current editing tools, slide specifications, PDF exports of HTML decks (one page per slide, aesthetics preserved), editable PowerPoint (.pptx) exports of HTML decks (native text boxes, shapes and pictures, checked against the deck slide by slide), editable Google Slides exports of HTML decks (created in the user's Google Drive, typefaces mapped to the faces Slides can draw, checked the same way) — all on the bundled NBG-inspired presentation design system, templates, logos, photography, screenshots, and guardrails. Also ships the BikS2013 personal theme (ink and copper on warm paper, the BikS2013 wheel lockups) for presentations given in a personal capacity, selected per deck with the same templates, scripts and guardrails, the AIHub theme (navy, lagoon and sun yellow after the NBG developer portal, Oswald titles embedded, the NBG AI Hub lockups) for NBG AI Hub and developer-facing material, and the Instrument theme (a dark, chart-led register in IBM Plex with Greek) for talks carried by data.
 ---
 
 # NBG Design
@@ -36,7 +36,7 @@ Approved defaults:
 - The NBG logo is shown (`show_logo: true`) unless the user asks to hide it.
 - The theme is `nbg` unless the user asks for a personal / BikS2013 presentation, or says the deck is not for the bank — then `biks2013` — or unless the deck is for the NBG AI Hub / a developer audience — then `aihub` — or unless the user asks for the Instrument theme, or for a dark, chart-led, data-driven talk — then `instrument` (see "Themes"). When it is unclear which theme a deck belongs to, ask.
 
-Supported output formats: `html` (default), `pdf` and `pptx` — both always exported from the finished HTML deck (see "PDF output" and "PowerPoint output"). A request for "a PDF", "PDF version", "print version", or "send as PDF" selects `pdf`; a request for "PowerPoint", "a .pptx", "slides I can edit in PowerPoint" or "convert the deck to PowerPoint" selects `pptx`. The PowerPoint file is an **editable** conversion — real text boxes, shapes and pictures — never slide screenshots; it is produced only by `scripts/export-pptx.mjs`, never improvised.
+Supported output formats: `html` (default), `pdf`, `pptx` and `gslides` — all always exported from the finished HTML deck (see "PDF output", "PowerPoint output" and "Google Slides output"). A request for "a PDF", "PDF version", "print version", or "send as PDF" selects `pdf`; a request for "PowerPoint", "a .pptx", "slides I can edit in PowerPoint" or "convert the deck to PowerPoint" selects `pptx`. The PowerPoint file is an **editable** conversion — real text boxes, shapes and pictures — never slide screenshots; it is produced only by `scripts/export-pptx.mjs`, never improvised. A request for "Google Slides", "a Google presentation", "put it in my Drive as slides" or "convert the deck to Google Slides" selects `gslides`: an editable presentation created in the user's Google Drive by `scripts/export-gslides.mjs` only — never by uploading the `.pptx` by hand, never by hand-building slides through the API.
 
 Do not create any other fallback configuration values unless the user explicitly approves the exception.
 
@@ -502,6 +502,37 @@ A `.pptx` deliverable is **always converted from the finished, verified HTML dec
 - **Headless host with no browser:** the exporter exits with code 3 — deliver the HTML and give the command to run where a browser exists. `compare-pptx.mjs` exits with 3 when it lacks a browser, PowerPoint / LibreOffice or poppler (`pdftoppm`): then open the `.pptx` and compare by eye, and say that the automated comparison could not run.
 - The exporter must never convert a deck that fails `verify-deck.mjs --strict`.
 
+## Google Slides output (export from the HTML deck)
+
+A Google Slides deliverable is **always converted from the finished, verified HTML deck** by `scripts/export-gslides.mjs`. It measures the deck exactly as `export-pptx.mjs` does (the same native text boxes, shapes and pictures — never screenshots), writes a `.pptx` tuned for Google Slides, uploads it to the user's Google Drive where Drive converts it into a Google Slides presentation, and then corrects through the Slides API what the import loses.
+
+### Prerequisite — Google access
+
+Google access goes through the Google Workspace CLI, `gws` (https://github.com/googleworkspace/cli), signed in with the Drive and Slides scopes: `gws auth login` once (it owns the OAuth flow and the token; the skill never reads or stores credentials). `export-gslides.mjs` checks the sign-in first and stops with the command to run when it is missing (exit 1), or with exit 3 when `gws` is not installed — then deliver the HTML (and the `.pptx`, which the user can open in Slides with *File → Import slides*) and give the command to run.
+
+### Workflow
+
+1. Build and verify the HTML deck exactly as for HTML output (`embed-assets.mjs` → `verify-deck.mjs --strict` → screenshots read).
+2. Export and check in one step:
+   `node "<skill-root>/scripts/export-gslides.mjs" <deck>.html [--name "<title>"] [--folder <Drive folder id>] --check <deck>-gslides-check`
+   It prints the presentation URL. What it does beyond the PowerPoint conversion:
+   - **typefaces** — Google Slides draws only Google Fonts and a few licensed faces (Arial, Helvetica, Helvetica Neue, Calibri, Cambria, Consolas, Georgia, Verdana, Tahoma, Trebuchet MS, Times New Roman, Courier New, Gill Sans, Palatino); a face it lacks would silently become Arial or worse. Every run gets the face Chrome actually drew (an Office face the exporting browser lacks was drawn with the stack's next face — that is what the HTML showed), kept when Slides has it, else its measured Google Fonts substitute: **Aptos → Source Sans 3** (with Greek), **Segoe UI → Open Sans**, **Avenir Next → Outfit Thin** (Ultra Light) / **Nunito Sans** (Regular and heavier), **Menlo / Monaco / SF Mono → JetBrains Mono**, the macOS system face (`.SF NS`) → Roboto (table in `scripts/lib/gslides-fonts.mjs`); Oswald and IBM Plex are Google Fonts and stay. The import keeps only regular / bold, so each run's exact weight (up to 700 — Slides mis-spaces heavier ones) and colour, and each bullet's colour, are then set through the Slides API;
+   - **translucent text** — Slides has no text transparency: a translucent colour is blended with the colour it sits on in the deck (sampled from a capture with the glyphs hidden);
+   - **line breaks** — Chrome's are carried over (`--reflow` lets Slides wrap instead), and every text box gets room on its free side, because Slides wraps every box;
+   - **raised runs** — Slides has only a fixed superscript: a raised run that ends a paragraph (a "%" beside a big figure) becomes its own text box where Chrome drew it;
+   - **text placement** — Slides' own first-baseline rule (calibrated: 0.75 × the line pitch up to 100 %, the rest of a taller pitch below the line, + 0.055 em);
+   - code / key chips keep their padding as no-break spaces (Slides drops the letter-spacing PowerPoint gets);
+   - dashed rules use Slides' preset dash (it reads no custom dash pattern).
+3. Read the comparison — **mandatory** (`--check`, or later `node "<skill-root>/scripts/compare-pptx.mjs" <deck>.html <presentation URL or id> -o <dir>`): Drive exports the presentation as PDF and each slide is set next to the deck (deck | Google Slides | differences in red, with a score). **Read** the cover, a divider, the densest slides and every slide flagged `<-- READ`. A slightly different face (a substitute) is expected; text that re-wraps, a missing picture or a shape in the wrong place is a defect to report.
+4. Deliver the presentation URL with the HTML it was converted from, and report the exporter's lines — in particular **which faces were substituted** (the user sees Source Sans 3 instead of Aptos, and so on) — and the comparison scores.
+
+### Rules
+
+- **The HTML stays the master**, as for PowerPoint: fix the deck and re-export; every export creates a new presentation (the previous one is not touched — tell the user it can be deleted).
+- The presentation is created in the signed-in account's Drive (`--folder` for a shared folder): say whose Drive it went to. Never share it or change its permissions unasked.
+- **Substitution is the rule, not a defect**, for faces Slides cannot draw; an unknown face Slides lacks is reported (`not in Slides … drawn in Arial`) — say so, and suggest a Google Fonts face for the deck when the user wants exact typography in Slides.
+- Never replace text by a picture to make Slides look closer.
+
 ## Bundled files
 
 Scripts (zero-dependency Node, see `scripts/README.md`):
@@ -511,7 +542,8 @@ Scripts (zero-dependency Node, see `scripts/README.md`):
 - `scripts/screenshot-deck.mjs` — per-slide PNGs at the required viewports (needs a browser).
 - `scripts/export-pdf.mjs` — HTML deck → PDF, one page per slide, aesthetics preserved, soft masks re-anchored for macOS Preview (needs a browser).
 - `scripts/export-pptx.mjs` — HTML deck → editable PowerPoint: text boxes, shapes, pictures, SVG pictures, theme fonts and colours (needs a browser).
-- `scripts/compare-pptx.mjs` — renders a `.pptx` with PowerPoint (macOS) or LibreOffice and writes deck | PowerPoint | difference images with a score per slide (needs a browser, PowerPoint or LibreOffice, and poppler).
+- `scripts/compare-pptx.mjs` — renders a `.pptx` with PowerPoint (macOS), LibreOffice or Google Slides (`--renderer google`), or exports a Google Slides presentation (URL / id as second argument), and writes deck | rendering | difference images with a score per slide (needs a browser, poppler, and PowerPoint, LibreOffice or gws).
+- `scripts/export-gslides.mjs` — HTML deck → editable Google Slides presentation in the user's Drive: the PowerPoint conversion tuned for Slides, uploaded and converted, typefaces and weights corrected through the Slides API (needs a browser and the gws CLI signed in).
 - `scripts/fix-pdf-soft-masks.mjs` — re-anchors the soft masks of an already exported PDF (`--check` reports only); zero dependencies.
 - `scripts/add-deck-menu.mjs` — inlines the right-click deck menu (Edit text / Export to PDF / Save edited copy) into a deck (idempotent: re-running upgrades an older block and keeps its configuration; `--remove` strips it). See "Updating an existing deck to the current skill".
 - `scripts/write-rebuild-script.mjs` — writes the deck's `<deck>.rebuild.mjs`, delivered with the HTML and the PDF: re-embeds the skill's current editing tools into that deck, verifies it and re-exports its PDF (`--check` only reports).
@@ -521,6 +553,8 @@ Scripts (zero-dependency Node, see `scripts/README.md`):
 - `scripts/lib/print-layout.js` — the print-layout shim shared by the exporter and the in-deck menu (browser JS); on the menu's print path it also prints blurred box-shadows as images for macOS Preview (`rasterShadows`, block v13).
 - `scripts/lib/pptx-extract.js` — measures the laid-out slides in the browser into a list of text / shape / picture items (browser JS, evaluated by `export-pptx.mjs`).
 - `scripts/lib/pptx-writer.mjs` — writes the Office Open XML package (slides, theme, master, notes, media, zip) from that list.
+- `scripts/lib/gslides.mjs` — the Drive / Slides calls (upload with conversion, get, batchUpdate, export, delete) through the gws CLI.
+- `scripts/lib/gslides-fonts.mjs` — the faces Google Slides draws and the measured Google Fonts substitutes (per weight) for the ones it cannot.
 - `scripts/lib/deck-menu.js` — the in-deck menu: UI, in-place text editing, shape resize/move, SVG part editing, persistence, saved copy, print orchestration (browser JS, inlined by `add-deck-menu.mjs`; configurable through `window.nbgDeckMenuConfig` — root selector, page mode — so the same editor serves non-deck HTML, see `scripts/README.md` §5).
 
 References (design history and the issue register; this `SKILL.md` is the authoritative behaviour):
@@ -618,4 +652,5 @@ Before delivering NBG slide work:
 - If any overlap is found during visual verification, revise the layout and repeat the screenshot inspection before delivery; do not report the deck as complete while a collision remains.
 - For PDF output, confirm the source HTML passed `verify-deck.mjs --strict`, that `scripts/export-pdf.mjs` reported `RESULT: PASS` (pages = slides, page box = the slide box, normally 1920x1080) and `soft masks re-anchored for macOS Preview: N` (not the `!` skipped note), and that rasterised pages were read and match the browser render (backgrounds, photography, logo, typography, no clipping). Deliver the PDF with its source HTML.
 - For PowerPoint output, confirm the source HTML passed `verify-deck.mjs --strict`, that `scripts/export-pptx.mjs` wrote the file without errors (read its warnings), that `scripts/compare-pptx.mjs` ran and its `slide-NN.png` images were read (cover, a divider, the densest slides, every flagged slide), and report the scores and the typefaces the presenting machine needs. Deliver the `.pptx` with its source HTML.
+- For Google Slides output, confirm the source HTML passed `verify-deck.mjs --strict`, that `scripts/export-gslides.mjs` created the presentation (read its substitution and warning lines), that the comparison ran and its `slide-NN.png` images were read, and report the URL, the substituted faces and the scores.
 - Report the files/resources inspected and any visual verification artifacts used.

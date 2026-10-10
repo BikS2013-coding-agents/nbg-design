@@ -132,7 +132,7 @@ Export a finished, verified NBG HTML deck to a PDF that preserves its aesthetics
 - `scripts/lib/find-browser.mjs` (browser locator shared with `scripts/screenshot-deck.mjs`)
 
 ### Functional Requirements
-- Accept `pdf` as an output format next to `html` (default); a PDF is always produced from the HTML deck, never authored separately. (`pptx` is the third format since v1.25.0 — see "PowerPoint export".)
+- Accept `pdf` as an output format next to `html` (default); a PDF is always produced from the HTML deck, never authored separately. (`pptx` is the third format since v1.25.0 — see "PowerPoint export"; `gslides` the fourth since v1.26.0 — see "Google Slides export".)
 - Require the HTML gate first: `embed-assets.mjs`, `verify-deck.mjs --strict`, and the screenshot inspection; never export a deck that fails the gate.
 - Lift only the deck's host layer (navigation toggles `.active` / `.hidden` / inline `display` / `[hidden]`, viewport-fit wrappers, non-slide chrome); never change a slide's own CSS, size, fonts, colours, copy, logos or photography.
 - Jump CSS animations/transitions to their end state, force `print-color-adjust: exact`, and wait for fonts and images before printing.
@@ -360,3 +360,16 @@ lockups.
 - Report slides, item counts, the typefaces the presenting machine needs and any element left out (`<video>`, `<iframe>`, conic gradients).
 - The comparison renders the `.pptx` (PowerPoint by default on macOS, `--renderer libreoffice` elsewhere), rasterises both sides at the artboard size and writes deck | PowerPoint | difference images with a per-slide score; it exits 3 when a required program is missing.
 
+## Google Slides export (skill v1.26.0)
+
+### Scripts
+- `scripts/export-gslides.mjs` (zero-dependency Node ≥ 18; a browser; the Google Workspace CLI `gws` signed in with the Drive and Slides scopes), `scripts/lib/gslides.mjs` (Drive / Slides calls through gws), `scripts/lib/gslides-fonts.mjs` (faces Slides draws, measured substitutes)
+- `scripts/compare-pptx.mjs` accepts a Google Slides URL / presentation id, or `--renderer google` for a `.pptx`
+
+### Functional Requirements
+- Accept `gslides` as an output format; the presentation is always converted from the finished, verified HTML deck, created in the signed-in account's Google Drive (optionally in a given folder), never shared or re-permissioned by the skill.
+- Content is editable Slides content (text boxes, shapes, pictures), never screenshots.
+- Every text run is drawn with a face Google Slides has: the face Chrome rendered when Slides has it, else the measured Google Fonts substitute; the exact weight, italic and colour are set through the Slides API; faces with no known substitute are reported.
+- Translucent text is blended with its backdrop; bullets keep their colour; raised runs at the end of a paragraph keep their position; Chrome's line breaks are kept unless `--reflow`.
+- Report the URL, the substitutions, the number of runs corrected, and run (or offer) the comparison; the comparison exports the presentation as PDF and writes deck | Google Slides | difference images with a per-slide score.
+- Exit 3 when the browser or gws is missing; exit 1 with the sign-in command when gws lacks the scopes.

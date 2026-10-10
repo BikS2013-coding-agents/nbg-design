@@ -49,10 +49,17 @@ export function typefaceFor(family, weight) {
 // per run — faces whose ascent metrics PowerPoint reads differently from Chrome).
 const SHADOW_BLUR_SCALE = 1.35;
 const BASELINE_EM = { 'Arial': 0.04, 'Avenir Next': -0.024, 'Courier New': -0.022 };
-export function pptBaseline(L, size, family) {
+export function pptBaseline(L, size, family, rule) {
   const base = String(family || '').replace(/ (Thin|ExtraLight|Light|Medium|SemiBold|Semibold|ExtraBold|Black)$/, '');
-  return 0.75 * L + (BASELINE_EM[base] != null ? BASELINE_EM[base] : 0.01) * size;
+  const r = rule || { pitch: 0.75, em: BASELINE_EM, k: 0.01 };
+  // cap: a renderer that puts the space of a line pitch above 100 % below the line (Google Slides)
+  return r.pitch * (r.cap ? Math.min(L, r.cap * size) : L) + (r.em[base] != null ? r.em[base] : r.k) * size;
 }
+
+// Google Slides (measured with test_scripts/pptx-baseline-calibration.mjs --renderer google, 10 faces x 3 sizes
+// x 4 line heights): the same 0.75 x pitch up to a pitch of 100 % (1.2 x size), no further — the rest of a
+// taller pitch goes below the line — and 0.055 em lower, for every face alike (±1 px)
+export const GSLIDES_BASELINE = { pitch: 0.75, cap: 1.2, em: {}, k: 0.055 };
 
 // ───────────────────────────── XML helpers ─────────────────────────────
 
@@ -70,8 +77,11 @@ const XML = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
 // ───────────────────────────── slide content ─────────────────────────────
 
 class SlideWriter {
-  constructor(pkg, index, scale) {
+  constructor(pkg, index, scale, opts = {}) {
     this.pkg = pkg; this.index = index; this.k = scale;   // EMU per px
+    this.plainFaces = !!opts.plainFaces;
+    this.presetDashes = !!opts.presetDashes;
+    this.baselineRule = opts.baselineRule || null;   // another renderer's first-baseline rule (Google Slides)
     this.ptPerPx = scale / 12700;
     this.id = 2; this.rels = [{ id: 'rId1', type: 'slideLayout', target: '../slideLayouts/slideLayout1.xml' }];
     this.parts = [];
@@ -118,7 +128,8 @@ class SlideWriter {
   line(l) {
     if (!l) return '<a:ln><a:noFill/></a:ln>';
     // Chrome draws a dashed border as ~2.75 w dashes and ~2.5 w gaps (measured); PowerPoint's preset "dash" is 4 w / 3 w
-    const dash = l.dash === 'dash' ? '<a:custDash><a:ds d="275000" sp="250000"/></a:custDash>' : l.dash ? `<a:prstDash val="${l.dash}"/>` : '';
+    // (Google Slides reads no custom dash — it draws one as dots — so presetDashes targets get the preset)
+    const dash = l.dash === 'dash' && !this.presetDashes ? '<a:custDash><a:ds d="275000" sp="250000"/></a:custDash>' : l.dash ? `<a:prstDash val="${l.dash}"/>` : '';
     return `<a:ln w="${Math.max(1, this.emu(l.w))}"><a:solidFill>${clr(l.color)}</a:solidFill>${dash}<a:miter lim="800000"/></a:ln>`;
   }
   effects(sh, w, h) {
@@ -173,6 +184,7 @@ class SlideWriter {
 
   text(it) {
     const id = this.id++;
+    it.spid = id;   // Google Slides names the imported shape p<slide>_i<id> (export-gslides.mjs finds it by that)
     const p = it.paragraph;
     const algn = { left: 'l', center: 'ctr', right: 'r', justify: 'just' }[it.align] || 'l';
     // line pitch as a percentage: PowerPoint rounds exact spacing (spcPts) to whole points — 2 px at this
@@ -198,7 +210,7 @@ class SlideWriter {
     let box = it;
     if (it.baseline != null && it.lineHeight && !it.rot) {
       const firstRun = p.runs.find((r) => !r.br) || p.runs[0];
-      const y = it.baseline - pptBaseline(it.lineHeight, it.firstSize || firstRun.size, firstRun.font);
+      const y = it.baseline - pptBaseline(it.lineHeight, it.firstSize || firstRun.size, firstRun.font, this.baselineRule);
       box = { ...it, y, h: it.h + (it.y - y) };
     }
     this.parts.push(`<p:sp><p:nvSpPr><p:cNvPr id="${id}" name="Text ${id}"/><p:cNvSpPr txBox="1"/><p:nvPr/></p:nvSpPr>` +
@@ -209,7 +221,8 @@ class SlideWriter {
   }
 
   rPr(r, tag) {
-    const { face, bold } = typefaceFor(r.font, r.weight);
+    // plainFaces (Google Slides): the family and a bold flag only — the exact weight is set after the import
+    const { face, bold } = this.plainFaces ? { face: r.font, bold: (r.weight || 400) >= 700 } : typefaceFor(r.font, r.weight);
     this.pkg.useFont(face);
     const lang = /[Ͱ-Ͽἀ-῿]/.test(r.text || '') ? 'el-GR' : 'en-US';
     // kern: the smallest size kerned (hundredths of a pt); without it PowerPoint does not kern at all, Chrome always does
@@ -307,7 +320,7 @@ export function buildPptx(model, opts = {}) {
   const hasNotes = model.slides.some((s) => s.notes);
 
   model.slides.forEach((s, i) => {
-    const w = new SlideWriter(pkg, i + 1, k);
+    const w = new SlideWriter(pkg, i + 1, k, opts);
     const xml = w.xml(s);
     if (s.notes) w.rels.push({ id: `rId${w.rels.length + 1}`, type: 'notesSlide', target: `../notesSlides/notesSlide${i + 1}.xml` });
     pkg.add(`ppt/slides/slide${i + 1}.xml`, xml);

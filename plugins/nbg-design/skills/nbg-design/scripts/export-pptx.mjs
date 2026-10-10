@@ -103,6 +103,7 @@ export async function measureDeck(deck, args) {
     const meta = await evaluate(cdp, sessionId, '({ theme: (window.nbgDeckMenuConfig && window.nbgDeckMenuConfig.theme) || null, title: document.title || "" })');
     const model = await evaluate(cdp, sessionId, `(async () => { ${EXTRACT_SRC}\n return nbgExtractPptx(${JSON.stringify({ selector: args.selector, wrapSlack: args.wrapSlack, keepLineBreaks: !!args.keepLineBreaks })}); })()`);
     await resolveRenderedFaces(cdp, sessionId, model);
+    if (args.afterExtract) await args.afterExtract(cdp, sessionId, model);
     try { await cdp.send('Browser.close'); } catch { /* already gone */ }
     return { model, diag, theme: meta.theme, title: meta.title };
   })();
@@ -147,7 +148,23 @@ async function resolveRenderedFaces(cdp, sessionId, model) {
       // an element's report also counts the glyphs of its children (a <b> inside a <p>): among the faces
       // of the run's own family, the one nearest the requested weight and style is the run's
       const own = list.map(styleOf).filter((f) => f.psFamily && squash(f.psFamily).startsWith(squash(r.font).slice(0, Math.max(4, squash(f.psFamily).length))));
-      if (!own.length) return;
+      if (!own.length) {
+        // the run's family is not on this host (an Office face kept for PowerPoint): record the face Chrome
+        // drew instead, for targets that cannot name the authored face — the family carrying most glyphs, and
+        // of its faces the one nearest the run's own weight (the report counts the children's glyphs too, so
+        // the most-used face may be a <b> child's)
+        const byFam = new Map();
+        list.forEach((f) => { if (f.familyName) byFam.set(f.familyName, (byFam.get(f.familyName) || 0) + (f.glyphCount || 0)); });
+        const fam = [...byFam.entries()].sort((a, b) => b[1] - a[1])[0];
+        if (!fam) return;
+        const faces = list.filter((f) => f.familyName === fam[0]).map(styleOf)
+          .sort((a, b) => (Math.abs(a.weight - r.weight) + (a.italic !== r.italic) * 1000) - (Math.abs(b.weight - r.weight) + (b.italic !== r.italic) * 1000));
+        // a variable face (the macOS system font) reports one "Regular" face for every weight: then the CSS
+        // weight is the one drawn
+        const variable = faces.length === 1 && faces[0].weight === 400 && r.weight !== 400;
+        r.rendered = { family: fam[0], weight: variable ? r.weight : faces[0].weight, italic: faces[0].italic };
+        return;
+      }
       own.sort((a, b) => (Math.abs(a.weight - r.weight) + (a.italic !== r.italic) * 1000) - (Math.abs(b.weight - r.weight) + (b.italic !== r.italic) * 1000));
       r.weight = own[0].weight;
       r.italic = own[0].italic || r.italic;

@@ -257,15 +257,18 @@ writes the Office Open XML package (zip written in the file, no dependency).
 ## 4d. Check the PowerPoint file — `compare-pptx.mjs`
 
 ```
-node "<skill-root>/scripts/compare-pptx.mjs" my-deck.html my-deck.pptx [-o <dir>] [--slides 1,4,9]
-                                             [--renderer powerpoint|libreoffice] [--fonts <dir>] [--soffice <path>]
-                                             [--keep] [--browser <path>] [--timeout <ms>]
+node "<skill-root>/scripts/compare-pptx.mjs" my-deck.html <my-deck.pptx | Google Slides URL or id> [-o <dir>] [--slides 1,4,9]
+                                             [--renderer powerpoint|libreoffice|google] [--fonts <dir>] [--soffice <path>]
+                                             [--gws <path>] [--keep] [--browser <path>] [--timeout <ms>]
 ```
 
 - Captures each slide of the deck in Chrome (print layout, 1920 × 1080), renders the `.pptx` to PDF with
   **Microsoft PowerPoint** (macOS, AppleScript; the default where it is installed — the files pass through a
-  temporary folder in PowerPoint's sandbox container) or **LibreOffice** (`--renderer libreoffice`), and
-  rasterises the pages with poppler's `pdftoppm` at the artboard size.
+  temporary folder in PowerPoint's sandbox container), **LibreOffice** (`--renderer libreoffice`) or **Google
+  Slides** (`--renderer google`: the `.pptx` is uploaded to Drive as a temporary Google Slides presentation,
+  exported as PDF and deleted), and rasterises the pages with poppler's `pdftoppm` at the artboard size. Given a
+  Google Slides URL or presentation id instead of a `.pptx`, it exports that presentation as it is (the check of
+  `export-gslides.mjs`, §4e).
 - Writes `<deck-name>-pptx-check/slide-NN.png` — deck | PowerPoint | difference (red) — and `report.json`;
   prints per slide the *solid difference* (pixels with |Δ| > 48 on a channel that survive a 3 × 3 erosion, so
   anti-aliasing seams do not count) and flags slides above 1.5 % with `<-- READ`. `--keep` also keeps the raw
@@ -273,7 +276,54 @@ node "<skill-root>/scripts/compare-pptx.mjs" my-deck.html my-deck.pptx [-o <dir>
 - Both renderers draw with the fonts installed on the host: a missing face is substituted and shows up as a
   text difference that is not a conversion defect. `--fonts <dir>` hands `.ttf/.otf` files to LibreOffice's
   throw-away profile (honoured by Linux/Windows builds; LibreOffice for macOS reads only installed fonts).
-- Exit: 0 = compared, 1 = error, 2 = usage, 3 = browser / renderer / `pdftoppm` missing.
+- Exit: 0 = compared, 1 = error, 2 = usage, 3 = browser / renderer / `pdftoppm` / `gws` missing.
+
+## 4e. Export to Google Slides — `export-gslides.mjs` (needs a browser and the gws CLI)
+
+```
+node "<skill-root>/scripts/export-gslides.mjs" my-deck.html [--name "<title>"] [--folder <Drive folder id>] [--pptx <path>]
+                                               [--theme nbg|biks2013|aihub|instrument] [--reflow] [--selector <css>]
+                                               [--check <dir>] [--gws <path>] [--browser <path>] [--timeout <ms>]
+```
+
+- Measures the deck as `export-pptx.mjs` does, writes a Slides-tuned `.pptx` (kept with `--pptx`), uploads it to
+  Google Drive with conversion to Google Slides (in `--folder`, else My Drive), corrects the result through the
+  Slides API and prints the presentation URL. `--check <dir>` then runs `compare-pptx.mjs` on the presentation.
+- **Google access**: through the Google Workspace CLI `gws` (https://github.com/googleworkspace/cli), signed in
+  once with `gws auth login` (Drive and Slides scopes). The script checks the sign-in before anything else;
+  it never reads or stores credentials.
+- **Typefaces** (`lib/gslides-fonts.mjs`): Slides draws only Google Fonts and a list of licensed faces. Each run
+  gets the face Chrome drew, kept when Slides has it (Google Fonts are recognised on fonts.googleapis.com), else
+  its substitute — chosen by measurement with the workspace's `test_scripts/gslides-font-match.mjs` (advance
+  width, x-height, glyph shape, stroke weight, Greek):
+
+  | Face | In Google Slides | Why |
+  |---|---|---|
+  | Aptos | Source Sans 3 (same weight) | width 0.98, x-height 1.02, glyph IoU 0.73; has Greek |
+  | Segoe UI | Open Sans | same designer and proportions |
+  | Avenir Next 100–300 | Outfit 100 | Nunito Sans's lightest weight is 24 % heavier than Ultra Light |
+  | Avenir Next 400 / 500 / 600+ | Nunito Sans 400 / 600 / 700 | width 0.99–1.00, stroke weight matched (700 is the heaviest weight Slides spaces correctly) |
+  | Menlo, Monaco, SF Mono | JetBrains Mono | width 1.00, glyph IoU 0.76, Greek |
+  | Helvetica 100–300 / 500–600 | Helvetica Neue Light / Regular | Slides has Helvetica in regular and bold only, Helvetica Neue also in Light |
+  | macOS system face (`.SF NS`, SF Pro) | Roboto | closest glyph shapes, Greek (Inter fits SF's width at text sizes but scored worse on five decks) |
+
+  The import keeps only regular / bold; every run's family, weight and colour is then set with `updateTextStyle`
+  (the imported shapes are named `p<slide>_i<shape id>`, so each run is found exactly). Measured API behaviour:
+  `bold: false` draws the regular face whatever the weight, and `bold: true` with a weight above 700 draws the
+  heavier face but spaces it as 700 — so weights up to 600 go without bold, 700 and above as 700 with bold.
+  A bullet takes the text colour on import; only a style update over the whole text reaches the bullet, so
+  bulleted boxes get one with the bullet colour before the runs are set.
+- **Chip padding** (code / key chips) is written as no-break spaces of the run's font (Slides drops the
+  letter-spacing of the zero-width space PowerPoint gets).
+- **Translucent text** is blended with the dominant colour under its box (captured with the glyphs hidden):
+  Slides has no text transparency.
+- **Layout**: Chrome's line breaks are kept (`--reflow` to let Slides wrap), including breaks after a hyphen;
+  text boxes get room on their free side (Slides wraps every box); a raised run ending a paragraph becomes its
+  own box (Slides has only a fixed superscript); the first baseline follows Slides' rule — 0.75 × the line
+  pitch, capped at a pitch of 100 % (1.2 × size), + 0.055 em, calibrated on 10 faces with
+  `test_scripts/pptx-baseline-calibration.mjs --renderer google`; dashed lines use the preset dash.
+- Each run creates a new presentation; nothing is shared. Exit: 0 = created, 1 = error, 2 = usage,
+  3 = no browser / no `gws`.
 
 ## 5. In-deck right-click menu — `add-deck-menu.mjs`
 

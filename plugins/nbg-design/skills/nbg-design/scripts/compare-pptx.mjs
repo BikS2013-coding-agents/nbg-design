@@ -5,8 +5,10 @@
 //      print-layout shim export-pdf.mjs and export-pptx.mjs use);
 //   2. the .pptx is rendered to PDF — by Microsoft PowerPoint itself on macOS (--renderer powerpoint,
 //      AppleScript "save as PDF"; the default when PowerPoint is installed) or by LibreOffice
-//      (--renderer libreoffice: soffice --headless --convert-to pdf) — and the pages rasterised by
-//      poppler (pdftoppm) at the artboard's pixel size;
+//      (--renderer libreoffice: soffice --headless --convert-to pdf) or by Google Slides (--renderer google:
+//      uploaded and converted by Drive, exported as PDF, the temporary copy deleted; or pass a Google
+//      Slides presentation URL / id instead of the .pptx to check that presentation as it is) — and the
+//      pages rasterised by poppler (pdftoppm) at the artboard's pixel size;
 //   3. inside the browser (canvas, no image library) each pair is compared and drawn as one PNG
 //      per slide: HTML | PowerPoint | difference map (red = differs), with a score per slide —
 //      the share of pixels that differ clearly (|Δ| > 48 on any channel), after a 3x3 erosion so
@@ -27,18 +29,23 @@ import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { findBrowser, NO_BROWSER_EXIT_CODE } from './lib/find-browser.mjs';
 import { launchBrowser, openPage, navigate, evaluate } from './lib/cdp.mjs';
+import { findGws, checkAuth, uploadPptxAsSlides, exportFile, deleteFile, presentationId } from './lib/gslides.mjs';
 
 const PRINT_LAYOUT_SRC = readFileSync(new URL('./lib/print-layout.js', import.meta.url), 'utf8');
 
 const USAGE = `NBG deck ⇄ PowerPoint comparison (needs a browser, LibreOffice and poppler)
-Usage: node compare-pptx.mjs <deck.html> <deck.pptx> [-o <dir>] [--slides 1,2,5]
-                             [--renderer powerpoint|libreoffice] [--fonts <dir>] [--soffice <path>]
-                             [--browser <path>] [--timeout <ms>]
+Usage: node compare-pptx.mjs <deck.html> <deck.pptx | Google Slides URL or id> [-o <dir>] [--slides 1,2,5]
+                             [--renderer powerpoint|libreoffice|google] [--fonts <dir>] [--soffice <path>]
+                             [--gws <path>] [--browser <path>] [--timeout <ms>]
 
   -o, --out          Output directory (default: <deck-name>-pptx-check/ next to the deck).
   --slides           Comma list of 1-based slide numbers (default: all).
-  --renderer <name>  powerpoint (macOS, Microsoft PowerPoint through AppleScript) or libreoffice.
+  --renderer <name>  powerpoint (macOS, Microsoft PowerPoint through AppleScript), libreoffice, or
+                     google (the .pptx uploaded to Google Drive as Google Slides, exported as PDF, the
+                     temporary presentation deleted; needs the gws CLI signed in). A Google Slides
+                     URL / id as second argument always renders with google.
                      Default: powerpoint when it is installed on this Mac, else libreoffice.
+  --gws <path>       Google Workspace CLI binary (else gws on PATH).
   --fonts <dir>      LibreOffice only: folder of .ttf/.otf files for its throw-away profile (honoured
                      on Linux/Windows builds; LibreOffice on macOS reads only installed fonts).
   --soffice <path>   LibreOffice binary (else soffice / libreoffice on PATH, or the macOS app).
@@ -59,6 +66,7 @@ function parseArgs(argv) {
     else if (x === '--renderer') a.renderer = argv[++i];
     else if (x === '--keep') a.keep = true;
     else if (x === '--soffice') a.soffice = argv[++i];
+    else if (x === '--gws') a.gws = argv[++i];
     else if (x === '--browser') a.browser = argv[++i];
     else if (x === '--timeout') a.timeout = parseInt(argv[++i], 10);
     else if (x === '-h' || x === '--help') a.help = true;
@@ -132,25 +140,40 @@ end timeout`;
   } finally { rmSync(box, { recursive: true, force: true }); }
 }
 
+// Google Slides: a presentation is exported as PDF by Drive. A .pptx is first uploaded and converted
+// (Drive's PowerPoint import, the same one "File → Open" uses), and that temporary copy deleted afterwards.
+function renderWithGoogleSlides(gws, id, pptx, work, timeout) {
+  checkAuth(gws);
+  let temp = null;
+  try {
+    if (!id) { temp = uploadPptxAsSlides(gws, pptx, { name: `nbg-pptx-check ${basename(pptx)} ${Date.now()}`, timeout }).id; }
+    return exportFile(gws, id || temp, 'application/pdf', join(work, 'deck.pdf'), timeout);
+  } finally { if (temp) { try { deleteFile(gws, temp); } catch (e) { console.log(`  ! could not delete the temporary presentation ${temp}: ${e.message}`); } } }
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help || args._.length !== 2) { console.log(USAGE); process.exit(args.help ? 0 : 2); }
   const deck = resolve(process.cwd(), args._[0]);
-  const pptx = resolve(process.cwd(), args._[1]);
-  for (const f of [deck, pptx]) if (!existsSync(f)) { console.error('compare-pptx ERROR: not found: ' + f); process.exit(1); }
+  const remoteId = presentationId(args._[1]);
+  const pptx = remoteId ? null : resolve(process.cwd(), args._[1]);
+  for (const f of [deck, pptx].filter(Boolean)) if (!existsSync(f)) { console.error('compare-pptx ERROR: not found: ' + f); process.exit(1); }
   const outDir = args.out ? resolve(process.cwd(), args.out) : join(dirname(deck), basename(deck).replace(/\.html?$/i, '') + '-pptx-check');
   mkdirSync(outDir, { recursive: true });
 
   const browser = findBrowser(args.browser);
   if (browser && browser.error) { console.error('compare-pptx ERROR: ' + browser.error); process.exit(1); }
   const powerpoint = process.platform === 'darwin' && existsSync(POWERPOINT_APP);
-  if (args.renderer && !['powerpoint', 'libreoffice'].includes(args.renderer)) { console.error(`compare-pptx ERROR: unknown --renderer "${args.renderer}"`); process.exit(2); }
-  const renderer = args.renderer || (powerpoint ? 'powerpoint' : 'libreoffice');
+  if (args.renderer && !['powerpoint', 'libreoffice', 'google'].includes(args.renderer)) { console.error(`compare-pptx ERROR: unknown --renderer "${args.renderer}"`); process.exit(2); }
+  if (remoteId && args.renderer && args.renderer !== 'google') { console.error('compare-pptx ERROR: a Google Slides presentation renders only with --renderer google'); process.exit(2); }
+  const renderer = remoteId ? 'google' : args.renderer || (powerpoint ? 'powerpoint' : 'libreoffice');
+  const gws = renderer === 'google' ? findGws(args.gws) : null;
   const soffice = renderer === 'libreoffice' ? findSoffice(args.soffice) : null;
   const pdftoppm = which(['pdftoppm']);
   const missing = [!browser && 'a Chrome/Chromium/Edge browser',
     renderer === 'libreoffice' && !soffice && 'LibreOffice (soffice)',
     renderer === 'powerpoint' && !powerpoint && 'Microsoft PowerPoint (macOS)',
+    renderer === 'google' && !gws && 'the Google Workspace CLI (gws)',
     !pdftoppm && 'poppler (pdftoppm)'].filter(Boolean);
   if (missing.length) {
     console.error(`compare-pptx: missing ${missing.join(', ')} — the comparison cannot run on this host.`);
@@ -161,8 +184,10 @@ async function main() {
   const work = mkdtempSync(join(tmpdir(), 'nbg-pptx-check-'));
   try {
     // ── 1. PowerPoint side: .pptx → PDF ──
-    const pdf = renderer === 'powerpoint' ? renderWithPowerPoint(pptx, work, args.timeout) : renderWithLibreOffice(pptx, work, soffice, args);
-    const rendererName = renderer === 'powerpoint' ? 'Microsoft PowerPoint' : 'LibreOffice';
+    const pdf = renderer === 'powerpoint' ? renderWithPowerPoint(pptx, work, args.timeout)
+      : renderer === 'google' ? renderWithGoogleSlides(gws, remoteId, pptx, work, args.timeout)
+      : renderWithLibreOffice(pptx, work, soffice, args);
+    const rendererName = { powerpoint: 'Microsoft PowerPoint', google: 'Google Slides', libreoffice: 'LibreOffice' }[renderer];
 
     // ── 2. HTML side: capture each slide ──
     const { cdp, close } = launchBrowser(browser);
@@ -226,7 +251,7 @@ async function main() {
             const cd = new OffscreenCanvas(W, H); cd.getContext('2d').putImageData(dm, 0, 0);
             g.drawImage(cd, gap * 3 + w * 2, top, w, h);
             g.fillStyle = '#0E1726'; g.font = '600 18px Helvetica, Arial, sans-serif';
-            g.fillText('Slide ${s.n} — HTML deck', gap, 28); g.fillText(${JSON.stringify('.pptx rendered by ' + rendererName)}, gap * 2 + w, 28);
+            g.fillText('Slide ${s.n} — HTML deck', gap, 28); g.fillText(${JSON.stringify(remoteId ? 'Google Slides presentation' : '.pptx rendered by ' + rendererName)}, gap * 2 + w, 28);
             const pct = (solid / (W * H) * 100);
             g.fillText('Difference — ' + pct.toFixed(2) + ' % solid', gap * 3 + w * 2, 28);
             return { mean: sum / (W * H), differing: any / (W * H) * 100, solid: pct, width: cv.width, height: cv.height };
@@ -242,7 +267,7 @@ async function main() {
         results.push({ slide: s.n, solidDiffPct: +res.solid.toFixed(3), differingPct: +res.differing.toFixed(3), meanDelta: +res.mean.toFixed(2), image: outPng });
       }
       try { await cdp.send('Browser.close'); } catch { /* gone */ }
-      writeFileSync(join(outDir, 'report.json'), JSON.stringify({ deck, pptx, renderer: rendererName, slides: results }, null, 1));
+      writeFileSync(join(outDir, 'report.json'), JSON.stringify({ deck, pptx: pptx || undefined, presentation: remoteId || undefined, renderer: rendererName, slides: results }, null, 1));
       console.log(`\nNBG deck ⇄ PowerPoint comparison — ${outDir}`);
       for (const r of results) {
         if (r.error) { console.log(`  slide ${String(r.slide).padStart(2)}: ${r.error}`); continue; }

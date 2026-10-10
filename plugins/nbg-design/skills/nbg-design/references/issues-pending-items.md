@@ -2,6 +2,18 @@
 
 ## Pending Items
 
+### Low — Google Slides export: faces Slides lacks are substituted
+- Detected: 2026-10-11 (v1.26.0)
+- Context: Google Slides draws only Google Fonts and a few licensed faces. Aptos, Segoe UI, Avenir Next, Menlo and the macOS system face are replaced by measured Google Fonts substitutes (`lib/gslides-fonts.mjs`); the comparison then shows a face difference (biks2013 decks ~0.5 % mean). A face with no known substitute is drawn in Arial and reported.
+- Current handling: the exporter lists every substitution; SKILL.md tells the agent to report them.
+- Resolution condition: none needed unless exact typography in Slides is required — then the deck itself would have to use Google Fonts faces.
+
+### Low — Google Slides export: weights above 700
+- Detected: 2026-10-11 (v1.26.0)
+- Context: through the Slides API, a weight above 700 with bold is drawn heavier but laid out as 700 (a gap after the run), and bold=false ignores the weight. Heavy runs (800 / 900) are therefore written as 700.
+- Resolution condition: Google fixes the layout of weights above 700.
+
+
 ### Low — PowerPoint export: fonts are referenced, not embedded
 - Detected: 2026-10-10 (v1.25.0)
 - Context: `export-pptx.mjs` names faces; it does not embed them. IBM Plex (Instrument) and Oswald (AIHub) must be installed where the `.pptx` is opened, or PowerPoint substitutes. The decks carry them as WOFF2 subsets, which PowerPoint cannot embed (it needs TrueType/OpenType it may obfuscate as `.fntdata`).

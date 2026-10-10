@@ -44,7 +44,7 @@ This YAML file is a Pi `@file` context bundle. It is not Pi native settings, and
 | Target audience | Yes per deck | Provide in the Pi prompt or answer when asked. | None |
 | Slide count or depth | Yes per deck | Provide in the Pi prompt or answer when asked. | None |
 | Preferred language | Optional | Provide in the Pi prompt (`en`, `gr`, or `bi`). | `en` |
-| Output format / delivery target | Optional | Provide in the Pi prompt: `html`, `pdf` (exported from the HTML deck by `scripts/export-pdf.mjs`), `pptx` (converted from the HTML deck by `scripts/export-pptx.mjs`, an editable PowerPoint). | `html` |
+| Output format / delivery target | Optional | Provide in the Pi prompt: `html`, `pdf` (exported from the HTML deck by `scripts/export-pdf.mjs`), `pptx` (converted from the HTML deck by `scripts/export-pptx.mjs`, an editable PowerPoint), `gslides` (an editable Google Slides presentation created in the user's Drive by `scripts/export-gslides.mjs`). | `html` |
 | Browser executable path | Required only for automated screenshot capture and PDF export | `scripts/screenshot-deck.mjs` and `scripts/export-pdf.mjs` auto-detect Chrome/Chromium/Edge at the usual macOS/Linux locations and on `PATH`; override with `--browser <path>` or the `NBG_BROWSER` / `CHROME_BIN` environment variables. No committed fallback path. | None (auto-detect) |
 | `NBG_DESIGN_SCRIPTS` (skill scripts directory) | Only when a delivered deck's `<deck>.rebuild.mjs` runs where the skill is neither an installed plugin (found through the plugin registry) nor at the directory recorded in it | Set it (or pass `--scripts <dir>`) to the installed skill's `scripts/` directory — the one holding `add-deck-menu.mjs`, `verify-deck.mjs`, `export-pdf.mjs`. A directory without them is an error. | The plugin registry's current install, then the directory recorded when the script was last written |
 
@@ -156,3 +156,15 @@ Historical reference artifacts under `docs/reference/`, `docs/research/`, and pl
 - Confirm whether documentation/checklist validation is sufficient or whether an executable script should be added under `test_scripts/`.
 - Confirm whether `config/pi-agent-nbg-design.yaml` is only used through Pi CLI `@file` or also parsed by a custom Pi extension/workflow.
 - Confirm whether screenshot automation should remain a manually adjusted command or use a future explicit local configuration mechanism.
+
+## Google access for the Google Slides export (v1.26.0)
+
+| Setting | Required | How to provide | Default |
+|---|---|---|---|
+| Google sign-in (Drive + Slides scopes) | For `gslides` only | Install the Google Workspace CLI (`gws`, https://github.com/googleworkspace/cli) and run `gws auth login` once; gws stores the OAuth token (encrypted, in the OS keyring) and refreshes it. The skill never reads or stores credentials. | none — `export-gslides.mjs` stops with exit 1 and the sign-in command when the scopes are missing |
+| `--gws <path>` | Optional | Path to the gws binary when it is not on PATH | `gws` on PATH; exit 3 when absent |
+| `--folder <id>` | Optional | Drive folder id (the part after `/folders/` in its URL) to create the presentation in | My Drive root |
+| `--name <title>` | Optional | Presentation name | the deck's `<title>`, else its file name |
+
+The OAuth refresh token is managed by gws; when Google revokes or expires it (e.g. an OAuth app in testing mode
+expires refresh tokens after 7 days), `gws auth status` shows it and `gws auth login` renews it.

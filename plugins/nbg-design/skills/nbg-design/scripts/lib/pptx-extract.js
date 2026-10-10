@@ -714,7 +714,12 @@ async function nbgExtractPptx(opts) {
     lines.forEach(function (L) {
       var ref = L.frags.reduce(function (m, f) { return f.w > m.w ? f : m; }, L.frags[0]);
       L.base = ref.base;
-      L.frags.forEach(function (f) { if (runs[f.run].shift == null) runs[f.run].shift = L.base - f.base; });
+      L.frags.forEach(function (f) {
+        if (runs[f.run].shift == null) runs[f.run].shift = L.base - f.base;
+        // where a raised / lowered run was drawn (slide coordinates): a target without free baseline offsets
+        // (Google Slides) sets it as a box of its own
+        if (!runs[f.run].rect && Math.abs(L.base - f.base) > 1) runs[f.run].rect = { x: f.l - ctx.ox, y: f.t - ctx.oy, w: f.w, h: f.b - f.t, base: f.base - ctx.oy };
+      });
     });
     var lineH = lh || (lines.length > 1 ? (lines[lines.length - 1].c - lines[0].c) / (lines.length - 1) : normalLineHeight(cs, tf));
     var baseline = lines[0].base;
@@ -784,6 +789,9 @@ async function nbgExtractPptx(opts) {
       if (r.spacer) {
         var sst = styleOf(r.el, alpha, tf);
         sst.spacing = r.spacer * tf.sx; sst.link = r.link || null; sst.baseline = 0;
+        // the advance of a no-break space in that font (a target that drops the spacing writes spaces instead)
+        var ccs = getComputedStyle(r.el); probe.font = ccs.fontStyle + ' ' + ccs.fontWeight + ' ' + ccs.fontSize + ' ' + ccs.fontFamily;
+        sst.spaceW = probe.measureText('\u00A0').width * tf.sx;
         outRuns.push({ text: '\u200B', style: sst, spacer: true });
         return;
       }
@@ -796,7 +804,7 @@ async function nbgExtractPptx(opts) {
       } else t = t.replace(/\r\n?/g, '\n');
       var st = styleOf(r.el, alpha, tf);
       if (st.hidden) return;
-      if (r.shift != null && Math.abs(r.shift) > Math.max(1, st.size * 0.04)) st.baseline = Math.round(r.shift / st.size * 100);
+      if (r.shift != null && Math.abs(r.shift) > Math.max(1, st.size * 0.04)) { st.baseline = Math.round(r.shift / st.size * 100); st.rect = r.rect || null; }
       else if (r.shift != null) st.baseline = 0;
       st.link = r.link || null;
       if (st.transform === 'capitalize') t = t.replace(/(^|\s)(\S)/g, function (m, a, b) { return a + b.toUpperCase(); });
@@ -825,7 +833,7 @@ async function nbgExtractPptx(opts) {
       var s = r.style;
       out.fonts[s.font] = (out.fonts[s.font] || 0) + (r.text ? r.text.length : 0);
       return { br: !!r.br, text: r.text || '', font: s.font, size: s.size, weight: s.weight, italic: s.italic, color: s.color, spacing: s.spacing,
-        underline: s.underline, strike: s.strike, caps: s.caps, baseline: s.baseline, link: s.link, fid: s.fid };
+        underline: s.underline, strike: s.strike, caps: s.caps, baseline: s.baseline, link: s.link, fid: s.fid, rect: s.baseline && s.rect ? s.rect : undefined, spaceW: r.spacer ? s.spaceW : undefined };
     });
     var breaks = flat.filter(function (r) { return r.br; }).length;
     return { runs: flat, allBreaks: function (nLines) { return breaks >= nLines - 1; } };
@@ -862,14 +870,15 @@ async function nbgExtractPptx(opts) {
     };
   }
 
-  // insert U+2028 into run texts where Chrome started a new line (at word starts)
+  // insert U+2028 into run texts where Chrome started a new line (at word starts and after hyphens)
   function markLineBreaks(runs, lineH) {
     var lastTop = null;
     runs.forEach(function (r) {
       if (!r.node) { if (r.br) lastTop = null; return; }
       var d = r.node.data, cuts = [];
       for (var i = 0; i < d.length; i++) {
-        if (/\s/.test(d[i]) || (i > 0 && !/\s/.test(d[i - 1]))) continue;
+        // a line starts at a word start, or right after a hyphen / dash / slash Chrome broke at ("non-|physical")
+        if (/\s/.test(d[i]) || (i > 0 && !/[\s\-\u2010\u2013\u2014\/\u00AD]/.test(d[i - 1]))) continue;
         var rg = document.createRange(); rg.setStart(r.node, i); rg.setEnd(r.node, i + 1);
         var q = rg.getClientRects()[0];
         if (!q) continue;

@@ -2,6 +2,7 @@
 
 > Note (2026-09-03, skill v1.11.0): PowerPoint / PPTX was taken out of scope; the PowerPoint wording below is historical intake context.
 > Note (2026-10-10, skill v1.25.0): PowerPoint is back as an **export** of the finished HTML deck (`scripts/export-pptx.mjs`, editable text boxes / shapes / pictures, checked with `scripts/compare-pptx.mjs`) — see SKILL.md "PowerPoint output". The intake wording below about authoring PowerPoint directly still does not apply.
+> Note (2026-10-11, skill v1.26.0): Google Slides is an export too (`scripts/export-gslides.mjs`: an editable presentation created in the user's Google Drive, checked with `scripts/compare-pptx.mjs`) — see SKILL.md "Google Slides output".
 
 ## Category
 Pi Agent skill packaging, configuration portability, and reusable presentation design-system enablement.

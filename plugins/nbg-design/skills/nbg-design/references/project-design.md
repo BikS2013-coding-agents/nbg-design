@@ -394,6 +394,50 @@ This project contains the assets of a presentation design system inspired by the
   `test_scripts/pptx-export-roundtrip.mjs` (package validity, slide count, editable text, pictures, theme
   fonts/colours, LibreOffice render; `--powerpoint` adds the comparison) passes 47/47.
 
+### Google Slides export (skill v1.26.0, 2026-10-11)
+
+- **Request.** Generate a Google Slides presentation from the HTML deck, and examine and correct the outcome
+  through screenshots for the best fidelity.
+- **Approach.** Reuse the PowerPoint conversion and let Google Drive's own PowerPoint import build the Slides
+  presentation (`files.create` with the Slides MIME type), then correct through the Slides API only what the
+  import loses — rather than building every slide through the API (no image upload via public URLs, no
+  re-implementation of shapes, crops, gradients and notes). `export-gslides.mjs` = `measureDeck` (shared with
+  `export-pptx.mjs`) → Slides-specific model changes → `buildPptx` with Slides options → upload → `batchUpdate`.
+  All Google calls go through the Google Workspace CLI `gws` (`lib/gslides.mjs`), which owns OAuth; the skill
+  handles no credentials. The imported shapes are named `p<slide>_i<cNvPr id>`, so the writer records each text
+  item's shape id and the API pass finds every run exactly (run texts aligned against the Slides text,
+  ignoring paragraph / line-break characters).
+- **Typefaces** (`lib/gslides-fonts.mjs`). Slides draws only Google Fonts and a list of licensed faces (probed by
+  exporting a presentation of each face to PDF: Arial, Helvetica, Helvetica Neue — Light / Regular / Bold only —,
+  Calibri, Cambria, Consolas, Georgia, Verdana, Tahoma, Trebuchet MS, Times New Roman, Courier New, Gill Sans,
+  Palatino; Avenir in two weights; not Aptos, Segoe UI, Avenir Next, Menlo, Monaco, SF). The import silently
+  replaces the rest (Aptos → Arial, Segoe UI → Quattrocento Sans). Each run gets the face Chrome drew (an Office
+  face the browser lacks was drawn with the stack's next face — what the HTML showed), kept when Slides has it,
+  else a substitute chosen by `test_scripts/gslides-font-match.mjs` (Chrome; candidates from fonts.googleapis.com;
+  advance width, x-height, per-glyph ink IoU, stroke ink area, Greek coverage): Aptos → Source Sans 3; Segoe UI
+  → Open Sans; Avenir Next Ultra Light → Outfit 100 and Regular+ → Nunito Sans one step heavier; Menlo / Monaco /
+  SF Mono → JetBrains Mono; the macOS system face (`.SF NS`) → Roboto (Inter, closer in width at body size, scored worse on five decks); Helvetica's light weights → Helvetica Neue
+  Light.
+- **Slides API behaviour (measured).** `bold: false` renders the regular face whatever `weightedFontFamily.weight`
+  says; `bold: true` with a weight above 700 is drawn heavier but laid out as 700 (a visible gap after the run).
+  So weights ≤ 600 are set without bold and ≥ 700 as 700 with bold. A bullet takes the text colour on import and
+  only an `updateTextStyle` over the whole text (`ALL`) reaches it: bulleted boxes get one with the bullet colour
+  before the per-run updates (family, weight, italic, colour).
+- **Text placement** (`GSLIDES_BASELINE` in `lib/pptx-writer.mjs`, calibrated with
+  `pptx-baseline-calibration.mjs --renderer google`, 10 faces × 3 sizes × 4 line heights): first baseline =
+  0.75 × min(pitch, 1.2 × size) + 0.055 em, the same for every face (±1 px). Up to a pitch of 100 % Slides agrees
+  with PowerPoint; above it Slides puts the extra space below the line.
+- **What else the import loses, and the fix.** Text transparency (blended with the dominant colour under the
+  box, sampled from a capture with `-webkit-text-fill-color: transparent`); "do not wrap" (every box gets room on
+  its free side; Chrome's line breaks are kept by default, now including breaks after a hyphen); free baseline
+  offsets (a raised run ending a paragraph becomes its own box where Chrome drew it); the letter-spacing of the
+  zero-width chip spacer (no-break spaces of the run's font instead); custom dash patterns (preset dash).
+- **Checking.** `compare-pptx.mjs` takes a presentation URL / id (Drive exports it as PDF) or `--renderer google`
+  for a `.pptx` (temporary upload, deleted afterwards).
+- **Verification (2026-10-11).** See `docs/nbg-design-docs/gslides-export/README.md` in the workspace for the
+  per-deck table; the four theme test decks score 0.01–0.65 % mean, the tech-event deck 0.14 % (was 2.2 % worst
+  before the corrections), the untype deck 0.36 %.
+
 ## Configuration Policy
 - Secrets, API keys, tokens, and expiring credentials must not be stored in project YAML files.
 - Missing required presentation inputs must be surfaced to the user; they must not be replaced with undocumented fallback values.
