@@ -132,7 +132,7 @@ Export a finished, verified NBG HTML deck to a PDF that preserves its aesthetics
 - `scripts/lib/find-browser.mjs` (browser locator shared with `scripts/screenshot-deck.mjs`)
 
 ### Functional Requirements
-- Accept `pdf` as an output format next to `html` (default); PowerPoint is out of scope; a PDF is always produced from the HTML deck, never authored separately.
+- Accept `pdf` as an output format next to `html` (default); a PDF is always produced from the HTML deck, never authored separately. (`pptx` is the third format since v1.25.0 — see "PowerPoint export".)
 - Require the HTML gate first: `embed-assets.mjs`, `verify-deck.mjs --strict`, and the screenshot inspection; never export a deck that fails the gate.
 - Lift only the deck's host layer (navigation toggles `.active` / `.hidden` / inline `display` / `[hidden]`, viewport-fit wrappers, non-slide chrome); never change a slide's own CSS, size, fonts, colours, copy, logos or photography.
 - Jump CSS animations/transitions to their end state, force `print-color-adjust: exact`, and wait for fonts and images before printing.
@@ -345,4 +345,18 @@ Author with tokens, then `embed-assets.mjs <deck> --theme instrument`,
 `{{FONT_PLEX_SANS}}` and `{{FONT_PLEX_MONO_*}}`, place photography with `{{PHOTO_<SUBJECT>_<N>}}` through
 the `PicturePanel` treatment, and sign the deck with one identity's `{{NBG_LOGO_*}}` or `{{AIHUB_LOGO_*}}`
 lockups.
+
+## PowerPoint export (skill v1.25.0)
+
+### Scripts
+- `scripts/export-pptx.mjs` (zero-dependency Node ≥ 18; headless Chrome/Chromium/Edge over the DevTools pipe), `scripts/lib/pptx-extract.js` (browser-side measurement), `scripts/lib/pptx-writer.mjs` (Office Open XML + zip)
+- `scripts/compare-pptx.mjs` (deck ⇄ .pptx comparison: PowerPoint on macOS or LibreOffice, poppler, canvas diff)
+
+### Functional Requirements
+- Accept `pptx` as an output format; the `.pptx` is always converted from the finished, verified HTML deck, never authored separately and never made of screenshots.
+- Text becomes PowerPoint text boxes with real runs (typeface and the weight Chrome actually rendered, size, italic, colour, transparency, letter-spacing, underline/strike, all-caps, raised/lowered runs, links, line breaks, exact line spacing), positioned on Chrome's first baseline with PowerPoint's own placement rule; boxes become shapes (fills, gradients, outlines, per-corner radii, shadows, opacity); pictures keep their full source with a crop; inline SVG becomes an SVG picture with a PNG fallback; `::before`/`::after` are converted like elements; paint order follows CSS stacking.
+- The presentation theme carries the deck's main face and the deck theme's palette.
+- Speaker notes (`data-notes`, `aside.notes`, `template.notes`) become PowerPoint notes.
+- Report slides, item counts, the typefaces the presenting machine needs and any element left out (`<video>`, `<iframe>`, conic gradients).
+- The comparison renders the `.pptx` (PowerPoint by default on macOS, `--renderer libreoffice` elsewhere), rasterises both sides at the artboard size and writes deck | PowerPoint | difference images with a per-slide score; it exits 3 when a required program is missing.
 

@@ -1,6 +1,6 @@
 ---
 name: nbg-design
-description: Use when creating presentations in a design system inspired by the brand image of the National Bank of Greece (NBG), HTML slides (with a built-in right-click menu for in-place text editing with a formatting toolbar, shape resize/move, editing of the parts of inline SVGs, an AI assistant panel, "Export to PDF" and "Save edited copy", plus a per-deck rebuild script that re-embeds newer versions of those editing tools), updating an existing deck to the skill's current editing tools, slide specifications, PDF exports of HTML decks (one page per slide, aesthetics preserved) — all on the bundled NBG-inspired presentation design system, templates, logos, photography, screenshots, and guardrails. Also ships the BikS2013 personal theme (ink and copper on warm paper, the BikS2013 wheel lockups) for presentations given in a personal capacity, selected per deck with the same templates, scripts and guardrails, the AIHub theme (navy, lagoon and sun yellow after the NBG developer portal, Oswald titles embedded, the NBG AI Hub lockups) for NBG AI Hub and developer-facing material, and the Instrument theme (a dark, chart-led register in IBM Plex with Greek) for talks carried by data.
+description: Use when creating presentations in a design system inspired by the brand image of the National Bank of Greece (NBG), HTML slides (with a built-in right-click menu for in-place text editing with a formatting toolbar, shape resize/move, editing of the parts of inline SVGs, an AI assistant panel, "Export to PDF" and "Save edited copy", plus a per-deck rebuild script that re-embeds newer versions of those editing tools), updating an existing deck to the skill's current editing tools, slide specifications, PDF exports of HTML decks (one page per slide, aesthetics preserved), editable PowerPoint (.pptx) exports of HTML decks (native text boxes, shapes and pictures, checked against the deck slide by slide) — all on the bundled NBG-inspired presentation design system, templates, logos, photography, screenshots, and guardrails. Also ships the BikS2013 personal theme (ink and copper on warm paper, the BikS2013 wheel lockups) for presentations given in a personal capacity, selected per deck with the same templates, scripts and guardrails, the AIHub theme (navy, lagoon and sun yellow after the NBG developer portal, Oswald titles embedded, the NBG AI Hub lockups) for NBG AI Hub and developer-facing material, and the Instrument theme (a dark, chart-led register in IBM Plex with Greek) for talks carried by data.
 ---
 
 # NBG Design
@@ -36,7 +36,7 @@ Approved defaults:
 - The NBG logo is shown (`show_logo: true`) unless the user asks to hide it.
 - The theme is `nbg` unless the user asks for a personal / BikS2013 presentation, or says the deck is not for the bank — then `biks2013` — or unless the deck is for the NBG AI Hub / a developer audience — then `aihub` — or unless the user asks for the Instrument theme, or for a dark, chart-led, data-driven talk — then `instrument` (see "Themes"). When it is unclear which theme a deck belongs to, ask.
 
-Supported output formats: `html` (default) and `pdf` (always exported from the finished HTML deck — see "PDF output"). **PowerPoint (.pptx) is out of scope**: this skill produces HTML presentations and their PDF export only. If PowerPoint is requested, say so plainly and deliver the HTML deck (and its PDF) instead — never improvise a conversion. A request for "a PDF", "PDF version", "print version", or "send as PDF" selects `pdf`.
+Supported output formats: `html` (default), `pdf` and `pptx` — both always exported from the finished HTML deck (see "PDF output" and "PowerPoint output"). A request for "a PDF", "PDF version", "print version", or "send as PDF" selects `pdf`; a request for "PowerPoint", "a .pptx", "slides I can edit in PowerPoint" or "convert the deck to PowerPoint" selects `pptx`. The PowerPoint file is an **editable** conversion — real text boxes, shapes and pictures — never slide screenshots; it is produced only by `scripts/export-pptx.mjs`, never improvised.
 
 Do not create any other fallback configuration values unless the user explicitly approves the exception.
 
@@ -474,6 +474,34 @@ Viewers of the HTML deck get the same export without any tooling: the in-deck me
 
 `<skill-root>` is the directory containing this `SKILL.md`. See `scripts/README.md` for the flags.
 
+## PowerPoint output (export from the HTML deck)
+
+A `.pptx` deliverable is **always converted from the finished, verified HTML deck** by `scripts/export-pptx.mjs` — never authored separately, never assembled from screenshots. It is an editable presentation: every text block is a PowerPoint text box with real runs, every box / card / rule / pill a shape, every photograph or logo a picture, so the recipient can change wording, move things and restyle them in PowerPoint.
+
+### Workflow
+
+1. Build and verify the HTML deck exactly as for HTML output (`embed-assets.mjs` → `verify-deck.mjs --strict` → screenshots read). The PowerPoint file inherits every defect of the HTML.
+2. Export:
+   `node "<skill-root>/scripts/export-pptx.mjs" <deck>.html [-o <deck>.pptx]`
+   The script opens the deck in headless Chrome/Chromium/Edge with the same print-layout shim the PDF exporter uses (every slide at its native 1920×1080 box, navigation chrome hidden, animations at their end state), measures every element where the browser laid it out, and writes:
+   - **text** → text boxes with the deck's typeface, size, weight (the face Chrome actually drew — e.g. `Aptos Light`, `IBM Plex Mono Medium`, `Avenir Next Ultra Light`), italic, colour and transparency, letter-spacing, underline / strike, all-caps (`text-transform: uppercase` stays editable lower-case text shown in capitals), super/subscript and other raised runs, links, line breaks, exact line spacing; single-line text in an unwrapped box, multi-line text in a wrapping box as wide as the element's content box but no wider than the widest line + 2 % (`--wrap-slack`), so the breaks stay Chrome's; `text-wrap: balance / pretty` text and paragraphs with code / key chips keep Chrome's exact line breaks (`--keep-line-breaks` does it for all text); chip padding is kept in the text advance, so chip backgrounds stay under their text. Line pitch is written as a percentage (PowerPoint rounds exact spacing to whole points) and the first baseline is placed with PowerPoint's own rule (0.75 × line pitch + a per-face offset, calibrated against PowerPoint), so text lands within a pixel or two of the deck;
+   - **boxes** → shapes: solid and linear/radial gradient fills, uniform borders as outlines, one-sided borders as thin rules, dashed / dotted borders as dashed lines, rounded corners (per corner as well), the outer box-shadow (blur matched to PowerPoint's falloff, spread kept), opacity;
+   - **pictures** → `<img>` and CSS background images with their full source and a crop (`object-fit` / `object-position`, `background-size` / `-position`, overflow clipping, rounded clipping frames), so they stay re-croppable; a CSS filter (the Instrument photo grade) is baked into the pixels;
+   - **inline SVG** (charts, icons, diagrams) → SVG pictures with a PNG fallback (in PowerPoint, right-click → *Convert to Shape* turns one into native shapes); `<canvas>` → a picture;
+   - `::before` / `::after` content is converted like real elements; paint order follows CSS stacking;
+   - the presentation theme carries the deck theme's fonts (Aptos; Avenir Next; Oswald headings + Segoe UI body; IBM Plex Sans — or, for a deck with no recorded theme, the face carrying most of its text) and the deck theme's palette (`--theme`, default: the theme recorded in the deck's menu block), so new text and PowerPoint's colour picker match the deck.
+   The slide is PowerPoint's 16:9 (13.333 × 7.5 in; 1 px = 0.5 pt). Speaker notes in `data-notes`, `<aside class="notes">` or `<template class="notes">` become PowerPoint notes. `<video>` / `<iframe>` are reported and left out.
+3. Check — **mandatory**: `node "<skill-root>/scripts/compare-pptx.mjs" <deck>.html <deck>.pptx`. It captures each slide of the deck in Chrome, renders the `.pptx` with Microsoft PowerPoint itself (macOS, through AppleScript — the default where PowerPoint is installed) or with LibreOffice (`--renderer libreoffice`), rasterises both at 1920×1080 and writes `<deck>-pptx-check/slide-NN.png` (deck | PowerPoint | differences in red) with a score per slide. **Read** the cover, a divider, the densest slides and every slide flagged `<-- READ`. Below ~0.5 % solid difference is anti-aliasing and sub-pixel font metrics; text that re-wraps, a missing picture, a shape in the wrong place or a wrong weight is a defect to report (or to fix in the deck when the deck is at fault). A "RESTRICTED USE"-style marking in the corner of the PowerPoint render is the renderer's sensitivity-label policy, not the file.
+4. Deliver the `.pptx` with the HTML it was converted from, report the exporter's output lines (slides, text boxes / shapes / pictures, the typefaces referenced) and the comparison scores, and tell the user which typefaces the presenting machine needs.
+
+### Rules
+
+- **Fonts are referenced, not embedded.** PowerPoint draws with the faces installed where the file is opened. Aptos (NBG) and Segoe UI ship with Office; Avenir Next (BikS2013) ships with macOS; IBM Plex Sans / Mono (Instrument) and Oswald (AIHub) are free downloads (Google Fonts / IBM) that must be installed on the presenting machine — say so when delivering an AIHub or Instrument `.pptx`. A face missing there is substituted by PowerPoint; that is a font-installation matter, not a conversion defect. Stacks led by an Office face keep it even when the exporting browser lacks it; `system-ui` / `-apple-system` (which PowerPoint cannot name) yield to the next face of the stack.
+- **The HTML stays the master.** Fix layout problems in the deck and re-export; do not hand-edit the `.pptx` to repair a conversion and then treat it as the source.
+- **Editable over pixel-identical.** Ordinary text wraps inside its box, so wording can be edited and reflows; only balanced / pretty-wrapped text and paragraphs with chips carry Chrome's line breaks. If a paragraph still re-wraps by a word in PowerPoint, re-export with `--keep-line-breaks` (every line as Chrome drew it) — never replace text by a picture.
+- **Headless host with no browser:** the exporter exits with code 3 — deliver the HTML and give the command to run where a browser exists. `compare-pptx.mjs` exits with 3 when it lacks a browser, PowerPoint / LibreOffice or poppler (`pdftoppm`): then open the `.pptx` and compare by eye, and say that the automated comparison could not run.
+- The exporter must never convert a deck that fails `verify-deck.mjs --strict`.
+
 ## Bundled files
 
 Scripts (zero-dependency Node, see `scripts/README.md`):
@@ -482,6 +510,8 @@ Scripts (zero-dependency Node, see `scripts/README.md`):
 - `scripts/verify-deck.mjs` — browser-free pre-delivery gate (mandatory, `--strict`).
 - `scripts/screenshot-deck.mjs` — per-slide PNGs at the required viewports (needs a browser).
 - `scripts/export-pdf.mjs` — HTML deck → PDF, one page per slide, aesthetics preserved, soft masks re-anchored for macOS Preview (needs a browser).
+- `scripts/export-pptx.mjs` — HTML deck → editable PowerPoint: text boxes, shapes, pictures, SVG pictures, theme fonts and colours (needs a browser).
+- `scripts/compare-pptx.mjs` — renders a `.pptx` with PowerPoint (macOS) or LibreOffice and writes deck | PowerPoint | difference images with a score per slide (needs a browser, PowerPoint or LibreOffice, and poppler).
 - `scripts/fix-pdf-soft-masks.mjs` — re-anchors the soft masks of an already exported PDF (`--check` reports only); zero dependencies.
 - `scripts/add-deck-menu.mjs` — inlines the right-click deck menu (Edit text / Export to PDF / Save edited copy) into a deck (idempotent: re-running upgrades an older block and keeps its configuration; `--remove` strips it). See "Updating an existing deck to the current skill".
 - `scripts/write-rebuild-script.mjs` — writes the deck's `<deck>.rebuild.mjs`, delivered with the HTML and the PDF: re-embeds the skill's current editing tools into that deck, verifies it and re-exports its PDF (`--check` only reports).
@@ -489,6 +519,8 @@ Scripts (zero-dependency Node, see `scripts/README.md`):
 - `scripts/lib/cdp.mjs` — shared DevTools-protocol client (launch, navigate, evaluate, print).
 - `scripts/lib/pdf-soft-masks.mjs` — zero-dependency PDF rewriter (classic xref, incremental update) that re-anchors Chrome's luminosity soft masks to page space so macOS Preview renders shadows; the analysis of the Quartz defect is in its header.
 - `scripts/lib/print-layout.js` — the print-layout shim shared by the exporter and the in-deck menu (browser JS); on the menu's print path it also prints blurred box-shadows as images for macOS Preview (`rasterShadows`, block v13).
+- `scripts/lib/pptx-extract.js` — measures the laid-out slides in the browser into a list of text / shape / picture items (browser JS, evaluated by `export-pptx.mjs`).
+- `scripts/lib/pptx-writer.mjs` — writes the Office Open XML package (slides, theme, master, notes, media, zip) from that list.
 - `scripts/lib/deck-menu.js` — the in-deck menu: UI, in-place text editing, shape resize/move, SVG part editing, persistence, saved copy, print orchestration (browser JS, inlined by `add-deck-menu.mjs`; configurable through `window.nbgDeckMenuConfig` — root selector, page mode — so the same editor serves non-deck HTML, see `scripts/README.md` §5).
 
 References (design history and the issue register; this `SKILL.md` is the authoritative behaviour):
@@ -558,8 +590,6 @@ Presentation screenshots:
 
 ## Excluded by default
 
-- **PowerPoint (.pptx) output and HTML-to-PowerPoint conversion** — out of scope for this skill, which covers HTML presentations and their PDF export only. When asked for PowerPoint, say it is not covered here and deliver the HTML deck and its PDF.
-
 Do not use or expect these adjacent project artifacts unless the user explicitly requests them:
 
 - newsletter/email prototype folders;
@@ -587,4 +617,5 @@ Before delivering NBG slide work:
 - For HTML output, confirm rendered screenshots show no unintended overlaps among cards, text blocks, decorative shapes, logos, grouped rows/columns, footers, or page numbers.
 - If any overlap is found during visual verification, revise the layout and repeat the screenshot inspection before delivery; do not report the deck as complete while a collision remains.
 - For PDF output, confirm the source HTML passed `verify-deck.mjs --strict`, that `scripts/export-pdf.mjs` reported `RESULT: PASS` (pages = slides, page box = the slide box, normally 1920x1080) and `soft masks re-anchored for macOS Preview: N` (not the `!` skipped note), and that rasterised pages were read and match the browser render (backgrounds, photography, logo, typography, no clipping). Deliver the PDF with its source HTML.
+- For PowerPoint output, confirm the source HTML passed `verify-deck.mjs --strict`, that `scripts/export-pptx.mjs` wrote the file without errors (read its warnings), that `scripts/compare-pptx.mjs` ran and its `slide-NN.png` images were read (cover, a divider, the densest slides, every flagged slide), and report the scores and the typefaces the presenting machine needs. Deliver the `.pptx` with its source HTML.
 - Report the files/resources inspected and any visual verification artifacts used.

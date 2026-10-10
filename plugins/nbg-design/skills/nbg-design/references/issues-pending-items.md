@@ -2,6 +2,17 @@
 
 ## Pending Items
 
+### Low — PowerPoint export: fonts are referenced, not embedded
+- Detected: 2026-10-10 (v1.25.0)
+- Context: `export-pptx.mjs` names faces; it does not embed them. IBM Plex (Instrument) and Oswald (AIHub) must be installed where the `.pptx` is opened, or PowerPoint substitutes. The decks carry them as WOFF2 subsets, which PowerPoint cannot embed (it needs TrueType/OpenType it may obfuscate as `.fntdata`).
+- Current handling: the exporter lists the typefaces referenced; SKILL.md tells the agent to say which faces the presenting machine needs.
+- Resolution condition: the user asks for font embedding (would need WOFF2 → TTF decoding and PowerPoint's font-embedding format).
+
+### Low — PowerPoint export: text placement calibrated on PowerPoint for Mac
+- Detected: 2026-10-10 (v1.25.0)
+- Context: the first-baseline rule (0.75 × line spacing + per-face offset), the superscript factor (2/3) and the shadow blur factor (1.35) were measured on PowerPoint 16 for Mac. PowerPoint for Windows uses the same layout engine and is expected to match; LibreOffice places text a few px differently.
+- Resolution condition: a Windows PowerPoint comparison run (`compare-pptx.mjs` renders with PowerPoint only on macOS; on Windows open the file and compare by eye, or extend the renderer).
+
 ### Medium — Confirm target operating systems for deterministic setup validation
 - Detected: 2026-06-04
 - Context: The portable setup guide is documentation/checklist based and uses shell examples that are straightforward on macOS/Linux. Windows support may require different command quoting or a different validation script approach.

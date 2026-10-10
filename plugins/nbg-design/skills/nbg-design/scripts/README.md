@@ -2,7 +2,7 @@
 
 Zero-dependency Node scripts (Node >= 18, no `npm install`) that make asset embedding
 deterministic, add a browser-free quality gate, capture per-slide screenshots, and export
-the finished deck to PDF. They exist because the hand-pasting of large base64 data URIs is
+the finished deck to PDF and to an editable PowerPoint file. They exist because the hand-pasting of large base64 data URIs is
 the step that silently breaks in headless / SSH / Linux runs — the model "approximates" a
 photo with a gradient or substitutes a text/box logo, and with no display to screenshot,
 the lapse ships — and because a PDF produced any other way (browser "Save as PDF",
@@ -207,6 +207,73 @@ node "<skill-root>/scripts/fix-pdf-soft-masks.mjs" my-deck.pdf [-o out.pdf] [--c
 - Idempotent: a second run finds nothing to do. Exit 0 = done / nothing to do, 1 = error or
   `--check` found work, 2 = usage. Only Chrome/Skia PDFs (classic cross-reference table, no
   object streams) are supported; anything else is reported and left untouched.
+
+## 4c. Export to PowerPoint — `export-pptx.mjs` (needs a browser)
+
+```
+node "<skill-root>/scripts/export-pptx.mjs" my-deck.html [-o my-deck.pptx] [--theme nbg|biks2013|aihub|instrument]
+                                            [--selector <css>] [--wrap-slack 0.02] [--keep-line-breaks]
+                                            [--settle 400] [--timeout 180000]
+                                            [--browser <path>] [--json model.json]
+```
+
+Converts the finished deck into an **editable** PowerPoint presentation — native objects, never slide
+screenshots. The deck is opened in headless Chrome with the print-layout shim (`lib/print-layout.js`, as
+for the PDF); `lib/pptx-extract.js` then measures every slide in the browser and `lib/pptx-writer.mjs`
+writes the Office Open XML package (zip written in the file, no dependency).
+
+| HTML | PowerPoint |
+|---|---|
+| a block of text (`p`, `h1`, `div`, `li`, a table cell…) with its inline runs | one text box; runs keep typeface, size, weight, italic, colour, alpha, letter-spacing, underline / strike, all-caps (`cap="all"`), baseline shift, link; `<br>` → line break; exact line spacing |
+| single-line text | unwrapped box hugging the line, anchored as the CSS alignment |
+| multi-line text | wrapping box: the element's content width, capped at the widest line + `--wrap-slack` (2 %) |
+| `text-wrap: balance / pretty`, paragraphs with chips, everything with `--keep-line-breaks` | Chrome's line breaks carried over as line breaks |
+| inline chip padding / border / margin (`code`, `kbd` pills) | a zero-width space with that letter-spacing (same advance as Chrome) |
+| background colour, linear / radial gradient | rectangle / rounded rectangle / ellipse / per-corner custom path with solid or gradient fill |
+| uniform border | the shape's outline (inset by half its width) · one-sided borders → thin rectangles · dashed / dotted → dashed lines (Chrome's 2.75 w / 2.5 w dash) |
+| `box-shadow` (outer) | `outerShdw` (blur × 1.35 — PowerPoint's falloff — spread as a scale) |
+| `opacity` | multiplied into every fill, line, text colour and picture |
+| `<img>`, CSS `background-image: url()` | picture with its full source and a `srcRect` crop (`object-fit`, `object-position`, `background-size`, `-position`, overflow clips, rounded clipping frames); CSS `filter` baked in |
+| inline `<svg>` | SVG picture (`svgBlip`, computed styles inlined) + PNG fallback · `<canvas>` → PNG |
+| `::before` / `::after` | converted as real elements (materialised first) |
+| speaker notes (`data-notes`, `aside.notes`, `template.notes`) | slide notes |
+| `<video>`, `<iframe>`, conic gradients | left out, reported |
+
+- **Placement.** Every position is Chrome's own layout. Line pitch is written as a percentage (PowerPoint
+  rounds exact spacing to whole points; 100 % = 1.2 × size for every face). A text box is placed so that
+  PowerPoint's first baseline — 0.75 × the line pitch + a small per-face offset (`BASELINE_EM` in `lib/pptx-writer.mjs`,
+  measured with the workspace's `test_scripts/pptx-baseline-calibration.mjs`) — lands on Chrome's.
+- **Faces.** The weight written is the face Chrome actually drew (DevTools `CSS.getPlatformFontsForNode`);
+  PowerPoint knows only a bold flag, so other weights become face names (`Aptos Light`, `IBM Plex Sans
+  SemiBold`, `Avenir Next Ultra Light`, `Segoe UI Semibold`…). Office faces in a stack are kept even when the
+  exporting host lacks them; `system-ui` / `-apple-system` yield to the next face. Fonts are not embedded —
+  the report lists the faces the presenting machine needs.
+- **Theme.** The presentation's theme fonts are the deck theme's faces (Aptos; Avenir Next; Oswald headings
+  with Segoe UI body; IBM Plex Sans) — for a deck with no recorded theme, the face carrying most of the text; its colour scheme is the
+  deck theme's palette (`--theme`, default: the theme recorded in the deck's menu block, NBG without one).
+- Slide size 13.333 × 7.5 in for the 1920 × 1080 artboard (1 px = 6350 EMU = 0.5 pt).
+- Exit: 0 = written, 1 = error, 2 = usage, 3 = no browser.
+
+## 4d. Check the PowerPoint file — `compare-pptx.mjs`
+
+```
+node "<skill-root>/scripts/compare-pptx.mjs" my-deck.html my-deck.pptx [-o <dir>] [--slides 1,4,9]
+                                             [--renderer powerpoint|libreoffice] [--fonts <dir>] [--soffice <path>]
+                                             [--keep] [--browser <path>] [--timeout <ms>]
+```
+
+- Captures each slide of the deck in Chrome (print layout, 1920 × 1080), renders the `.pptx` to PDF with
+  **Microsoft PowerPoint** (macOS, AppleScript; the default where it is installed — the files pass through a
+  temporary folder in PowerPoint's sandbox container) or **LibreOffice** (`--renderer libreoffice`), and
+  rasterises the pages with poppler's `pdftoppm` at the artboard size.
+- Writes `<deck-name>-pptx-check/slide-NN.png` — deck | PowerPoint | difference (red) — and `report.json`;
+  prints per slide the *solid difference* (pixels with |Δ| > 48 on a channel that survive a 3 × 3 erosion, so
+  anti-aliasing seams do not count) and flags slides above 1.5 % with `<-- READ`. `--keep` also keeps the raw
+  captures (`html-N.png`, `pptx-N.png`).
+- Both renderers draw with the fonts installed on the host: a missing face is substituted and shows up as a
+  text difference that is not a conversion defect. `--fonts <dir>` hands `.ttf/.otf` files to LibreOffice's
+  throw-away profile (honoured by Linux/Windows builds; LibreOffice for macOS reads only installed fonts).
+- Exit: 0 = compared, 1 = error, 2 = usage, 3 = browser / renderer / `pdftoppm` missing.
 
 ## 5. In-deck right-click menu — `add-deck-menu.mjs`
 
@@ -690,7 +757,9 @@ node "<skill-root>/scripts/screenshot-deck.mjs" my-deck.html            # option
 # then READ the PNGs and inspect them
 node "<skill-root>/scripts/export-pdf.mjs"      my-deck.html            # when a PDF was requested (shadows re-anchored for Preview)
 # then rasterise a few pages and READ them against the screenshots
-# deliver my-deck.html + my-deck.pdf + my-deck.rebuild.mjs
+node "<skill-root>/scripts/export-pptx.mjs"     my-deck.html            # when PowerPoint was requested (editable)
+node "<skill-root>/scripts/compare-pptx.mjs"    my-deck.html my-deck.pptx   # then READ my-deck-pptx-check/slide-NN.png
+# deliver my-deck.html + my-deck.pdf / my-deck.pptx + my-deck.rebuild.mjs
 ```
 
 ### Update an existing deck
@@ -717,5 +786,6 @@ deck to the current skill".
 (print-layout shim, browser JS, used by the exporter and inlined by the menu; prints blurred
 box-shadows as images on the menu's print path — block v13), `deck-menu.js`
 (menu UI, text editing, persistence, saved copy, print orchestration; browser JS),
-`pdf-soft-masks.mjs` (re-anchors Chrome's luminosity soft masks for macOS Preview; used by the
+`pptx-extract.js` (slide measurement for the PowerPoint export; browser JS), `pptx-writer.mjs` (Office
+Open XML writer and zip), `pdf-soft-masks.mjs` (re-anchors Chrome's luminosity soft masks for macOS Preview; used by the
 exporter and by `fix-pdf-soft-masks.mjs`).

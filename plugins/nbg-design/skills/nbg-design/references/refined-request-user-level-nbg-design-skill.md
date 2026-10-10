@@ -1,6 +1,7 @@
 # Refined Request: User-Level NBG Design Skill
 
-> Note (2026-09-03, skill v1.11.0): PowerPoint / PPTX is out of scope for this skill. Any remaining PowerPoint wording below is historical intake context and no longer applies.
+> Note (2026-09-03, skill v1.11.0): PowerPoint / PPTX was taken out of scope; the PowerPoint wording below is historical intake context.
+> Note (2026-10-10, skill v1.25.0): PowerPoint is back as an **export** of the finished HTML deck (`scripts/export-pptx.mjs`, editable text boxes / shapes / pictures, checked with `scripts/compare-pptx.mjs`) — see SKILL.md "PowerPoint output". The intake wording below about authoring PowerPoint directly still does not apply.
 
 ## Category
 Pi Agent skill packaging, configuration portability, and reusable presentation design-system enablement.

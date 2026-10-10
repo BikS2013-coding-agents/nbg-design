@@ -2,7 +2,7 @@
 
 NBG Design - Claude Code plugin marketplace. It ships the `nbg-design` plugin: a presentation design
 system for HTML slides inspired by the brand image of the National Bank of Greece (NBG), with the in-deck
-editor, the AI assistant, PDF export and the per-deck rebuild script.
+editor, the AI assistant, PDF export, an editable PowerPoint (.pptx) export, and the per-deck rebuild script.
 
 ## Installation
 
@@ -22,8 +22,8 @@ The marketplace identifier (the part after `@`) is `nbg-design`, as declared in
 
 See the `plugins/` directory for available plugins. For a guided tour of the `nbg-design` plugin, open
 [The nbg-design skill — explained](https://biks2013-presentations.github.io/deck-work-nbgdesign/), a
-38-slide deck built with the skill itself (HTML with the in-browser editor, PDF, and five standalone
-diagrams of how the skill works).
+40-slide deck built with the skill itself (HTML with the in-browser editor, PDF, the editable PowerPoint
+conversion, and five standalone diagrams of how the skill works).
 
 ## Development
 

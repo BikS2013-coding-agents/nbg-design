@@ -199,6 +199,7 @@ This project contains the assets of a presentation design system inspired by the
 - Decision: The skill produces HTML presentations and their PDF export only. Every PowerPoint concept was removed on 2026-09-03 at the user's request: the `pptx` output format, the HTML-to-PowerPoint conversion guardrails (SKILL.md section, `html_to_powerpoint_conversion` block and every related check in the config), the bundled master deck `NBG-Design/uploads/Powerpoint - Version 1.0_EN.pptx`, and the historical PowerPoint decision blocks and function entries in these references.
 - Rationale: The skill and its plugin must stay totally focused on HTML decks; PowerPoint deliverables are not part of this product. Keeping the rules around invited the agent to attempt conversions the skill cannot verify.
 - Behaviour: When a user asks for PowerPoint, the agent says it is out of scope for this skill and delivers the HTML deck and its PDF.
+- Superseded on 2026-10-10 (skill v1.25.0) at the user's request: PowerPoint returns as an **export** of the finished HTML deck — see "PowerPoint export (skill v1.25.0)". The HTML deck stays the only authored artefact.
 
 ### Technology photography set (skill v1.17.0)
 - Decision (user request, 2026-09-05): the five lifestyle photos are supplemented — not replaced — by 21 technology-focused photos in `NBG-Design/assets/`, `photo-<subject>-<n>.jpeg` with their `.datauri.txt`, for seven subjects (`datacenter`, `team-analytics`, `network`, `chip`, `athens-dusk`, `security`, `developer`) in three variants each. Variant `1` was generated with OpenAI `gpt-image-2`, `2` with Google `gemini-3-pro-image` (Nano Banana Pro), `3` with Google `gemini-3.1-flash-image` (Nano Banana 2) — the vendors' current flagship image models, verified against their documentation and live model lists that day. An eighth subject (mobile banking) was generated and dropped by the user.
@@ -341,6 +342,57 @@ This project contains the assets of a presentation design system inspired by the
 - **Screenshots** default to `<deck-name>-screenshots/` next to the deck.
 - **References** no longer carry the author's absolute paths.
 - The editor block is unchanged (still v17), so no delivered deck is flagged as outdated by this release.
+
+### PowerPoint export (skill v1.25.0, 2026-10-10)
+
+- **Request.** Convert an HTML presentation to a regular, editable `.pptx` — not screenshots in slides — and check
+  the result with screenshots so its quality is close to the HTML deck's.
+- **Approach.** Measure, don't re-derive: the deck is laid out by Chrome (the PDF exporter's print-layout shim),
+  `lib/pptx-extract.js` walks every slide in CSS stacking order and reads each element's computed style and
+  geometry (Range rects for text lines), and `lib/pptx-writer.mjs` writes the OOXML package with no dependency
+  (zip and CRC-32 in the file). Slide = 13.333 × 7.5 in for 1920 × 1080 (1 px = 0.5 pt).
+- **Text placement.** Calibrated against PowerPoint 16 for Mac (`test_scripts/pptx-baseline-calibration.mjs`,
+  one face per run): with zero insets PowerPoint draws the first baseline at 0.75 L + k·size for a line pitch L
+  (k = 0.01 for most faces; 0.04 Arial, −0.024 Avenir Next, −0.022 Courier New); the exporter puts the box where
+  that baseline lands on Chrome's. The pitch is written as a **percentage** (`spcPct` = L / (1.2 × the line's
+  largest size) — 100 % is exactly 1.2 × size for every face, measured), because PowerPoint rounds exact spacing
+  (`spcPts`) to whole points: 2 px at this scale, which drifted a 16-line code block by 10 px. `kern` is set on
+  every run (PowerPoint does not kern without it; Chrome always does). Result: ±1–3 px on 14 faces × 3 sizes ×
+  4 line heights.
+- **Line breaks.** A wrapping box is the element's content width, capped at the widest line + 2 % (never wider:
+  a word that did not fit in Chrome must not fit in PowerPoint). Chrome's breaks are carried over as line breaks
+  for `text-wrap: balance / pretty` text (a greedy renderer cannot reproduce them), for paragraphs with chips
+  (PowerPoint breaks inside a chip at a hyphen), and everywhere with `--keep-line-breaks`.
+- **Chips.** The horizontal margin + border + padding of an inline box (a code or key chip) is written as a
+  zero-width space with that letter-spacing, so the text keeps Chrome's advance and the chip's background stays
+  under its text. Dashed borders use a custom dash (2.75 w / 2.5 w, Chrome's pattern) instead of PowerPoint's
+  4 w / 3 w.
+- **Faces.** PowerPoint has only a bold flag: other weights are written as the installed face name (`Aptos Light`,
+  `IBM Plex Mono Medium`, `Avenir Next Ultra Light`…). The weight is the one Chrome actually rendered
+  (`CSS.getPlatformFontsForNode`, nearest weight among the faces of the run's family — an element's report
+  includes its children's glyphs), so a deck shipping only Plex Mono 300/500 writes Medium for a 400 request.
+  Office faces in a stack are kept even when the exporting browser lacks them; `system-ui`/`-apple-system` yield
+  to the next face. Fonts are referenced, not embedded.
+- **Raised runs** (sup, `vertical-align: top`, relative offsets) are measured against the line's widest fragment
+  and written as a baseline offset; PowerPoint draws such runs at 2/3 size, so size × 1.5 and offset ÷ 1.5.
+- **Shapes.** Uniform borders become outlines inset by half their width; per-corner radii a custom path (radii
+  scaled by the CSS overlap rule — a single 100 % corner stays a quarter circle); content reaching a rounded
+  clipping frame's corners takes its radii; box-shadow → outerShdw with blur × 1.35 (PowerPoint's falloff,
+  measured) and spread as a scale about the centre.
+- **Pictures** keep their full source with `srcRect`; CSS filters are baked on a canvas. **Inline SVG** is
+  serialised with computed styles (root opacity left to the picture) and embedded as `svgBlip` + PNG.
+- **Checking.** `compare-pptx.mjs` renders with PowerPoint itself through AppleScript (files go through a folder
+  in PowerPoint's sandbox container) or LibreOffice, and diffs in a canvas (|Δ| > 48, 3 × 3 erosion).
+- **First real conversion (2026-10-10).** The untype tool's deck, downloaded from its GitHub Pages site
+  (BikS2013 theme, 53 slides): mean 0.22 %, worst 0.53 %; it exposed the balance / pretty wrapping, the line-pitch
+  rounding, the chip padding, the over-wide wrapping box and the dash pattern above.
+- **Verification (2026-10-10, PowerPoint 16 for Mac).** 11 decks, 256 slides (the 4 theme test decks and 7
+  production decks, among them a 76-slide deck of tables and a 36-slide deck with 147 inline SVGs): mean solid
+  difference per deck 0.13–0.74 %, 253 slides below 1 %, worst 1.11 % — a deck whose font stack renders in the
+  macOS system font in Chrome, which PowerPoint cannot name (it draws the stack's next face, Segoe UI). The rest of
+  the difference is anti-aliasing, sub-pixel font metrics and the renderer's sensitivity-label marking.
+  `test_scripts/pptx-export-roundtrip.mjs` (package validity, slide count, editable text, pictures, theme
+  fonts/colours, LibreOffice render; `--powerpoint` adds the comparison) passes 47/47.
 
 ## Configuration Policy
 - Secrets, API keys, tokens, and expiring credentials must not be stored in project YAML files.
